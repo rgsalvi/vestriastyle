@@ -89,6 +89,32 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
         const jsonText = response.text.trim();
         const parsedJson = JSON.parse(jsonText);
         
+        // Generate an image based on the first outfit recommendation
+        if (parsedJson.outfits && parsedJson.outfits.length > 0) {
+            try {
+                const firstOutfit = parsedJson.outfits[0];
+                const outfitDescription = firstOutfit.items.join(', ');
+                const imageGenPrompt = `A full-body, professional fashion photograph of a person with an '${bodyType}' body shape wearing the following outfit: ${outfitDescription}. The photo should be in a clean, minimalist style with a plain light-colored background.`;
+
+                const imageResponse = await ai.models.generateImages({
+                    model: 'imagen-4.0-generate-001',
+                    prompt: imageGenPrompt,
+                    config: {
+                        numberOfImages: 1,
+                        outputMimeType: 'image/jpeg',
+                        aspectRatio: '3:4', // Vertical aspect ratio for full-body shots
+                    },
+                });
+
+                if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
+                    parsedJson.generatedOutfitImage = imageResponse.generatedImages[0].image.imageBytes;
+                }
+            } catch (imageError) {
+                // Log the error but don't fail the whole request
+                console.error("Error generating outfit image:", imageError);
+            }
+        }
+
         return res.status(200).json(parsedJson);
 
     } catch (error) {

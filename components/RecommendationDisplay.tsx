@@ -26,7 +26,7 @@ const LoadingState: React.FC = () => (
     <div className="text-center p-8">
         <Spinner/>
         <h3 className="mt-6 text-xl font-medium text-slate-800">Curating Your Look...</h3>
-        <p className="mt-2 text-base text-slate-500">Our AI stylist is analyzing your items to find the perfect combinations. This might take a moment.</p>
+        <p className="mt-2 text-base text-slate-500">Our AI stylist is analyzing your items and visualizing the perfect outfit. This might take a moment.</p>
     </div>
 );
 
@@ -46,6 +46,15 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
 
     return (
       <div className="space-y-6">
+        {recommendation.generatedOutfitImage && (
+            <div className="rounded-xl overflow-hidden shadow-lg border border-slate-200">
+                <img
+                    src={`data:image/jpeg;base64,${recommendation.generatedOutfitImage}`}
+                    alt="AI-generated outfit visualization"
+                    className="w-full h-auto object-cover"
+                />
+            </div>
+        )}
         <div className={`p-4 rounded-xl border-2 ${verdictClasses}`}>
           <p className="text-lg font-semibold text-center">{recommendation.verdict}</p>
         </div>

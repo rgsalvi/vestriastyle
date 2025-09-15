@@ -24,8 +24,8 @@ export interface AiResponse {
   compatibility: string;
   outfits: Outfit[];
   advice: string;
-
   verdict: string;
+  generatedOutfitImage?: string;
 }
 
 export interface StyleRecipe {
