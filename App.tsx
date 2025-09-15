@@ -1,0 +1,183 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { ImageUploader } from './components/ImageUploader';
+import { RecommendationDisplay } from './components/RecommendationDisplay';
+import { BodyTypeSelector } from './components/BodyTypeSelector';
+import { StyleRecipes } from './components/StyleRecipes';
+import { WardrobeManager } from './components/WardrobeManager';
+import { getStyleAdvice } from './services/geminiService';
+import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem } from './types';
+
+const Header: React.FC = () => (
+  <header className="text-center p-6 md:p-8 bg-white/80 backdrop-blur-sm border-b border-slate-200">
+    <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
+      AI Wardrobe Curator
+    </h1>
+    <p className="mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Make smarter wardrobe decisions. See how a new item fits before you buy.</p>
+  </header>
+);
+
+const WARDROBE_STORAGE_KEY = 'ai-wardrobe-items';
+
+const App: React.FC = () => {
+  const [newItem, setNewItem] = useState<WardrobeItem | null>(null);
+  const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
+  const [bodyType, setBodyType] = useState<BodyType>('None');
+  const [recommendation, setRecommendation] = useState<AiResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [managedWardrobe, setManagedWardrobe] = useState<PersistentWardrobeItem[]>([]);
+
+  // Load wardrobe from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedWardrobe = localStorage.getItem(WARDROBE_STORAGE_KEY);
+      if (savedWardrobe) {
+        setManagedWardrobe(JSON.parse(savedWardrobe));
+      }
+    } catch (e) {
+      console.error("Failed to load wardrobe from localStorage", e);
+    }
+  }, []);
+
+  // Save wardrobe to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(WARDROBE_STORAGE_KEY, JSON.stringify(managedWardrobe));
+    } catch (e) {
+      console.error("Failed to save wardrobe to localStorage", e);
+    }
+  }, [managedWardrobe]);
+
+
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddItemsToWardrobe = async (items: WardrobeItem[]) => {
+    const newManagedItemsPromises = items.map(async (item, index) => {
+      const dataUrl = await fileToDataUrl(item.file);
+      return {
+        id: `item-${Date.now()}-${index}`,
+        dataUrl,
+        description: '',
+        category: 'Uncategorized',
+        color: '',
+        fabric: '',
+        season: '',
+      };
+    });
+    const newManagedItems = await Promise.all(newManagedItemsPromises);
+    setManagedWardrobe(prev => [...prev, ...newManagedItems]);
+  };
+
+  const handleSaveWardrobeItem = (itemData: Omit<PersistentWardrobeItem, 'id'>, existingId?: string) => {
+    if (existingId) {
+      // Update existing item
+      setManagedWardrobe(prev => prev.map(item =>
+        item.id === existingId ? { ...item, ...itemData, id: existingId } : item
+      ));
+    } else {
+      // Create new item
+      const newItem: PersistentWardrobeItem = {
+        id: `item-${Date.now()}`,
+        ...itemData
+      };
+      setManagedWardrobe(prev => [...prev, newItem]);
+    }
+  };
+
+
+  const handleDeleteWardrobeItem = (itemId: string) => {
+    setManagedWardrobe(prev => prev.filter(item => item.id !== itemId));
+  };
+
+
+  const handleGetAdvice = useCallback(async () => {
+    if (!newItem) {
+      setError('Please upload a new item to analyze.');
+      return;
+    }
+    if (wardrobeItems.length === 0) {
+      setError('Please upload at least one item from your existing wardrobe.');
+      return;
+    }
+    if (bodyType === 'None') {
+      setError('Please select your body type for personalized advice.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setRecommendation(null);
+
+    try {
+      const response = await getStyleAdvice(newItem, wardrobeItems, bodyType);
+      setRecommendation(response);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [newItem, wardrobeItems, bodyType]);
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <Header />
+      <main className="container mx-auto p-4 md:p-8">
+        <div className="space-y-12">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Style Analysis</h2>
+            <p className="mt-2 text-lg text-slate-500">Get instant feedback on a new item.</p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div className="space-y-8">
+              <ImageUploader
+                title="1. Upload New Item"
+                description="Select a single image of an item you're thinking of buying."
+                onFilesSelect={(items) => setNewItem(items[0] || null)}
+                multiple={false}
+              />
+              <ImageUploader
+                title="2. Upload Your Wardrobe"
+                description="Add photos of items you already own (up to 5)."
+                onFilesSelect={setWardrobeItems}
+                multiple={true}
+                maxFiles={5}
+              />
+              <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
+               <div className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200">
+                {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
+                <button
+                  onClick={handleGetAdvice}
+                  disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None'}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold py-3 px-4 rounded-full shadow-lg hover:scale-105 hover:shadow-xl disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
+                  {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
+                </button>
+              </div>
+            </div>
+            <div className="lg:sticky lg:top-8">
+              <RecommendationDisplay recommendation={recommendation} isLoading={isLoading} />
+            </div>
+          </div>
+        </div>
+      </main>
+      <WardrobeManager 
+        items={managedWardrobe}
+        onAddItems={handleAddItemsToWardrobe}
+        onSaveItem={handleSaveWardrobeItem}
+        onDeleteItem={handleDeleteWardrobeItem}
+      />
+      <StyleRecipes />
+    </div>
+  );
+};
+
+export default App;
