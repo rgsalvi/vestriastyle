@@ -56,20 +56,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description
 
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-slate-200">
-      <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
-      <p className="text-sm text-slate-500 mt-1">{description}</p>
+    <div className="bg-white/60 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/50">
+      {title && <h3 className="text-xl font-semibold text-slate-900">{title}</h3>}
+      {description && <p className="text-sm text-slate-500 mt-1">{description}</p>}
       
       <div className="mt-4">
-        <label htmlFor={fileInputId} className="relative cursor-pointer bg-white rounded-xl font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500">
-          <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl">
+        <label htmlFor={fileInputId} className="relative cursor-pointer bg-slate-50/50 rounded-xl font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500 transition-colors duration-200">
+          <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-purple-400">
             <div className="space-y-1 text-center">
               <UploadIcon/>
               <div className="flex text-sm text-slate-600">
                 <span className="p-1">Upload files</span>
                 <input id={fileInputId} name={fileInputId} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" multiple={multiple} />
               </div>
-              <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
+              <p className="text-xs text-slate-500">PNG, JPG, up to 10MB</p>
             </div>
           </div>
         </label>
@@ -78,11 +78,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description
       {items.length > 0 && (
         <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
           {items.map((item, index) => (
-            <div key={index} className="relative aspect-square">
+            <div key={index} className="relative aspect-square group">
               <img src={item.preview} alt={`preview ${index}`} className="h-full w-full object-cover rounded-xl shadow-md" />
                 <button
                   onClick={() => removeItem(index)}
-                  className="absolute top-1.5 right-1.5 bg-black/50 text-white rounded-full p-1 backdrop-blur-sm hover:bg-black/75 hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                  className="absolute top-1.5 right-1.5 bg-white/70 text-slate-800 rounded-full p-1 backdrop-blur-sm hover:bg-white hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
                   aria-label="Remove item"
                 >
                   <XIcon />

@@ -46,26 +46,28 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ items, onAddIt
     }
 
     return (
-        <section className="mt-12 py-12 bg-slate-100/80 border-t border-slate-200">
+        <section className="mt-12 py-16 bg-white border-t border-slate-200">
             <div className="container mx-auto px-4 md:px-8">
                 <div className="text-center mb-10">
                     <h2 className="text-3xl font-bold text-slate-900 tracking-tight">My Wardrobe</h2>
                     <p className="mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Manage your digital closet. Add, edit, and remove items.</p>
                 </div>
 
-                <div className="max-w-3xl mx-auto space-y-4">
+                <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                     <ImageUploader
                         title="Add From Photos"
-                        description="Upload one or more images of your clothes."
+                        description="Upload images of your clothes."
                         onFilesSelect={onAddItems}
                         multiple={true}
                     />
-                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-slate-200">
-                         <h3 className="text-xl font-semibold text-slate-900">Add From Description</h3>
-                         <p className="text-sm text-slate-500 mt-1">Don't have a photo? Generate an image with AI.</p>
+                    <div className="bg-white/60 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/50 flex flex-col justify-between">
+                         <div>
+                            <h3 className="text-xl font-semibold text-slate-900">Add From Description</h3>
+                            <p className="text-sm text-slate-500 mt-1">Don't have a photo? Generate an image with AI.</p>
+                         </div>
                          <button
                             onClick={() => setIsCreating(true)}
-                            className="mt-4 w-full flex items-center justify-center bg-purple-100 text-purple-700 font-semibold py-3 px-4 rounded-xl hover:bg-purple-200 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                            className="mt-4 w-full flex items-center justify-center bg-slate-100 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-200/80 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ring-1 ring-slate-200"
                         >
                             <PlusIcon />
                             Add Item with AI
@@ -77,8 +79,8 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ items, onAddIt
                     <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                         {items.map(item => (
                             <div key={item.id} className="relative group aspect-square">
-                                <img src={item.dataUrl} alt={item.description || "Wardrobe item"} className="h-full w-full object-cover rounded-xl shadow-md" />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-300 flex flex-col items-center justify-center rounded-xl p-2">
+                                <img src={item.dataUrl} alt={item.description || "Wardrobe item"} className="h-full w-full object-cover rounded-2xl shadow-md" />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-300 flex flex-col items-center justify-center rounded-2xl p-2">
                                      <div className="text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                         <p className="text-white text-sm font-semibold truncate">{item.category}</p>
                                         <p className="text-slate-200 text-xs truncate">{item.color || 'No color'}</p>
@@ -87,17 +89,17 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ items, onAddIt
                                             {item.season && <p className="truncate">Season: {item.season}</p>}
                                         </div>
                                     </div>
-                                    <div className="absolute bottom-2 flex space-x-2">
+                                    <div className="absolute bottom-2 flex space-x-2 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                                         <button
                                             onClick={() => setEditingItem(item)}
-                                            className="p-2 bg-white text-slate-700 rounded-full opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300 hover:bg-slate-200"
+                                            className="p-2 bg-white/80 text-slate-700 rounded-full backdrop-blur-sm shadow-md hover:scale-110 hover:bg-white transition-all"
                                             aria-label="Edit item"
                                         >
                                             <EditIcon />
                                         </button>
                                         <button
                                             onClick={() => onDeleteItem(item.id)}
-                                            className="p-2 bg-white text-red-600 rounded-full opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all duration-300 hover:bg-red-50"
+                                            className="p-2 bg-white/80 text-red-600 rounded-full backdrop-blur-sm shadow-md hover:scale-110 hover:bg-white transition-all"
                                             aria-label="Delete item"
                                         >
                                             <TrashIcon />
@@ -108,7 +110,7 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ items, onAddIt
                         ))}
                     </div>
                 ) : (
-                    <div className="mt-10 text-center py-10 px-6 bg-white rounded-2xl border-2 border-dashed border-slate-300">
+                    <div className="mt-10 text-center py-10 px-6 bg-white rounded-2xl border-2 border-dashed border-slate-200">
                         <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 6.138h4.5m-4.5 0a3.75 3.75 0 01-3.75 3.75v1.5a.75.75 0 001.5 0v-1.5a2.25 2.25 0 002.25-2.25zM14.25 6.138a3.75 3.75 0 00-3.75 3.75v1.5a.75.75 0 01-1.5 0v-1.5a2.25 2.25 0 012.25-2.25zM9 10.5h6m-6 3h6m-6 3h6m-6 3h6" />
                             <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3.75 6.138v10.124A2.25 2.25 0 006 18.5h12a2.25 2.25 0 002.25-2.238V6.138M3.75 6.138h16.5" />

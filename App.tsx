@@ -9,7 +9,7 @@ import { getStyleAdvice } from './services/geminiService';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem } from './types';
 
 const Header: React.FC = () => (
-  <header className="text-center p-6 md:p-8 bg-white/80 backdrop-blur-sm border-b border-slate-200">
+  <header className="text-center p-6 md:p-8 bg-white/60 backdrop-blur-lg sticky top-0 z-20 border-b border-slate-200">
     <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
       AI Wardrobe Curator
     </h1>
@@ -170,7 +170,7 @@ const App: React.FC = () => {
   }, [newItem, wardrobeItems, bodyType, managedWardrobe]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-100">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
         <div className="space-y-12">
@@ -192,18 +192,18 @@ const App: React.FC = () => {
                 maxFiles={5}
               />
               <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
-               <div className="p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200">
+               <div className="p-4 bg-white/60 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50">
                 {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
                 <button
                   onClick={handleGetAdvice}
                   disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None'}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold py-3 px-4 rounded-full shadow-lg hover:scale-105 hover:shadow-xl disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-bold py-4 px-4 rounded-full shadow-lg shadow-purple-500/20 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/30 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-lg disabled:shadow-slate-400/20 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-purple-500/50"
                 >
                   {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
                 </button>
               </div>
             </div>
-            <div className="lg:sticky lg:top-8">
+            <div className="lg:sticky lg:top-28">
               <RecommendationDisplay
                 recommendation={recommendation}
                 isLoading={isLoading}

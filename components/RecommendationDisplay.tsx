@@ -17,7 +17,7 @@ const Spinner: React.FC = () => (
 const InitialState: React.FC = () => (
     <div className="text-center p-8">
         <svg className="mx-auto h-20 w-20 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-5.197-5.975M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
         </svg>
         <h3 className="mt-4 text-xl font-medium text-slate-800">Your Personal Stylist Awaits</h3>
         <p className="mt-2 text-base text-slate-500">Upload your items and let our AI provide expert style advice and create perfect outfits for you.</p>
@@ -48,7 +48,7 @@ const OutfitCarousel: React.FC<{ outfits: Outfit[], images: string[] }> = ({ out
     return (
       <div className="space-y-4">
           <div className="relative">
-              <div className="rounded-xl overflow-hidden shadow-lg border border-slate-200 aspect-square">
+              <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-square">
                   <img
                       src={`data:image/jpeg;base64,${images[activeIndex]}`}
                       alt={`AI-generated visualization for ${currentOutfit.title}`}
@@ -58,17 +58,17 @@ const OutfitCarousel: React.FC<{ outfits: Outfit[], images: string[] }> = ({ out
               </div>
               {images.length > 1 && (
                   <>
-                      <button onClick={goToPrevious} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all shadow-md">
+                      <button onClick={goToPrevious} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all shadow-md hover:scale-110">
                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                       </button>
-                      <button onClick={goToNext} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all shadow-md">
+                      <button onClick={goToNext} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all shadow-md hover:scale-110">
                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                       </button>
                   </>
               )}
           </div>
           
-          <div className="p-4 bg-slate-100/50 rounded-xl border border-slate-200">
+          <div className="p-4 bg-slate-100/50 rounded-2xl border border-slate-200">
               <p className="font-semibold text-purple-700">{currentOutfit.title}</p>
               <ul className="mt-2 list-disc list-inside text-slate-600 space-y-1 text-sm">
                   {currentOutfit.items.map((item, i) => <li key={i}>{item}</li>)}
@@ -76,9 +76,9 @@ const OutfitCarousel: React.FC<{ outfits: Outfit[], images: string[] }> = ({ out
           </div>
 
           {images.length > 1 && (
-              <div className="flex justify-center space-x-2">
+              <div className="flex justify-center space-x-2 pt-2">
                   {images.map((_, index) => (
-                      <button key={index} onClick={() => setActiveIndex(index)} className={`h-2.5 w-2.5 rounded-full transition-colors ${activeIndex === index ? 'bg-purple-500' : 'bg-slate-300 hover:bg-slate-400'}`}></button>
+                      <button key={index} onClick={() => setActiveIndex(index)} className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${activeIndex === index ? 'bg-purple-500 scale-125' : 'bg-slate-300 hover:bg-slate-400'}`}></button>
                   ))}
               </div>
           )}
@@ -100,7 +100,7 @@ const UnsavedItems: React.FC<{ items: AnalysisItem[], onSave: () => void }> = ({
             </div>
             <button
                 onClick={onSave}
-                className="mt-4 w-full bg-purple-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:bg-purple-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                className="mt-4 w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
             >
                 Save to My Wardrobe
             </button>
@@ -128,14 +128,14 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
     const { verdict, compatibility, advice, outfits, generatedOutfitImages } = internalRecommendation;
 
     const verdictClasses = verdict.includes('go for it')
-      ? "bg-teal-100 text-teal-800 border-teal-300"
-      : "bg-orange-100 text-orange-800 border-orange-300";
+      ? "bg-purple-100 text-purple-800 border-purple-300"
+      : "bg-slate-200 text-slate-800 border-slate-300";
 
     const hasVisuals = generatedOutfitImages && generatedOutfitImages.length > 0;
 
     return (
       <div className="space-y-6">
-        <div className={`p-4 rounded-xl border-2 ${verdictClasses}`}>
+        <div className={`p-4 rounded-2xl border-2 ${verdictClasses}`}>
           <p className="text-lg font-semibold text-center">{verdict}</p>
         </div>
         
@@ -156,7 +156,7 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
               <h4 className="text-lg font-semibold text-slate-900">Outfit Ideas</h4>
               <div className="mt-2 space-y-4">
                 {outfits.map((outfit, index) => (
-                  <div key={index} className="p-4 bg-slate-100/50 rounded-xl border border-slate-200">
+                  <div key={index} className="p-4 bg-slate-100/50 rounded-2xl border border-slate-200">
                     <p className="font-semibold text-purple-700">{outfit.title}</p>
                     <ul className="mt-2 list-disc list-inside text-slate-600 space-y-1">
                       {outfit.items.map((item, i) => <li key={i}>{item}</li>)}
@@ -176,7 +176,7 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+    <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50 overflow-hidden">
       <div className="p-6 min-h-[400px] flex flex-col justify-center">
         {renderContent()}
       </div>

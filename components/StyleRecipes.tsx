@@ -38,7 +38,7 @@ const recipes: StyleRecipe[] = [
 ];
 
 const CheckIcon: React.FC = () => (
-    <svg className="h-5 w-5 text-purple-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <svg className="h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
     </svg>
 );
@@ -46,7 +46,7 @@ const CheckIcon: React.FC = () => (
 
 export const StyleRecipes: React.FC = () => {
     return (
-        <section className="mt-12 py-12 bg-white border-t border-slate-200">
+        <section className="mt-12 py-16 bg-slate-50 border-t border-slate-200">
             <div className="container mx-auto px-4 md:px-8">
                 <div className="text-center mb-10">
                     <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Style Recipes & Cheat Sheets</h2>
@@ -54,13 +54,13 @@ export const StyleRecipes: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {recipes.map((recipe) => (
-                        <div key={recipe.title} className="bg-slate-50 p-6 rounded-2xl shadow-lg border border-slate-200 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                        <div key={recipe.title} className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                             <h3 className="text-xl font-semibold text-slate-900">{recipe.title}</h3>
                             <p className="text-sm text-slate-500 mt-1 flex-grow">{recipe.description}</p>
                             <ul className="mt-4 space-y-3">
                                 {recipe.items.map((item) => (
                                     <li key={item} className="flex items-start">
-                                        <div className="flex-shrink-0">
+                                        <div className="flex-shrink-0 pt-0.5">
                                             <CheckIcon />
                                         </div>
                                         <span className="ml-3 text-sm text-slate-700">{item}</span>
