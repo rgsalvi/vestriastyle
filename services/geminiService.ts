@@ -62,3 +62,30 @@ export const generateWardrobeImage = async (prompt: string): Promise<string> => 
     throw new Error("Failed to generate wardrobe image.");
   }
 };
+
+export const editOutfitImage = async (base64Image: string, mimeType: string, prompt: string): Promise<string> => {
+    try {
+        const response = await fetch('/api/edit-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ base64Image, mimeType, prompt }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Server responded with an error');
+        }
+
+        const data = await response.json();
+        if (!data.base64Image) {
+            throw new Error("API did not return an edited image.");
+        }
+        return data.base64Image;
+
+    } catch (error) {
+        console.error("Error editing outfit image:", error);
+        throw new Error("Failed to edit outfit image.");
+    }
+};
