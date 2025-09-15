@@ -89,37 +89,40 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
         const jsonText = textResponse.text.trim();
         const parsedJson = JSON.parse(jsonText);
         
-        // Generate an image based on the first outfit recommendation, using the original item image.
+        // Generate an image for each outfit recommendation
         if (parsedJson.outfits && parsedJson.outfits.length > 0) {
-            try {
-                const firstOutfit = parsedJson.outfits[0];
-                const outfitDescription = firstOutfit.items.join(', ');
-                const imageGenPrompt = `Using the provided image as the main clothing item, build a complete outfit around it based on this description: ${outfitDescription}. Show the full outfit on a person with an '${bodyType}' body shape, photographed in a clean, minimalist style with a plain light-colored background.`;
+            const imagePromises = parsedJson.outfits.map(async (outfit: { items: string[] }) => {
+                try {
+                    const outfitDescription = outfit.items.join(', ');
+                    const imageGenPrompt = `Using the provided image as the main clothing item, build a complete outfit around it based on this description: ${outfitDescription}. Show the full outfit on a person with an '${bodyType}' body shape, photographed in a clean, minimalist style with a plain light-colored background.`;
 
-                const imageResponse = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash-image-preview',
-                    contents: {
-                        parts: [
-                            { inlineData: { data: newItem.base64, mimeType: newItem.mimeType } },
-                            { text: imageGenPrompt },
-                        ],
-                    },
-                    config: {
-                        responseModalities: [Modality.IMAGE, Modality.TEXT],
-                    },
-                });
-
-                for (const part of imageResponse.candidates[0].content.parts) {
-                    if (part.inlineData) {
-                        parsedJson.generatedOutfitImage = part.inlineData.data;
-                        break; // Stop after finding the first image
+                    const imageResponse = await ai.models.generateContent({
+                        model: 'gemini-2.5-flash-image-preview',
+                        contents: {
+                            parts: [
+                                { inlineData: { data: newItem.base64, mimeType: newItem.mimeType } },
+                                { text: imageGenPrompt },
+                            ],
+                        },
+                        config: {
+                            responseModalities: [Modality.IMAGE, Modality.TEXT],
+                        },
+                    });
+                    
+                    for (const part of imageResponse.candidates[0].content.parts) {
+                        if (part.inlineData) {
+                            return part.inlineData.data;
+                        }
                     }
+                    return null;
+                } catch (imageError) {
+                    console.error("Error generating an outfit image:", imageError);
+                    return null; // Return null if a specific image generation fails
                 }
+            });
 
-            } catch (imageError) {
-                // Log the error but don't fail the whole request
-                console.error("Error generating outfit image:", imageError);
-            }
+            const generatedImages = (await Promise.all(imagePromises)).filter(img => img !== null) as string[];
+            parsedJson.generatedOutfitImages = generatedImages;
         }
 
         return res.status(200).json(parsedJson);

@@ -5,6 +5,12 @@ export interface WardrobeItem {
   preview: string;
 }
 
+export interface AnalysisItem {
+  preview: string;
+  base64: string;
+  mimeType: string;
+}
+
 export interface PersistentWardrobeItem {
   id: string;
   dataUrl: string;
@@ -25,7 +31,7 @@ export interface AiResponse {
   outfits: Outfit[];
   advice: string;
   verdict: string;
-  generatedOutfitImage?: string;
+  generatedOutfitImages?: string[];
 }
 
 export interface StyleRecipe {

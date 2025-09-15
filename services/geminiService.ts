@@ -1,27 +1,15 @@
-import type { WardrobeItem, AiResponse, BodyType } from '../types';
+import type { AnalysisItem, AiResponse, BodyType } from '../types';
 
-// Helper function to convert file to base64
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve((reader.result as string).split(',')[1]);
-    reader.onerror = error => reject(error);
-  });
-};
-
-export const getStyleAdvice = async (newItem: WardrobeItem, wardrobeItems: WardrobeItem[], bodyType: BodyType): Promise<AiResponse> => {
+export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: AnalysisItem[], bodyType: BodyType): Promise<AiResponse> => {
   try {
     const newItemPayload = {
-      base64: await fileToBase64(newItem.file),
-      mimeType: newItem.file.type,
+      base64: newItem.base64,
+      mimeType: newItem.mimeType,
     };
-    const wardrobeItemsPayload = await Promise.all(
-      wardrobeItems.map(async item => ({
-        base64: await fileToBase64(item.file),
-        mimeType: item.file.type,
-      }))
-    );
+    const wardrobeItemsPayload = wardrobeItems.map(item => ({
+      base64: item.base64,
+      mimeType: item.mimeType,
+    }));
     
     const response = await fetch('/api/style-advice', {
       method: 'POST',

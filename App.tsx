@@ -4,8 +4,9 @@ import { RecommendationDisplay } from './components/RecommendationDisplay';
 import { BodyTypeSelector } from './components/BodyTypeSelector';
 import { StyleRecipes } from './components/StyleRecipes';
 import { WardrobeManager } from './components/WardrobeManager';
+import { WardrobeInput } from './components/WardrobeInput';
 import { getStyleAdvice } from './services/geminiService';
-import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem } from './types';
+import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem } from './types';
 
 const Header: React.FC = () => (
   <header className="text-center p-6 md:p-8 bg-white/80 backdrop-blur-sm border-b border-slate-200">
@@ -18,9 +19,18 @@ const Header: React.FC = () => (
 
 const WARDROBE_STORAGE_KEY = 'ai-wardrobe-items';
 
+const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 const App: React.FC = () => {
-  const [newItem, setNewItem] = useState<WardrobeItem | null>(null);
-  const [wardrobeItems, setWardrobeItems] = useState<WardrobeItem[]>([]);
+  const [newItem, setNewItem] = useState<AnalysisItem | null>(null);
+  const [wardrobeItems, setWardrobeItems] = useState<AnalysisItem[]>([]);
   const [bodyType, setBodyType] = useState<BodyType>('None');
   const [recommendation, setRecommendation] = useState<AiResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -50,14 +60,22 @@ const App: React.FC = () => {
   }, [managedWardrobe]);
 
 
-  const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+  const handleNewItemSelect = async (items: WardrobeItem[]) => {
+    if (items.length === 0) {
+      setNewItem(null);
+      return;
+    }
+    const item = items[0];
+    const dataUrl = await fileToDataUrl(item.file);
+    const [header, base64] = dataUrl.split(',');
+    const mimeType = header.match(/:(.*?);/)![1];
+    setNewItem({
+        preview: item.preview,
+        base64,
+        mimeType,
     });
   };
+
 
   const handleAddItemsToWardrobe = async (items: WardrobeItem[]) => {
     const newManagedItemsPromises = items.map(async (item, index) => {
@@ -104,7 +122,7 @@ const App: React.FC = () => {
       return;
     }
     if (wardrobeItems.length === 0) {
-      setError('Please upload at least one item from your existing wardrobe.');
+      setError('Please upload or select at least one item from your existing wardrobe.');
       return;
     }
     if (bodyType === 'None') {
@@ -141,14 +159,12 @@ const App: React.FC = () => {
               <ImageUploader
                 title="1. Upload New Item"
                 description="Select a single image of an item you're thinking of buying."
-                onFilesSelect={(items) => setNewItem(items[0] || null)}
+                onFilesSelect={handleNewItemSelect}
                 multiple={false}
               />
-              <ImageUploader
-                title="2. Upload Your Wardrobe"
-                description="Add photos of items you already own (up to 5)."
-                onFilesSelect={setWardrobeItems}
-                multiple={true}
+              <WardrobeInput 
+                managedWardrobe={managedWardrobe}
+                onAnalysisItemsChange={setWardrobeItems}
                 maxFiles={5}
               />
               <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
