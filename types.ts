@@ -7,6 +7,7 @@ export interface WardrobeItem {
 
 export interface AnalysisItem {
   preview: string;
+  dataUrl: string;
   base64: string;
   mimeType: string;
 }

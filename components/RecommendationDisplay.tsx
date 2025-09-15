@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import type { AiResponse, Outfit } from '../types';
+import type { AiResponse, Outfit, AnalysisItem } from '../types';
 
 interface RecommendationDisplayProps {
   recommendation: AiResponse | null;
   isLoading: boolean;
+  unsavedItems: AnalysisItem[];
+  onSaveUnsavedItems: () => void;
 }
 
 const Spinner: React.FC = () => (
@@ -84,12 +86,32 @@ const OutfitCarousel: React.FC<{ outfits: Outfit[], images: string[] }> = ({ out
     );
 }
 
-export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading }) => {
+const UnsavedItems: React.FC<{ items: AnalysisItem[], onSave: () => void }> = ({ items, onSave }) => {
+    if (items.length === 0) return null;
+
+    return (
+        <div className="mt-6 p-4 bg-purple-50 border-t-2 border-b-2 border-purple-200">
+            <h4 className="text-lg font-semibold text-slate-900 text-center">Save New Items</h4>
+            <p className="text-sm text-slate-500 mt-1 text-center">Add the items from this session to your permanent wardrobe.</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {items.map((item, index) => (
+                    <img key={index} src={item.preview} alt={`unsaved item ${index}`} className="h-16 w-16 object-cover rounded-lg shadow-md border-2 border-white" />
+                ))}
+            </div>
+            <button
+                onClick={onSave}
+                className="mt-4 w-full bg-purple-600 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:bg-purple-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+            >
+                Save to My Wardrobe
+            </button>
+        </div>
+    );
+};
+
+export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems }) => {
   const [internalRecommendation, setInternalRecommendation] = useState<AiResponse | null>(null);
 
   useEffect(() => {
-    // Only update the internal state when a *new* recommendation comes in.
-    // This prevents the carousel from resetting when the parent component re-renders for other reasons.
     if (recommendation) {
       setInternalRecommendation(recommendation);
     }
@@ -154,8 +176,11 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-slate-200 min-h-[400px] flex flex-col justify-center">
-      {renderContent()}
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+      <div className="p-6 min-h-[400px] flex flex-col justify-center">
+        {renderContent()}
+      </div>
+      <UnsavedItems items={unsavedItems} onSave={onSaveUnsavedItems} />
     </div>
   );
 };

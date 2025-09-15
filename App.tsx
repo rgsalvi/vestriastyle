@@ -37,6 +37,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [managedWardrobe, setManagedWardrobe] = useState<PersistentWardrobeItem[]>([]);
+  const [unsavedItemsFromAnalysis, setUnsavedItemsFromAnalysis] = useState<AnalysisItem[]>([]);
 
   // Load wardrobe from localStorage on initial render
   useEffect(() => {
@@ -71,6 +72,7 @@ const App: React.FC = () => {
     const mimeType = header.match(/:(.*?);/)![1];
     setNewItem({
         preview: item.preview,
+        dataUrl,
         base64,
         mimeType,
     });
@@ -115,6 +117,20 @@ const App: React.FC = () => {
     setManagedWardrobe(prev => prev.filter(item => item.id !== itemId));
   };
 
+  const handleSaveUnsavedItems = () => {
+    const newManagedItems: PersistentWardrobeItem[] = unsavedItemsFromAnalysis.map((item, index) => ({
+      id: `item-${Date.now()}-${index}`,
+      dataUrl: item.dataUrl,
+      description: '', // Can be enhanced later
+      category: 'Uncategorized',
+      color: '',
+      fabric: '',
+      season: '',
+    }));
+    setManagedWardrobe(prev => [...prev, ...newManagedItems]);
+    setUnsavedItemsFromAnalysis([]); // Clear after saving
+  };
+
 
   const handleGetAdvice = useCallback(async () => {
     if (!newItem) {
@@ -133,17 +149,25 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setRecommendation(null);
+    setUnsavedItemsFromAnalysis([]);
 
     try {
       const response = await getStyleAdvice(newItem, wardrobeItems, bodyType);
       setRecommendation(response);
+
+      // After successful analysis, determine which items are not already saved.
+      const allAnalysisItems = [newItem, ...wardrobeItems];
+      const savedDataUrls = new Set(managedWardrobe.map(item => item.dataUrl));
+      const unsaved = allAnalysisItems.filter(item => !savedDataUrls.has(item.dataUrl));
+      setUnsavedItemsFromAnalysis(unsaved);
+
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  }, [newItem, wardrobeItems, bodyType]);
+  }, [newItem, wardrobeItems, bodyType, managedWardrobe]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -180,7 +204,12 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="lg:sticky lg:top-8">
-              <RecommendationDisplay recommendation={recommendation} isLoading={isLoading} />
+              <RecommendationDisplay
+                recommendation={recommendation}
+                isLoading={isLoading}
+                unsavedItems={unsavedItemsFromAnalysis}
+                onSaveUnsavedItems={handleSaveUnsavedItems}
+              />
             </div>
           </div>
         </div>

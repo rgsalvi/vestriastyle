@@ -38,7 +38,7 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ managedWardrobe, o
                 const dataUrl = await fileToDataUrl(item.file);
                 const [header, base64] = dataUrl.split(',');
                 const mimeType = header.match(/:(.*?);/)![1];
-                return { preview: item.preview, base64, mimeType };
+                return { preview: item.preview, dataUrl, base64, mimeType };
             });
             const uploadedAnalysisItems = await Promise.all(uploadedAnalysisItemsPromises);
             
@@ -48,7 +48,7 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ managedWardrobe, o
                 .map(item => {
                     const [header, base64] = item.dataUrl.split(',');
                     const mimeType = header.match(/:(.*?);/)![1];
-                    return { preview: item.dataUrl, base64, mimeType };
+                    return { preview: item.dataUrl, dataUrl: item.dataUrl, base64, mimeType };
                 });
 
             // Combine, respecting the maxFiles limit
