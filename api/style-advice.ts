@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 
 if (!process.env.API_KEY) {
   // This will cause the function to fail safely if the API key is not set.
@@ -77,7 +77,7 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
 
         const contents = [{ parts: [{ text: prompt }, ...imageParts] }];
 
-        const response = await ai.models.generateContent({
+        const textResponse = await ai.models.generateContent({
             model: model,
             contents: contents,
             config: {
@@ -86,29 +86,36 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
             },
         });
     
-        const jsonText = response.text.trim();
+        const jsonText = textResponse.text.trim();
         const parsedJson = JSON.parse(jsonText);
         
-        // Generate an image based on the first outfit recommendation
+        // Generate an image based on the first outfit recommendation, using the original item image.
         if (parsedJson.outfits && parsedJson.outfits.length > 0) {
             try {
                 const firstOutfit = parsedJson.outfits[0];
                 const outfitDescription = firstOutfit.items.join(', ');
-                const imageGenPrompt = `A full-body, professional fashion photograph of a person with an '${bodyType}' body shape wearing the following outfit: ${outfitDescription}. The photo should be in a clean, minimalist style with a plain light-colored background.`;
+                const imageGenPrompt = `Using the provided image as the main clothing item, build a complete outfit around it based on this description: ${outfitDescription}. Show the full outfit on a person with an '${bodyType}' body shape, photographed in a clean, minimalist style with a plain light-colored background.`;
 
-                const imageResponse = await ai.models.generateImages({
-                    model: 'imagen-4.0-generate-001',
-                    prompt: imageGenPrompt,
+                const imageResponse = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash-image-preview',
+                    contents: {
+                        parts: [
+                            { inlineData: { data: newItem.base64, mimeType: newItem.mimeType } },
+                            { text: imageGenPrompt },
+                        ],
+                    },
                     config: {
-                        numberOfImages: 1,
-                        outputMimeType: 'image/jpeg',
-                        aspectRatio: '3:4', // Vertical aspect ratio for full-body shots
+                        responseModalities: [Modality.IMAGE, Modality.TEXT],
                     },
                 });
 
-                if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
-                    parsedJson.generatedOutfitImage = imageResponse.generatedImages[0].image.imageBytes;
+                for (const part of imageResponse.candidates[0].content.parts) {
+                    if (part.inlineData) {
+                        parsedJson.generatedOutfitImage = part.inlineData.data;
+                        break; // Stop after finding the first image
+                    }
                 }
+
             } catch (imageError) {
                 // Log the error but don't fail the whole request
                 console.error("Error generating outfit image:", imageError);
