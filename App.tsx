@@ -8,6 +8,7 @@ import { WardrobeInput } from './components/WardrobeInput';
 import { Footer } from './components/Footer';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
+import { RefundPolicy } from './components/RefundPolicy';
 import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { getStyleAdvice } from './services/geminiService';
@@ -127,7 +128,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
   });
 };
 
-type Page = 'main' | 'privacy' | 'terms';
+type Page = 'main' | 'privacy' | 'terms' | 'refund';
 
 // Fix: Augment the Window interface to declare the 'google' property for Google Sign-In, preventing redeclaration errors.
 declare global {
@@ -361,6 +362,8 @@ const App: React.FC = () => {
         return <PrivacyPolicy onBack={() => setCurrentPage('main')} />;
       case 'terms':
         return <TermsOfService onBack={() => setCurrentPage('main')} />;
+      case 'refund':
+        return <RefundPolicy onBack={() => setCurrentPage('main')} />;
       case 'main':
       default:
         return (
@@ -426,6 +429,7 @@ const App: React.FC = () => {
       <Footer 
         onNavigateToPrivacy={() => setCurrentPage('privacy')}
         onNavigateToTerms={() => setCurrentPage('terms')}
+        onNavigateToRefund={() => setCurrentPage('refund')}
       />
     </div>
   );

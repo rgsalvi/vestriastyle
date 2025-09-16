@@ -87,9 +87,10 @@ const Logo: React.FC<{ className?: string }> = ({ className }) => (
 interface FooterProps {
     onNavigateToPrivacy: () => void;
     onNavigateToTerms: () => void;
+    onNavigateToRefund: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateToTerms }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateToTerms, onNavigateToRefund }) => {
     return (
         <footer className="bg-dark-blue text-platinum/70 backdrop-blur-lg border-t border-platinum/20">
             <div className="container mx-auto px-4 md:px-8 py-12">
@@ -110,10 +111,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
 
                 {/* Bottom Bar */}
                 <div className="mt-12 pt-8 border-t border-platinum/20 text-center text-xs text-platinum/40">
-                    <div className="flex justify-center space-x-4 text-sm mb-4">
+                    <div className="flex justify-center flex-wrap items-center gap-x-2 sm:gap-x-4 text-sm mb-4">
                         <button onClick={onNavigateToPrivacy} className="text-platinum/60 hover:text-white transition-colors">Privacy Policy</button>
-                        <span className="text-platinum/40">|</span>
+                        <span className="text-platinum/40 hidden sm:inline">|</span>
                         <button onClick={onNavigateToTerms} className="text-platinum/60 hover:text-white transition-colors">Terms of Service</button>
+                        <span className="text-platinum/40 hidden sm:inline">|</span>
+                        <button onClick={onNavigateToRefund} className="text-platinum/60 hover:text-white transition-colors">Refund Policy</button>
                     </div>
                     <p className="font-medium text-platinum/60">&copy; {new Date().getFullYear()} Gilded Technologies Pvt Ltd. All rights reserved.</p>
                 </div>
