@@ -97,7 +97,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
                     {/* Centered Logo and Tagline */}
                     <Logo className="h-12 w-auto" />
                     <p className="mt-4 text-sm text-platinum/50 max-w-sm">
-                        Your wardrobe, intelligently styled.
+                        Every wardrobe hides a world. Open yours with Vestria Style.
                     </p>
 
                     {/* Social Links */}

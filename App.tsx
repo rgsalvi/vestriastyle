@@ -362,7 +362,7 @@ const App: React.FC = () => {
               <div className="space-y-12">
                 <div className="text-center">
                   <h2 className="text-3xl font-semibold text-platinum tracking-[0.2em] uppercase">Style Analysis</h2>
-                  <p className="mt-3 text-lg text-platinum/60">"Your wardrobe, intelligently styled."</p>
+                  <p className="mt-3 text-lg text-platinum/60">Every wardrobe hides a world. Open yours with Vestria Style.</p>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <div className="space-y-8">
