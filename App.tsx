@@ -19,6 +19,8 @@ interface HeaderProps {
   user: User | null;
   onSignOut: () => void;
   onSignIn: () => void;
+  showWardrobeButton: boolean;
+  onWardrobeClick: () => void;
 }
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
@@ -80,7 +82,7 @@ const Logo: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobeButton, onWardrobeClick }) => (
   <header className="relative p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
     <Logo className="h-24 w-auto" />
 
@@ -91,6 +93,15 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
     </div>
 
     <div className="flex items-center space-x-4">
+      {showWardrobeButton && (
+          <button
+            onClick={onWardrobeClick}
+            className="hidden md:flex items-center px-4 py-2 bg-dark-blue text-platinum/80 font-semibold rounded-full shadow-sm hover:bg-[#1F2937] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/40"
+          >
+            My Wardrobe
+            <span className="ml-2 bg-platinum/10 text-platinum text-[10px] font-bold px-2 py-0.5 rounded-full leading-none">10 ITEMS FREE</span>
+          </button>
+      )}
       {user ? (
         <div className="relative group">
           <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30" />
@@ -345,6 +356,11 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, [newItem, wardrobeItems, bodyType, managedWardrobe, styleProfile, user]);
+
+  const handleWardrobeClick = () => {
+    const element = document.getElementById('wardrobe-manager');
+    element?.scrollIntoView({ behavior: 'smooth' });
+  };
   
   const renderPage = () => {
     if (isAuthLoading) {
@@ -423,7 +439,13 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-dark-blue flex flex-col">
       <div className="flex-grow">
-        <Header user={user} onSignOut={handleSignOut} onSignIn={() => setShowLogin(true)} />
+        <Header 
+          user={user} 
+          onSignOut={handleSignOut} 
+          onSignIn={() => setShowLogin(true)}
+          showWardrobeButton={currentPage === 'main'}
+          onWardrobeClick={handleWardrobeClick} 
+        />
         {renderPage()}
       </div>
       <Footer 

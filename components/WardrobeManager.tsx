@@ -56,7 +56,7 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ user, items, o
     );
 
     return (
-        <section className="mt-12 py-16 bg-dark-blue border-t border-platinum/20">
+        <section id="wardrobe-manager" className="mt-12 py-16 bg-dark-blue border-t border-platinum/20 scroll-mt-28">
             <div className="container mx-auto px-4 md:px-8">
                 <div className="text-center mb-10">
                     <h2 className="text-3xl font-semibold text-platinum tracking-[0.2em] uppercase">My Wardrobe</h2>
