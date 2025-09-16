@@ -19,7 +19,7 @@ async function getModel(): Promise<faceDetection.FaceDetector> {
     try {
         await tf.setBackend('webgl');
         const detector = await faceDetection.createDetector(
-            faceDetection.SupportedModels.MediaPipeFaceDetector,
+            faceDetection.SupportedModels.BlazeFace,
             { runtime: 'tfjs', maxFaces: 10 }
         );
         model = detector;

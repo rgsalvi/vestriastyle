@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface LoginPageProps {
     onGoogleSignIn: (res: any) => void;
@@ -13,11 +13,20 @@ const BackArrowIcon: React.FC = () => (
 
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn, onBack }) => {
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID_WEB;
+        if (!clientId) {
+            console.error("Google Client ID is not configured. Please set VITE_GOOGLE_CLIENT_ID_WEB in your environment variables.");
+            setError("Authentication is not configured correctly. Please contact support.");
+            return;
+        }
+
         const initGoogleSignIn = () => {
             if (window.google) {
                 window.google.accounts.id.initialize({
-                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_WEB,
+                    client_id: clientId,
                     callback: onGoogleSignIn,
                 });
                 window.google.accounts.id.renderButton(
@@ -50,7 +59,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn, onBack }) 
                 </button>
                 <h2 className="text-3xl font-bold text-platinum tracking-tight mt-8">Create an Account</h2>
                 <p className="mt-2 text-lg text-platinum/60">Sign in to save your wardrobe and get hyper-personalized advice.</p>
-                <div id="google-signin-button" className="mt-8 flex justify-center"></div>
+                
+                {error ? (
+                    <div className="mt-8 text-red-400 bg-red-900/20 p-3 rounded-lg border border-red-400/30">
+                        {error}
+                    </div>
+                ) : (
+                    <div id="google-signin-button" className="mt-8 flex justify-center"></div>
+                )}
+
                 <p className="mt-8 text-xs text-platinum/40">
                     By signing in, you agree to our Terms of Service and Privacy Policy.
                 </p>
