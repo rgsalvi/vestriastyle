@@ -51,7 +51,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({ onBack }) => {
           <p>We reserve the right to modify these Terms at any time. We will notify you by making the revised Terms available through the Service. Your continued use of the Service after any such change constitutes your acceptance of the new Terms.</p>
 
           <h2>Contact Us</h2>
-          <p>If you have any questions about these Terms, please contact us at: contact@gildedtech.com</p>
+          <p>If you have any questions about these Terms, please contact us at: support@vestria.style</p>
         </div>
       </div>
     </main>

@@ -62,7 +62,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
           <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes.</p>
 
           <h2>Contact Us</h2>
-          <p>If you have questions or comments about this Privacy Policy, please contact us at: contact@gildedtech.com</p>
+          <p>If you have questions or comments about this Privacy Policy, please contact us at: support@vestria.style</p>
         </div>
       </div>
     </main>
