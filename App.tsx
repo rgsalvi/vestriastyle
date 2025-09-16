@@ -88,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
 
     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:block pointer-events-none">
         <p className="text-center text-sm font-mono text-platinum/60 tracking-widest uppercase">
-            Every wardrobe hides a world. Open yours with Vestria Style.
+            Every wardrobe hides a magical world. Open yours with Vestria Style.
         </p>
     </div>
 
@@ -405,7 +405,7 @@ const App: React.FC = () => {
                       <button
                         onClick={handleGetAdvice}
                         disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None'}
-                        className="w-full bg-platinum text-dark-blue font-bold py-4 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 hover:shadow-xl hover:shadow-platinum/20 disabled:bg-platinum/50 disabled:text-dark-blue/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
+                        className="w-full bg-platinum text-dark-blue font-bold py-4 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 hover:shadow-glow disabled:bg-platinum/50 disabled:text-dark-blue/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
                       >
                         {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
                       </button>

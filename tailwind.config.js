@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      boxShadow: {
+        'glow': '0 0 15px rgba(194, 190, 186, 0.3)',
+      },
       colors: {
         'dark-blue': '#192135',
         'platinum': '#C2BEBA',

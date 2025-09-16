@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { AiResponse, Outfit, AnalysisItem } from '../types';
 import { editOutfitImage } from '../services/geminiService';
 import { PremiumUpsellModal } from './PremiumUpsellModal';
@@ -43,8 +43,28 @@ const InitialState: React.FC = () => (
     </div>
 );
 
+const Stardust: React.FC = () => (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+            <div
+                key={i}
+                className="absolute bg-platinum/70 rounded-full"
+                style={{
+                    width: `${Math.random() * 2 + 1}px`,
+                    height: `${Math.random() * 2 + 1}px`,
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    animation: `stardust-float ${Math.random() * 3 + 4}s ease-in-out infinite`,
+                    animationDelay: `${Math.random() * 4}s`,
+                }}
+            />
+        ))}
+    </div>
+);
+
 const LoadingState: React.FC = () => (
-    <div className="text-center p-8">
+    <div className="text-center p-8 relative">
+        <Stardust />
         <VestriaSymbol className="mx-auto h-20 w-20 text-platinum animate-pulse-gentle" />
         <h3 className="mt-6 text-xl font-medium text-platinum">Curating Your Look...</h3>
         <p className="mt-2 text-base text-platinum/60">Our AI stylist is analyzing your items and visualizing the perfect outfits. This might take a moment.</p>
@@ -174,14 +194,14 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={handleRefineClick}
-                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum transition-colors duration-200 ring-1 ring-platinum/20"
+                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 hover:shadow-glow text-platinum transition-all duration-200 ring-1 ring-platinum/20"
                         >
                             <WandIcon />
                             Refine Outfit
                         </button>
                         <button
                             onClick={() => setIsUpsellModalOpen(true)}
-                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum hover:bg-platinum/90 text-dark-blue transition-colors duration-200"
+                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum hover:bg-platinum/90 hover:shadow-glow text-dark-blue transition-all duration-200"
                         >
                             <ChatIcon />
                             Chat with a Stylist
@@ -229,12 +249,25 @@ const UnsavedItems: React.FC<{ items: AnalysisItem[], onSave: () => void }> = ({
 
 export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems }) => {
   const [internalRecommendation, setInternalRecommendation] = useState<AiResponse | null>(null);
+  const [runRevealAnimation, setRunRevealAnimation] = useState(false);
+  const prevIsLoading = useRef(isLoading);
 
   useEffect(() => {
     if (recommendation) {
       setInternalRecommendation(recommendation);
     }
   }, [recommendation]);
+  
+  useEffect(() => {
+    if (prevIsLoading.current && !isLoading && internalRecommendation) {
+      setRunRevealAnimation(true);
+      const timer = setTimeout(() => {
+        setRunRevealAnimation(false);
+      }, 1000); // Match animation duration
+      return () => clearTimeout(timer);
+    }
+    prevIsLoading.current = isLoading;
+  }, [isLoading, internalRecommendation]);
   
   const handleImageUpdate = (index: number, newImage: string) => {
     if (!internalRecommendation || !internalRecommendation.generatedOutfitImages) return;
@@ -262,9 +295,11 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
       : "bg-slate-700 text-platinum/80 border-slate-600";
 
     const hasVisuals = generatedOutfitImages && generatedOutfitImages.length > 0;
+    
+    const revealClasses = runRevealAnimation ? 'animate-shimmer relative overflow-hidden' : '';
 
     return (
-      <div className="space-y-6">
+      <div className={`space-y-6 ${revealClasses}`}>
         <div className={`p-4 rounded-2xl border ${verdictClasses}`}>
           <p className="text-lg font-semibold text-center uppercase tracking-widest">{verdict}</p>
         </div>
