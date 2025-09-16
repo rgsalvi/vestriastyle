@@ -96,10 +96,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
       {showWardrobeButton && (
           <button
             onClick={onWardrobeClick}
-            className="hidden md:flex items-center px-4 py-2 bg-dark-blue text-platinum/80 font-semibold rounded-full shadow-sm hover:bg-[#1F2937] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/40"
+            className="hidden md:flex items-center px-4 py-2 bg-platinum/10 text-platinum font-semibold rounded-full shadow-sm hover:bg-platinum/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/30"
           >
             My Wardrobe
-            <span className="ml-2 bg-platinum/10 text-platinum text-[10px] font-bold px-2 py-0.5 rounded-full leading-none">10 ITEMS FREE</span>
           </button>
       )}
       {user ? (

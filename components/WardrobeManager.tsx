@@ -51,7 +51,7 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ user, items, o
                 <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
             <h3 className="mt-2 text-lg font-medium text-platinum">Sign in to save your wardrobe</h3>
-            <p className="mt-1 text-base text-platinum/60">Create an account to build your digital closet, sync across devices, and get hyper-personalized advice.</p>
+            <p className="mt-1 text-base text-platinum/60">Create an account to build your digital closet, sync across devices, and get hyper-personalized advice. 10 items free.</p>
         </div>
     );
 
