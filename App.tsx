@@ -17,9 +17,10 @@ import { jwtDecode } from 'jwt-decode';
 interface HeaderProps {
   user: User | null;
   onSignOut: () => void;
+  onSignIn: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => (
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
   <header className="text-center p-4 md:p-6 bg-white/60 backdrop-blur-lg sticky top-0 z-20 border-b border-slate-200 flex justify-between items-center">
     <div className="flex-1"></div>
     <div className="flex-1">
@@ -28,8 +29,8 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => (
       </h1>
       <p className="hidden md:block mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Make smarter wardrobe decisions.</p>
     </div>
-    <div className="flex-1 flex justify-end items-center space-x-4">
-      {user && (
+    <div className="flex-1 flex justify-end items-center space-x-4 pr-4">
+      {user ? (
         <div className="relative group">
           <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer" />
           <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
@@ -41,6 +42,13 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => (
             </button>
           </div>
         </div>
+      ) : (
+        <button
+          onClick={onSignIn}
+          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        >
+          Sign In
+        </button>
       )}
     </div>
   </header>
@@ -82,6 +90,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Auth and User Data Logic
@@ -112,6 +121,7 @@ const App: React.FC = () => {
     };
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
     setUser(userData);
+    setShowLogin(false);
 
     const userProfile = localStorage.getItem(`${STYLE_PROFILE_KEY}-${userData.id}`);
     if (!userProfile) {
@@ -125,9 +135,9 @@ const App: React.FC = () => {
     setUser(null);
     setStyleProfile(null);
     setManagedWardrobe([]);
+    setBodyType('None');
     localStorage.removeItem(USER_STORAGE_KEY);
-    localStorage.removeItem(WARDROBE_STORAGE_KEY);
-    // Note: We keep style profiles in case the user logs back in
+    // Note: We keep style profiles and wardrobe in local storage in case the user logs back in
     if (window.google) {
         // Fix: Use window.google to access the globally declared google object.
         window.google.accounts.id.disableAutoSelect();
@@ -152,6 +162,8 @@ const App: React.FC = () => {
       } catch (e) {
         console.error("Failed to load wardrobe", e);
       }
+    } else {
+        setManagedWardrobe([]);
     }
   }, [user]);
 
@@ -185,6 +197,10 @@ const App: React.FC = () => {
 
 
   const handleAddItemsToWardrobe = async (items: WardrobeItem[]) => {
+    if (!user) {
+        setShowLogin(true);
+        return;
+    }
     const newManagedItemsPromises = items.map(async (item, index) => {
       const dataUrl = await fileToDataUrl(item.file);
       return {
@@ -221,6 +237,10 @@ const App: React.FC = () => {
   };
 
   const handleSaveUnsavedItems = () => {
+    if (!user) {
+        setShowLogin(true);
+        return;
+    }
     const newManagedItems: PersistentWardrobeItem[] = unsavedItemsFromAnalysis.map((item, index) => ({
       id: `item-${Date.now()}-${index}`,
       dataUrl: item.dataUrl,
@@ -239,7 +259,6 @@ const App: React.FC = () => {
     if (!newItem) { setError('Please upload a new item to analyze.'); return; }
     if (wardrobeItems.length === 0) { setError('Please upload or select at least one item from your existing wardrobe.'); return; }
     if (bodyType === 'None') { setError('Please select your body type for personalized advice.'); return; }
-    if (!styleProfile) { setError('Please complete your style profile.'); return; }
 
     setIsLoading(true);
     setError(null);
@@ -247,13 +266,16 @@ const App: React.FC = () => {
     setUnsavedItemsFromAnalysis([]);
 
     try {
-      const response = await getStyleAdvice(newItem, wardrobeItems, styleProfile);
+      const currentProfile = user ? styleProfile : null;
+      const response = await getStyleAdvice(newItem, wardrobeItems, bodyType, currentProfile);
       setRecommendation(response);
 
-      const allAnalysisItems = [newItem, ...wardrobeItems];
-      const savedDataUrls = new Set(managedWardrobe.map(item => item.dataUrl));
-      const unsaved = allAnalysisItems.filter(item => !savedDataUrls.has(item.dataUrl));
-      setUnsavedItemsFromAnalysis(unsaved);
+      if (user) {
+        const allAnalysisItems = [newItem, ...wardrobeItems];
+        const savedDataUrls = new Set(managedWardrobe.map(item => item.dataUrl));
+        const unsaved = allAnalysisItems.filter(item => !savedDataUrls.has(item.dataUrl));
+        setUnsavedItemsFromAnalysis(unsaved);
+      }
 
     } catch (err) {
       console.error(err);
@@ -261,16 +283,16 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newItem, wardrobeItems, bodyType, managedWardrobe, styleProfile]);
+  }, [newItem, wardrobeItems, bodyType, managedWardrobe, styleProfile, user]);
   
   const renderPage = () => {
     if (isAuthLoading) {
         return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div></div>;
     }
-    if (!user) {
-        return <LoginPage onGoogleSignIn={handleGoogleSignIn} />;
+    if (showLogin) {
+        return <LoginPage onGoogleSignIn={handleGoogleSignIn} onBack={() => setShowLogin(false)} />;
     }
-    if (showOnboarding) {
+    if (user && showOnboarding) {
         return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
     }
 
@@ -298,6 +320,7 @@ const App: React.FC = () => {
                       multiple={false}
                     />
                     <WardrobeInput 
+                      user={user}
                       managedWardrobe={managedWardrobe}
                       onAnalysisItemsChange={setWardrobeItems}
                       maxFiles={5}
@@ -325,7 +348,8 @@ const App: React.FC = () => {
                 </div>
               </div>
             </main>
-            <WardrobeManager 
+            <WardrobeManager
+              user={user}
               items={managedWardrobe}
               onAddItems={handleAddItemsToWardrobe}
               onSaveItem={handleSaveWardrobeItem}
@@ -340,7 +364,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <div className="flex-grow">
-        <Header user={user} onSignOut={handleSignOut} />
+        <Header user={user} onSignOut={handleSignOut} onSignIn={() => setShowLogin(true)} />
         {renderPage()}
       </div>
       <Footer 

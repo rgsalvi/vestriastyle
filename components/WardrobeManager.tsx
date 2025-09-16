@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
 import { EditItemModal } from './EditItemModal';
-import type { PersistentWardrobeItem, WardrobeItem } from '../types';
+import type { PersistentWardrobeItem, WardrobeItem, User } from '../types';
 
 interface WardrobeManagerProps {
+  user: User | null;
   items: PersistentWardrobeItem[];
   onAddItems: (items: WardrobeItem[]) => void;
   onSaveItem: (itemData: Omit<PersistentWardrobeItem, 'id'>, existingId?: string) => void;
@@ -29,10 +30,9 @@ const PlusIcon: React.FC = () => (
 );
 
 
-export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ items, onAddItems, onSaveItem, onDeleteItem }) => {
+export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ user, items, onAddItems, onSaveItem, onDeleteItem }) => {
     const [editingItem, setEditingItem] = useState<PersistentWardrobeItem | null>(null);
     const [isCreating, setIsCreating] = useState(false);
-
 
     const handleSave = (itemData: Omit<PersistentWardrobeItem, 'id'>, existingId?: string) => {
         onSaveItem(itemData, existingId);
@@ -44,6 +44,16 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ items, onAddIt
         setEditingItem(null);
         setIsCreating(false);
     }
+    
+    const GuestCTA: React.FC = () => (
+        <div className="mt-10 text-center py-10 px-6 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+            <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-slate-900">Sign in to save your wardrobe</h3>
+            <p className="mt-1 text-base text-slate-500">Create an account to build your digital closet, sync across devices, and get hyper-personalized advice.</p>
+        </div>
+    );
 
     return (
         <section className="mt-12 py-16 bg-white border-t border-slate-200">
@@ -53,29 +63,32 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ items, onAddIt
                     <p className="mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Manage your digital closet. Add, edit, and remove items.</p>
                 </div>
 
-                <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ImageUploader
-                        title="Add From Photos"
-                        description="Upload images of your clothes."
-                        onFilesSelect={onAddItems}
-                        multiple={true}
-                    />
-                    <div className="bg-white/60 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/50 flex flex-col justify-between">
-                         <div>
-                            <h3 className="text-xl font-semibold text-slate-900">Add From Description</h3>
-                            <p className="text-sm text-slate-500 mt-1">Don't have a photo? Generate an image with AI.</p>
-                         </div>
-                         <button
-                            onClick={() => setIsCreating(true)}
-                            className="mt-4 w-full flex items-center justify-center bg-slate-100 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-200/80 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ring-1 ring-slate-200"
-                        >
-                            <PlusIcon />
-                            Add Item with AI
-                        </button>
+                {user && (
+                    <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <ImageUploader
+                            title="Add From Photos"
+                            description="Upload images of your clothes."
+                            onFilesSelect={onAddItems}
+                            multiple={true}
+                        />
+                        <div className="bg-white/60 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/50 flex flex-col justify-between">
+                             <div>
+                                <h3 className="text-xl font-semibold text-slate-900">Add From Description</h3>
+                                <p className="text-sm text-slate-500 mt-1">Don't have a photo? Generate an image with AI.</p>
+                             </div>
+                             <button
+                                onClick={() => setIsCreating(true)}
+                                className="mt-4 w-full flex items-center justify-center bg-slate-100 text-slate-700 font-semibold py-3 px-4 rounded-xl hover:bg-slate-200/80 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ring-1 ring-slate-200"
+                            >
+                                <PlusIcon />
+                                Add Item with AI
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {items.length > 0 ? (
+
+                {!user ? <GuestCTA /> : items.length > 0 ? (
                     <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                         {items.map(item => (
                             <div key={item.id} className="relative group aspect-square">

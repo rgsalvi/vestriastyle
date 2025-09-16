@@ -2,9 +2,17 @@ import React, { useEffect } from 'react';
 
 interface LoginPageProps {
     onGoogleSignIn: (res: any) => void;
+    onBack: () => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn }) => {
+const BackArrowIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+    </svg>
+);
+
+
+export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn, onBack }) => {
     useEffect(() => {
         const initGoogleSignIn = () => {
             if (window.google) {
@@ -16,7 +24,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn }) => {
                     document.getElementById('google-signin-button'),
                     { theme: 'outline', size: 'large', type: 'standard', text: 'signin_with' }
                 );
-                window.google.accounts.id.prompt();
+                // We remove the automatic prompt to give users control
+                // window.google.accounts.id.prompt(); 
             }
         };
 
@@ -29,10 +38,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn }) => {
     }, [onGoogleSignIn]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] bg-slate-100 p-4 animate-fade-in">
-            <div className="w-full max-w-md text-center bg-white/60 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-white/50">
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Welcome Back</h2>
-                <p className="mt-2 text-lg text-slate-500">Sign in to access your personal wardrobe and get style advice.</p>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4 animate-fade-in">
+            <div className="w-full max-w-md text-center bg-white/60 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-white/50 relative">
+                <button
+                  onClick={onBack}
+                  className="absolute top-4 left-4 inline-flex items-center text-sm font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+                  aria-label="Back to main application"
+                >
+                  <BackArrowIcon />
+                  Back
+                </button>
+                <h2 className="text-3xl font-bold text-slate-900 tracking-tight mt-8">Create an Account</h2>
+                <p className="mt-2 text-lg text-slate-500">Sign in to save your wardrobe and get hyper-personalized advice.</p>
                 <div id="google-signin-button" className="mt-8 flex justify-center"></div>
                 <p className="mt-8 text-xs text-slate-400">
                     By signing in, you agree to our Terms of Service and Privacy Policy.

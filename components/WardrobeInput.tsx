@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ImageUploader } from './ImageUploader';
-import type { PersistentWardrobeItem, WardrobeItem, AnalysisItem } from '../types';
+import type { PersistentWardrobeItem, WardrobeItem, AnalysisItem, User } from '../types';
 
 interface WardrobeInputProps {
+    user: User | null;
     managedWardrobe: PersistentWardrobeItem[];
     onAnalysisItemsChange: (items: AnalysisItem[]) => void;
     maxFiles: number;
@@ -26,10 +27,11 @@ const CheckIcon: React.FC = () => (
 );
 
 
-export const WardrobeInput: React.FC<WardrobeInputProps> = ({ managedWardrobe, onAnalysisItemsChange, maxFiles }) => {
+export const WardrobeInput: React.FC<WardrobeInputProps> = ({ user, managedWardrobe, onAnalysisItemsChange, maxFiles }) => {
     const [activeTab, setActiveTab] = useState<Tab>('upload');
     const [uploadedItems, setUploadedItems] = useState<WardrobeItem[]>([]);
     const [selectedWardrobeIds, setSelectedWardrobeIds] = useState<Set<string>>(new Set());
+    const isGuest = !user;
 
     useEffect(() => {
         const convertAndCombine = async () => {
@@ -90,11 +92,11 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ managedWardrobe, o
                     </button>
                     <button
                         onClick={() => setActiveTab('select')}
-                        className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'select' ? 'border-purple-500 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
-                        disabled={managedWardrobe.length === 0}
+                        className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'select' ? 'border-purple-500 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 disabled:text-slate-400 disabled:hover:border-transparent'}`}
+                        disabled={isGuest}
                     >
                         Select from My Wardrobe
-                         {managedWardrobe.length === 0 && <span className="text-xs ml-1">(Empty)</span>}
+                        {isGuest && <span className="text-xs ml-1">(Sign in to use)</span>}
                     </button>
                 </nav>
             </div>
@@ -112,28 +114,32 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ managedWardrobe, o
                  {activeTab === 'select' && (
                     <div>
                         <p className="text-sm text-slate-500 mb-4">You can select {remainingSlots} more item{remainingSlots !== 1 && 's'}.</p>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                             {managedWardrobe.map(item => {
-                                const isSelected = selectedWardrobeIds.has(item.id);
-                                return (
-                                    <button 
-                                        key={item.id}
-                                        onClick={() => toggleWardrobeSelection(item.id)}
-                                        className="relative aspect-square focus:outline-none group rounded-2xl focus:ring-4 focus:ring-purple-500/50"
-                                        aria-pressed={isSelected}
-                                    >
-                                        <img src={item.dataUrl} alt={item.description || 'wardrobe item'} className={`h-full w-full object-cover rounded-2xl shadow-md transition-all duration-200 ${isSelected ? 'ring-4 ring-purple-500' : 'ring-1 ring-slate-200 group-hover:ring-2 group-hover:ring-purple-300'}`} />
-                                        {isSelected && (
-                                            <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
-                                                <div className="bg-gradient-to-r from-purple-600 to-blue-500 rounded-full p-1.5 shadow-lg">
-                                                    <CheckIcon />
+                        {managedWardrobe.length > 0 ? (
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                                {managedWardrobe.map(item => {
+                                    const isSelected = selectedWardrobeIds.has(item.id);
+                                    return (
+                                        <button 
+                                            key={item.id}
+                                            onClick={() => toggleWardrobeSelection(item.id)}
+                                            className="relative aspect-square focus:outline-none group rounded-2xl focus:ring-4 focus:ring-purple-500/50"
+                                            aria-pressed={isSelected}
+                                        >
+                                            <img src={item.dataUrl} alt={item.description || 'wardrobe item'} className={`h-full w-full object-cover rounded-2xl shadow-md transition-all duration-200 ${isSelected ? 'ring-4 ring-purple-500' : 'ring-1 ring-slate-200 group-hover:ring-2 group-hover:ring-purple-300'}`} />
+                                            {isSelected && (
+                                                <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
+                                                    <div className="bg-gradient-to-r from-purple-600 to-blue-500 rounded-full p-1.5 shadow-lg">
+                                                        <CheckIcon />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </button>
-                                );
-                             })}
-                        </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-center text-slate-500 py-8">Your wardrobe is empty. Add items in the "My Wardrobe" section below.</p>
+                        )}
                     </div>
                 )}
             </div>
