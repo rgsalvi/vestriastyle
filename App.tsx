@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
   <header className="text-center p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
     <div className="flex-1"></div>
     <div className="flex-1 flex flex-col items-center">
-      <Logo className="h-12 w-auto" />
+      <Logo className="h-16 w-auto" />
     </div>
     <div className="flex-1 flex justify-end items-center space-x-4 pr-4">
       {user ? (
