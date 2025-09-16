@@ -105,7 +105,7 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ user, managedWardr
                 {activeTab === 'upload' && (
                      <ImageUploader
                         title=""
-                        description={`You can upload up to ${maxFiles - selectedWardrobeIds.size} more photos.`}
+                        description={`For best results, use clear photos of just the clothing. You can upload up to ${maxFiles - selectedWardrobeIds.size} more photos.`}
                         onFilesSelect={setUploadedItems}
                         multiple={true}
                         maxFiles={maxFiles - selectedWardrobeIds.size}

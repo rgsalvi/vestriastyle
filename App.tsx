@@ -368,7 +368,7 @@ const App: React.FC = () => {
                   <div className="space-y-8">
                     <ImageUploader
                       title="1. Upload New Item"
-                      description="Select a single image of an item you're thinking of buying."
+                      description="Select a single image of an item you're thinking of buying. For best results, use clear photos of just the clothing."
                       onFilesSelect={handleNewItemSelect}
                       multiple={false}
                     />

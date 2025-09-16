@@ -25,7 +25,7 @@ const TrashIcon: React.FC = () => (
 
 const PlusIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110 2h5V4a1 1 0 011-1z" clipRule="evenodd" />
     </svg>
 );
 
@@ -67,7 +67,7 @@ export const WardrobeManager: React.FC<WardrobeManagerProps> = ({ user, items, o
                     <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                         <ImageUploader
                             title="Add From Photos"
-                            description="Upload images of your clothes."
+                            description="Upload images of your clothes. For best results, use photos of just the item."
                             onFilesSelect={onAddItems}
                             multiple={true}
                         />

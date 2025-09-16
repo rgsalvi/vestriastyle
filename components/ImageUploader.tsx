@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import type { WardrobeItem } from '../types';
 import { anonymizeImage } from '../utils/imageProcessor';
+import { PrivacyExplanationModal } from './PrivacyExplanationModal';
 
 interface ImageUploaderProps {
   title: string;
@@ -26,6 +27,7 @@ const XIcon: React.FC = () => (
 export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description, onFilesSelect, multiple, maxFiles = 5 }) => {
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
   useEffect(() => {
     onFilesSelect(items);
@@ -89,49 +91,61 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description
 
 
   return (
-    <div className="bg-dark-blue/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-platinum/20">
-      {title && <h3 className="text-xl font-semibold text-platinum uppercase tracking-wider">{title}</h3>}
-      {description && <p className="text-sm text-platinum/60 mt-1">{description}</p>}
-      
-      <div className="mt-4">
-        <label htmlFor={fileInputId} className={`relative rounded-xl font-medium text-platinum transition-colors duration-200 ${isProcessing ? 'cursor-wait opacity-70' : 'cursor-pointer bg-black/20 hover:text-white focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-dark-blue focus-within:ring-platinum'}`}>
-          <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-platinum/30 border-dashed rounded-xl hover:border-platinum/50">
-             {isProcessing ? (
+    <>
+      <div className="bg-dark-blue/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-platinum/20">
+        {title && <h3 className="text-xl font-semibold text-platinum uppercase tracking-wider">{title}</h3>}
+        {description && <p className="text-sm text-platinum/60 mt-1">{description}</p>}
+        
+        <div className="mt-4">
+          <label htmlFor={fileInputId} className={`relative rounded-xl font-medium text-platinum transition-colors duration-200 ${isProcessing ? 'cursor-wait opacity-70' : 'cursor-pointer bg-black/20 hover:text-white focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-dark-blue focus-within:ring-platinum'}`}>
+            <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-platinum/30 border-dashed rounded-xl hover:border-platinum/50">
+               {isProcessing ? (
+                <div className="space-y-1 text-center">
+                   <svg className="mx-auto h-12 w-12 text-platinum/40 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                   <p className="text-sm text-platinum/80">Processing for privacy...</p>
+                   <div className="text-xs text-platinum/50">
+                        <span>Faces will be automatically blurred. </span>
+                        <button 
+                            type="button" 
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsPrivacyModalOpen(true); }} 
+                            className="underline hover:text-platinum/80 focus:outline-none focus:ring-2 focus:ring-platinum rounded"
+                        >
+                            Why?
+                        </button>
+                   </div>
+                </div>
+              ) : (
               <div className="space-y-1 text-center">
-                 <svg className="mx-auto h-12 w-12 text-platinum/40 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                 <p className="text-sm text-platinum/80">Processing for privacy...</p>
-                 <p className="text-xs text-platinum/50">Faces will be automatically blurred.</p>
+                <UploadIcon/>
+                <div className="flex text-sm text-platinum/80">
+                  <span className="p-1">Upload files</span>
+                  <input id={fileInputId} name={fileInputId} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" multiple={multiple} disabled={isProcessing} />
+                </div>
+                <p className="text-xs text-platinum/50">PNG, JPG, up to 10MB</p>
               </div>
-            ) : (
-            <div className="space-y-1 text-center">
-              <UploadIcon/>
-              <div className="flex text-sm text-platinum/80">
-                <span className="p-1">Upload files</span>
-                <input id={fileInputId} name={fileInputId} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" multiple={multiple} disabled={isProcessing} />
-              </div>
-              <p className="text-xs text-platinum/50">PNG, JPG, up to 10MB</p>
+              )}
             </div>
-            )}
-          </div>
-        </label>
-      </div>
-
-      {items.length > 0 && (
-        <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-          {items.map((item, index) => (
-            <div key={item.preview} className="relative aspect-square group">
-              <img src={item.preview} alt={`preview ${index}`} className="h-full w-full object-cover rounded-xl shadow-md" />
-                <button
-                  onClick={() => removeItem(index)}
-                  className="absolute top-1.5 right-1.5 bg-dark-blue/70 text-platinum rounded-full p-1 backdrop-blur-sm hover:bg-dark-blue hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
-                  aria-label="Remove item"
-                >
-                  <XIcon />
-                </button>
-            </div>
-          ))}
+          </label>
         </div>
-      )}
-    </div>
+
+        {items.length > 0 && (
+          <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+            {items.map((item, index) => (
+              <div key={item.preview} className="relative aspect-square group">
+                <img src={item.preview} alt={`preview ${index}`} className="h-full w-full object-cover rounded-xl shadow-md" />
+                  <button
+                    onClick={() => removeItem(index)}
+                    className="absolute top-1.5 right-1.5 bg-dark-blue/70 text-platinum rounded-full p-1 backdrop-blur-sm hover:bg-dark-blue hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                    aria-label="Remove item"
+                  >
+                    <XIcon />
+                  </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {isPrivacyModalOpen && <PrivacyExplanationModal onClose={() => setIsPrivacyModalOpen(false)} />}
+    </>
   );
 };

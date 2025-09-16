@@ -52,6 +52,14 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
             <li><strong>By Law or to Protect Rights:</strong> If we believe the release of information about you is necessary to respond to legal process, to investigate or remedy potential violations of our policies, or to protect the rights, property, and safety of others.</li>
           </ul>
 
+          <h2>Face Anonymization for Your Privacy</h2>
+          <p>We take proactive steps to protect your identity. For any image you upload to the Service for analysis, we automatically detect and blur any faces present.</p>
+          <ul>
+            <li><strong>Client-Side Processing:</strong> This anonymization process happens entirely within your web browser on your own device.</li>
+            <li><strong>Data Minimization:</strong> The original, un-blurred image is <strong>never</strong> uploaded to our servers or sent to any third-party service. Only the version with the face blurred is used for the style analysis.</li>
+          </ul>
+          <p>This "privacy by design" approach ensures that we only process the data necessary to provide our service—the clothing items—while keeping your personal identity secure.</p>
+          
           <h2>Data Security</h2>
           <p>We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.</p>
 

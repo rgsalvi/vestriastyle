@@ -1,6 +1,6 @@
-import * as faceDetection from '@tensorflow-models/face-detection';
-import '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-backend-webgl';
+import * as faceDetection from '@tensorflow-models/face-detection';
 
 let model: faceDetection.FaceDetector | null = null;
 let modelLoadingPromise: Promise<faceDetection.FaceDetector> | null = null;
