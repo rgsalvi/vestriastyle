@@ -9,17 +9,34 @@ interface RecommendationDisplayProps {
   onSaveUnsavedItems: () => void;
 }
 
-const Spinner: React.FC = () => (
-  <div className="flex justify-center items-center h-full">
-    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-platinum"></div>
-  </div>
+const VestriaSymbol: React.FC<{ className?: string }> = ({ className }) => (
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 100 100"
+        className={className}
+        aria-hidden="true"
+    >
+        <g fill="currentColor" stroke="currentColor" strokeWidth="8" strokeLinecap="round">
+            <circle cx="20" cy="20" r="8" stroke="none"/>
+            <circle cx="50" cy="20" r="8" stroke="none"/>
+            <circle cx="80" cy="20" r="8" stroke="none"/>
+            <circle cx="20" cy="50" r="8" stroke="none"/>
+            <circle cx="50" cy="50" r="8" stroke="none"/>
+            <circle cx="80" cy="50" r="8" stroke="none"/>
+            <circle cx="20" cy="80" r="8" stroke="none"/>
+            <circle cx="50" cy="80" r="8" stroke="none"/>
+            <circle cx="80" cy="80" r="8" stroke="none"/>
+            <line x1="80" y1="20" x2="20" y2="80"/>
+            <line x1="20" y1="20" x2="42" y2="42"/>
+            <line x1="58" y1="58" x2="80" y2="80"/>
+        </g>
+    </svg>
 );
+
 
 const InitialState: React.FC = () => (
     <div className="text-center p-8">
-        <svg className="mx-auto h-20 w-20 text-platinum/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-        </svg>
+        <VestriaSymbol className="mx-auto h-20 w-20 text-platinum/20" />
         <h3 className="mt-4 text-xl font-medium text-platinum">Your Personal Stylist Awaits</h3>
         <p className="mt-2 text-base text-platinum/60">Upload your items and let our AI provide expert style advice and create perfect outfits for you.</p>
     </div>
@@ -27,7 +44,7 @@ const InitialState: React.FC = () => (
 
 const LoadingState: React.FC = () => (
     <div className="text-center p-8">
-        <Spinner/>
+        <VestriaSymbol className="mx-auto h-20 w-20 text-platinum animate-pulse-gentle" />
         <h3 className="mt-6 text-xl font-medium text-platinum">Curating Your Look...</h3>
         <p className="mt-2 text-base text-platinum/60">Our AI stylist is analyzing your items and visualizing the perfect outfits. This might take a moment.</p>
     </div>
