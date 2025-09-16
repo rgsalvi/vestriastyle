@@ -68,10 +68,10 @@ export const BodyTypeGuideModal: React.FC<BodyTypeGuideModalProps> = ({ onClose,
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
             <div className="fixed inset-0" onClick={onClose} aria-hidden="true"></div>
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl z-10 transform transition-all opacity-100 scale-100">
-                <div className="p-6 text-center border-b border-slate-200">
-                    <h3 className="text-2xl font-semibold text-slate-900">What's My Body Type?</h3>
-                    <p className="mt-2 text-slate-500 max-w-lg mx-auto">
+            <div className="bg-[#1F2937] rounded-2xl shadow-xl w-full max-w-2xl z-10 transform transition-all opacity-100 scale-100 border border-platinum/20">
+                <div className="p-6 text-center border-b border-platinum/20">
+                    <h3 className="text-2xl font-semibold text-platinum">What's My Body Type?</h3>
+                    <p className="mt-2 text-platinum/60 max-w-lg mx-auto">
                         Your body type is about your proportions, not your size. Find the description that sounds most like you.
                     </p>
                 </div>
@@ -80,12 +80,12 @@ export const BodyTypeGuideModal: React.FC<BodyTypeGuideModalProps> = ({ onClose,
                         const Icon = icons[name];
                         return (
                             <div key={name} className="flex items-start sm:items-center space-x-4">
-                                <div className="flex-shrink-0 w-16 h-16 p-2 rounded-2xl bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center text-slate-500">
+                                <div className="flex-shrink-0 w-16 h-16 p-2 rounded-2xl bg-dark-blue ring-1 ring-platinum/20 flex items-center justify-center text-platinum/70">
                                     <Icon />
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-lg text-slate-800">{name}</h4>
-                                    <ul className="mt-1 list-disc list-inside text-slate-600 space-y-0.5">
+                                    <h4 className="font-semibold text-lg text-platinum">{name}</h4>
+                                    <ul className="mt-1 list-disc list-inside text-platinum/70 space-y-0.5">
                                         {characteristics.map((char, index) => (
                                             <li key={index} className="text-sm">{char}</li>
                                         ))}
@@ -95,11 +95,11 @@ export const BodyTypeGuideModal: React.FC<BodyTypeGuideModalProps> = ({ onClose,
                         )
                     })}
                 </div>
-                <div className="bg-slate-50 px-6 py-4 flex justify-center rounded-b-2xl border-t border-slate-200">
+                <div className="bg-dark-blue px-6 py-4 flex justify-center rounded-b-2xl border-t border-platinum/20">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-500 border border-transparent rounded-full shadow-sm text-sm font-medium text-white hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-transform"
+                        className="px-6 py-2 bg-platinum text-dark-blue border border-transparent rounded-full shadow-sm text-sm font-medium hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum transition-transform"
                     >
                         Got It!
                     </button>

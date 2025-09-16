@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 .prose h1 {
-    @apply text-3xl font-bold text-slate-900 tracking-tight mb-4;
+    @apply text-3xl font-bold text-platinum tracking-tight mb-4;
 }
 
 .prose h2 {
-    @apply text-2xl font-semibold text-slate-800 tracking-tight mt-8 mb-4 border-b border-slate-200 pb-2;
+    @apply text-2xl font-semibold text-platinum/90 tracking-tight mt-8 mb-4 border-b border-platinum/20 pb-2;
 }
 
 .prose p {
-    @apply text-base text-slate-700 leading-relaxed mb-4;
+    @apply text-base text-platinum/80 leading-relaxed mb-4;
 }
 
 .prose ul {
@@ -19,15 +19,15 @@
 }
 
 .prose li {
-    @apply text-slate-700;
+    @apply text-platinum/80;
 }
 
 .prose a {
-    @apply text-purple-600 underline hover:text-purple-800;
+    @apply text-platinum underline hover:text-white;
 }
 
 .prose strong {
-    @apply font-semibold text-slate-800;
+    @apply font-semibold text-platinum;
 }
 
 @keyframes fadeIn {

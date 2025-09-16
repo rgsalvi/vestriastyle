@@ -28,13 +28,13 @@ export const BodyTypeSelector: React.FC<BodyTypeSelectorProps> = ({ selectedBody
 
   return (
     <>
-      <div className="bg-white/60 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/50">
+      <div className="bg-dark-blue/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-platinum/20">
         <div>
-          <h3 className="text-xl font-semibold text-slate-900">3. Select Your Body Type</h3>
-          <p className="text-sm text-slate-500 mt-1">This helps us give you more personalized advice.
+          <h3 className="text-xl font-semibold text-platinum uppercase tracking-wider">3. Select Your Body Type</h3>
+          <p className="text-sm text-platinum/60 mt-1">This helps us give you more personalized advice.
             <button
               onClick={() => setIsGuideOpen(true)}
-              className="ml-2 text-purple-600 hover:text-purple-800 font-medium text-sm underline focus:outline-none focus:ring-2 focus:ring-purple-500 rounded"
+              className="ml-2 text-platinum/80 hover:text-white font-medium text-sm underline focus:outline-none focus:ring-2 focus:ring-platinum rounded"
             >
               Help me choose
             </button>
@@ -49,18 +49,18 @@ export const BodyTypeSelector: React.FC<BodyTypeSelectorProps> = ({ selectedBody
                   <button
                       key={name}
                       onClick={() => onBodyTypeChange(name)}
-                      className={`flex flex-col items-center justify-start text-center p-3 rounded-2xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-purple-500/50 ${
+                      className={`flex flex-col items-center justify-start text-center p-3 rounded-2xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-platinum/50 ${
                         isSelected 
-                          ? 'bg-purple-100 ring-2 ring-purple-500' 
-                          : 'bg-slate-50/50 ring-1 ring-slate-200 hover:ring-purple-300'
+                          ? 'bg-platinum/10 ring-2 ring-platinum' 
+                          : 'bg-black/20 ring-1 ring-platinum/20 hover:ring-platinum/40'
                       }`}
                       aria-pressed={isSelected}
                   >
-                      <div className="w-12 h-12 text-slate-500">
+                      <div className={`w-12 h-12 transition-colors ${isSelected ? 'text-platinum' : 'text-platinum/60'}`}>
                           <Icon />
                       </div>
-                      <span className={`mt-2 block text-sm font-semibold ${isSelected ? 'text-purple-700' : 'text-slate-800'}`}>{name}</span>
-                      <span className={`mt-1 hidden sm:block text-xs ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>{description}</span>
+                      <span className={`mt-2 block text-sm font-semibold transition-colors ${isSelected ? 'text-platinum' : 'text-platinum/80'}`}>{name}</span>
+                      <span className={`mt-1 hidden sm:block text-xs transition-colors ${isSelected ? 'text-platinum/90' : 'text-platinum/60'}`}>{description}</span>
                   </button>
               )
           })}

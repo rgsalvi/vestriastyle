@@ -20,24 +20,51 @@ interface HeaderProps {
   onSignIn: () => void;
 }
 
+const Logo: React.FC<{ className?: string }> = ({ className }) => (
+    <div className={`flex items-center ${className}`}>
+        <svg width="32" height="32" viewBox="0 0 100 100" className="mr-4 text-platinum" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <rect id="rect" x="10" y="10" width="80" height="80" />
+                <clipPath id="clip">
+                    <use xlinkHref="#rect"/>
+                </clipPath>
+            </defs>
+            <g clipPath="url(#clip)">
+                <circle cx="20" cy="20" r="8"/>
+                <circle cx="50" cy="20" r="8"/>
+                <circle cx="80" cy="20" r="8"/>
+                <circle cx="20" cy="50" r="8"/>
+                <circle cx="50" cy="50" r="8"/>
+                <circle cx="80" cy="50" r="8"/>
+                <circle cx="20" cy="80" r="8"/>
+                <circle cx="50" cy="80" r="8"/>
+                <circle cx="80" cy="80" r="8"/>
+                <line x1="10" y1="50" x2="90" y2="50" strokeWidth="10" stroke="#C2BEBA" transform="rotate(45, 50, 50)" />
+                <line x1="50" y1="10" x2="50" y2="90" strokeWidth="10" stroke="#C2BEBA" transform="rotate(45, 50, 50)" />
+            </g>
+        </svg>
+        <div className="flex flex-col justify-center">
+            <span className="text-2xl font-semibold tracking-[0.2em] text-platinum leading-none">VESTRIA</span>
+            <span className="block text-xs font-mono tracking-[0.35em] text-platinum/70 mt-1">STYLE</span>
+        </div>
+    </div>
+);
+
 const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
-  <header className="text-center p-4 md:p-6 bg-white/60 backdrop-blur-lg sticky top-0 z-20 border-b border-slate-200 flex justify-between items-center">
+  <header className="text-center p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
     <div className="flex-1"></div>
-    <div className="flex-1">
-      <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
-        Vestria Style
-      </h1>
-      <p className="hidden md:block mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Make smarter wardrobe decisions.</p>
+    <div className="flex-1 flex flex-col items-center">
+      <Logo />
     </div>
     <div className="flex-1 flex justify-end items-center space-x-4 pr-4">
       {user ? (
         <div className="relative group">
-          <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer" />
-          <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
-            <p className="font-semibold text-sm px-3 py-1 text-slate-800 truncate">{user.name}</p>
-            <p className="text-xs px-3 text-slate-500 truncate mb-1">{user.email}</p>
-            <div className="h-px bg-slate-200 my-1"></div>
-            <button onClick={onSignOut} className="w-full text-left text-sm text-red-600 px-3 py-1 hover:bg-slate-100 rounded-md">
+          <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30" />
+          <div className="absolute top-full right-0 mt-2 w-48 bg-[#1F2937] rounded-xl shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto border border-platinum/20">
+            <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
+            <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
+            <div className="h-px bg-platinum/20 my-1"></div>
+            <button onClick={onSignOut} className="w-full text-left text-sm text-red-400 px-3 py-1 hover:bg-platinum/10 rounded-md">
               Sign Out
             </button>
           </div>
@@ -45,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
       ) : (
         <button
           onClick={onSignIn}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+          className="px-5 py-2 bg-dark-blue text-platinum font-semibold rounded-full shadow-md hover:bg-[#1F2937] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/50"
         >
           Sign In
         </button>
@@ -287,7 +314,7 @@ const App: React.FC = () => {
   
   const renderPage = () => {
     if (isAuthLoading) {
-        return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div></div>;
+        return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-platinum"></div></div>;
     }
     if (showLogin) {
         return <LoginPage onGoogleSignIn={handleGoogleSignIn} onBack={() => setShowLogin(false)} />;
@@ -308,8 +335,8 @@ const App: React.FC = () => {
             <main className="container mx-auto p-4 md:p-8">
               <div className="space-y-12">
                 <div className="text-center">
-                  <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Style Analysis</h2>
-                  <p className="mt-2 text-lg text-slate-500">Get instant feedback on a new item.</p>
+                  <h2 className="text-3xl font-semibold text-platinum tracking-[0.2em] uppercase">Style Analysis</h2>
+                  <p className="mt-3 text-lg text-platinum/60">"Your wardrobe, intelligently styled."</p>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <div className="space-y-8">
@@ -326,12 +353,12 @@ const App: React.FC = () => {
                       maxFiles={5}
                     />
                     <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
-                    <div className="p-4 bg-white/60 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50">
-                      {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
+                    <div className="p-4 bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20">
+                      {error && <p className="text-red-400 text-center mb-4 font-medium">{error}</p>}
                       <button
                         onClick={handleGetAdvice}
                         disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None'}
-                        className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-bold py-4 px-4 rounded-full shadow-lg shadow-purple-500/20 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/30 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-lg disabled:shadow-slate-400/20 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-purple-500/50"
+                        className="w-full bg-platinum text-dark-blue font-bold py-4 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 hover:shadow-xl hover:shadow-platinum/20 disabled:bg-platinum/50 disabled:text-dark-blue/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
                       >
                         {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
                       </button>
@@ -362,7 +389,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
+    <div className="min-h-screen bg-dark-blue flex flex-col">
       <div className="flex-grow">
         <Header user={user} onSignOut={handleSignOut} onSignIn={() => setShowLogin(true)} />
         {renderPage()}

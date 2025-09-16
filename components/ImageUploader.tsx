@@ -10,7 +10,7 @@ interface ImageUploaderProps {
 }
 
 const UploadIcon: React.FC = () => (
-    <svg className="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+    <svg className="mx-auto h-12 w-12 text-platinum/40" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 );
@@ -56,20 +56,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description
 
 
   return (
-    <div className="bg-white/60 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/50">
-      {title && <h3 className="text-xl font-semibold text-slate-900">{title}</h3>}
-      {description && <p className="text-sm text-slate-500 mt-1">{description}</p>}
+    <div className="bg-dark-blue/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-platinum/20">
+      {title && <h3 className="text-xl font-semibold text-platinum uppercase tracking-wider">{title}</h3>}
+      {description && <p className="text-sm text-platinum/60 mt-1">{description}</p>}
       
       <div className="mt-4">
-        <label htmlFor={fileInputId} className="relative cursor-pointer bg-slate-50/50 rounded-xl font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500 transition-colors duration-200">
-          <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-purple-400">
+        <label htmlFor={fileInputId} className="relative cursor-pointer bg-black/20 rounded-xl font-medium text-platinum hover:text-white focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-dark-blue focus-within:ring-platinum transition-colors duration-200">
+          <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-platinum/30 border-dashed rounded-xl hover:border-platinum/50">
             <div className="space-y-1 text-center">
               <UploadIcon/>
-              <div className="flex text-sm text-slate-600">
+              <div className="flex text-sm text-platinum/80">
                 <span className="p-1">Upload files</span>
                 <input id={fileInputId} name={fileInputId} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" multiple={multiple} />
               </div>
-              <p className="text-xs text-slate-500">PNG, JPG, up to 10MB</p>
+              <p className="text-xs text-platinum/50">PNG, JPG, up to 10MB</p>
             </div>
           </div>
         </label>
@@ -82,7 +82,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description
               <img src={item.preview} alt={`preview ${index}`} className="h-full w-full object-cover rounded-xl shadow-md" />
                 <button
                   onClick={() => removeItem(index)}
-                  className="absolute top-1.5 right-1.5 bg-white/70 text-slate-800 rounded-full p-1 backdrop-blur-sm hover:bg-white hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+                  className="absolute top-1.5 right-1.5 bg-dark-blue/70 text-platinum rounded-full p-1 backdrop-blur-sm hover:bg-dark-blue hover:scale-110 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
                   aria-label="Remove item"
                 >
                   <XIcon />

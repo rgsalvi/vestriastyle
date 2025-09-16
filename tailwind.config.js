@@ -6,8 +6,13 @@ export default {
   ],
   theme: {
     extend: {
+      colors: {
+        'dark-blue': '#192135',
+        'platinum': '#C2BEBA',
+      },
       fontFamily: {
-        sans: ['Lexend', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+        mono: ['Space Grotesk', 'monospace'],
       },
     },
   },

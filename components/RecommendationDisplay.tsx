@@ -11,25 +11,25 @@ interface RecommendationDisplayProps {
 
 const Spinner: React.FC = () => (
   <div className="flex justify-center items-center h-full">
-    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-platinum"></div>
   </div>
 );
 
 const InitialState: React.FC = () => (
     <div className="text-center p-8">
-        <svg className="mx-auto h-20 w-20 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <svg className="mx-auto h-20 w-20 text-platinum/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
         </svg>
-        <h3 className="mt-4 text-xl font-medium text-slate-800">Your Personal Stylist Awaits</h3>
-        <p className="mt-2 text-base text-slate-500">Upload your items and let our AI provide expert style advice and create perfect outfits for you.</p>
+        <h3 className="mt-4 text-xl font-medium text-platinum">Your Personal Stylist Awaits</h3>
+        <p className="mt-2 text-base text-platinum/60">Upload your items and let our AI provide expert style advice and create perfect outfits for you.</p>
     </div>
 );
 
 const LoadingState: React.FC = () => (
     <div className="text-center p-8">
         <Spinner/>
-        <h3 className="mt-6 text-xl font-medium text-slate-800">Curating Your Look...</h3>
-        <p className="mt-2 text-base text-slate-500">Our AI stylist is analyzing your items and visualizing the perfect outfits. This might take a moment.</p>
+        <h3 className="mt-6 text-xl font-medium text-platinum">Curating Your Look...</h3>
+        <p className="mt-2 text-base text-platinum/60">Our AI stylist is analyzing your items and visualizing the perfect outfits. This might take a moment.</p>
     </div>
 );
 
@@ -95,7 +95,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
     return (
       <div className="space-y-4">
           <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-lg border border-slate-200 aspect-square">
+              <div className="rounded-2xl overflow-hidden shadow-lg border border-platinum/20 aspect-square">
                   <img
                       src={`data:image/png;base64,${images[activeIndex]}`}
                       alt={`AI-generated visualization for ${currentOutfit.title}`}
@@ -105,22 +105,22 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
               </div>
               {images.length > 1 && (
                   <>
-                      <button onClick={goToPrevious} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all shadow-md hover:scale-110">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                      <button onClick={goToPrevious} className="absolute left-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                       </button>
-                      <button onClick={goToNext} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all shadow-md hover:scale-110">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                      <button onClick={goToNext} className="absolute right-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                       </button>
                   </>
               )}
           </div>
           
-          <div className="p-4 bg-slate-100/50 rounded-2xl border border-slate-200">
-              <p className="font-semibold text-purple-700">{currentOutfit.title}</p>
-              <ul className="mt-2 list-disc list-inside text-slate-600 space-y-1 text-sm">
+          <div className="p-4 bg-black/20 rounded-2xl border border-platinum/20">
+              <p className="font-semibold text-platinum">{currentOutfit.title}</p>
+              <ul className="mt-2 list-disc list-inside text-platinum/70 space-y-1 text-sm">
                   {currentOutfit.items.map((item, i) => <li key={i}>{item}</li>)}
               </ul>
-              <div className="mt-3 pt-3 border-t border-slate-200/80">
+              <div className="mt-3 pt-3 border-t border-platinum/20">
                 {editingIndex === activeIndex ? (
                     <div className="space-y-2">
                         <input
@@ -128,18 +128,18 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                             value={editText}
                             onChange={(e) => setEditText(e.target.value)}
                             placeholder="e.g., 'Remove the jacket'"
-                            className="block w-full shadow-sm sm:text-sm border-slate-300 rounded-full focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                            className="block w-full shadow-sm sm:text-sm bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50"
                             aria-label="Edit outfit prompt"
                         />
-                        {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+                        {error && <p className="text-red-400 text-xs text-center">{error}</p>}
                         <div className="flex justify-end space-x-2">
-                            <button onClick={handleCancelEdit} className="px-3 py-1 bg-white border border-slate-300 rounded-full text-xs font-medium text-slate-700 hover:bg-slate-100">Cancel</button>
+                            <button onClick={handleCancelEdit} className="px-3 py-1 bg-dark-blue border border-platinum/30 rounded-full text-xs font-medium text-platinum/80 hover:bg-black/20">Cancel</button>
                             <button 
                                 onClick={handleGenerateEdit} 
                                 disabled={isGenerating || !editText}
-                                className="px-3 py-1 bg-purple-600 border border-transparent rounded-full text-xs font-medium text-white hover:bg-purple-700 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center"
+                                className="px-3 py-1 bg-platinum border border-transparent rounded-full text-xs font-medium text-dark-blue hover:bg-platinum/90 disabled:bg-platinum/50 disabled:cursor-not-allowed flex items-center"
                             >
-                                {isGenerating && <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-white mr-1.5"></div>}
+                                {isGenerating && <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-dark-blue mr-1.5"></div>}
                                 {isGenerating ? 'Generating...' : 'Generate'}
                             </button>
                         </div>
@@ -147,7 +147,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                 ) : (
                     <button
                         onClick={handleRefineClick}
-                        className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors duration-200 ring-1 ring-slate-200"
+                        className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum transition-colors duration-200 ring-1 ring-platinum/20"
                     >
                         <WandIcon />
                         Refine Outfit
@@ -159,7 +159,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
           {images.length > 1 && (
               <div className="flex justify-center space-x-2 pt-2">
                   {images.map((_, index) => (
-                      <button key={index} onClick={() => setActiveIndex(index)} className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${activeIndex === index ? 'bg-purple-500 scale-125' : 'bg-slate-300 hover:bg-slate-400'}`}></button>
+                      <button key={index} onClick={() => setActiveIndex(index)} className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${activeIndex === index ? 'bg-platinum scale-125' : 'bg-platinum/40 hover:bg-platinum/60'}`}></button>
                   ))}
               </div>
           )}
@@ -171,17 +171,17 @@ const UnsavedItems: React.FC<{ items: AnalysisItem[], onSave: () => void }> = ({
     if (items.length === 0) return null;
 
     return (
-        <div className="mt-6 p-4 bg-purple-50 border-t-2 border-b-2 border-purple-200">
-            <h4 className="text-lg font-semibold text-slate-900 text-center">Save New Items</h4>
-            <p className="text-sm text-slate-500 mt-1 text-center">Add the items from this session to your permanent wardrobe.</p>
+        <div className="mt-6 p-4 bg-black/20 border-t-2 border-b-2 border-platinum/20">
+            <h4 className="text-lg font-semibold text-platinum text-center">Save New Items</h4>
+            <p className="text-sm text-platinum/60 mt-1 text-center">Add the items from this session to your permanent wardrobe.</p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {items.map((item, index) => (
-                    <img key={index} src={item.preview} alt={`unsaved item ${index}`} className="h-16 w-16 object-cover rounded-lg shadow-md border-2 border-white" />
+                    <img key={index} src={item.preview} alt={`unsaved item ${index}`} className="h-16 w-16 object-cover rounded-lg shadow-md border-2 border-dark-blue" />
                 ))}
             </div>
             <button
                 onClick={onSave}
-                className="mt-4 w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-semibold py-2 px-4 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                className="mt-4 w-full bg-platinum text-dark-blue font-semibold py-2 px-4 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
             >
                 Save to My Wardrobe
             </button>
@@ -220,37 +220,37 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
     const { verdict, compatibility, advice, outfits, generatedOutfitImages } = internalRecommendation;
 
     const verdictClasses = verdict.includes('go for it')
-      ? "bg-purple-100 text-purple-800 border-purple-300"
-      : "bg-slate-200 text-slate-800 border-slate-300";
+      ? "bg-platinum/10 text-platinum border-platinum/30"
+      : "bg-slate-700 text-platinum/80 border-slate-600";
 
     const hasVisuals = generatedOutfitImages && generatedOutfitImages.length > 0;
 
     return (
       <div className="space-y-6">
-        <div className={`p-4 rounded-2xl border-2 ${verdictClasses}`}>
-          <p className="text-lg font-semibold text-center">{verdict}</p>
+        <div className={`p-4 rounded-2xl border ${verdictClasses}`}>
+          <p className="text-lg font-semibold text-center uppercase tracking-widest">{verdict}</p>
         </div>
         
         {hasVisuals && (
           <div>
-            <h4 className="text-lg font-semibold text-slate-900 mb-2">Outfit Visualizations</h4>
+            <h4 className="text-lg font-semibold text-platinum mb-2 uppercase tracking-wider">Outfit Visualizations</h4>
             <OutfitCarousel outfits={outfits} images={generatedOutfitImages!} onImageUpdate={handleImageUpdate} />
           </div>
         )}
         
         <div>
-          <h4 className="text-lg font-semibold text-slate-900">Compatibility Analysis</h4>
-          <p className="mt-2 text-slate-600">{compatibility}</p>
+          <h4 className="text-lg font-semibold text-platinum uppercase tracking-wider">Compatibility Analysis</h4>
+          <p className="mt-2 text-platinum/80">{compatibility}</p>
         </div>
 
         {!hasVisuals && (
            <div>
-              <h4 className="text-lg font-semibold text-slate-900">Outfit Ideas</h4>
+              <h4 className="text-lg font-semibold text-platinum uppercase tracking-wider">Outfit Ideas</h4>
               <div className="mt-2 space-y-4">
                 {outfits.map((outfit, index) => (
-                  <div key={index} className="p-4 bg-slate-100/50 rounded-2xl border border-slate-200">
-                    <p className="font-semibold text-purple-700">{outfit.title}</p>
-                    <ul className="mt-2 list-disc list-inside text-slate-600 space-y-1">
+                  <div key={index} className="p-4 bg-black/20 rounded-2xl border border-platinum/20">
+                    <p className="font-semibold text-platinum">{outfit.title}</p>
+                    <ul className="mt-2 list-disc list-inside text-platinum/70 space-y-1">
                       {outfit.items.map((item, i) => <li key={i}>{item}</li>)}
                     </ul>
                   </div>
@@ -260,15 +260,15 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
         )}
 
         <div>
-          <h4 className="text-lg font-semibold text-slate-900">Stylist's Advice</h4>
-          <p className="mt-2 text-slate-600">{advice}</p>
+          <h4 className="text-lg font-semibold text-platinum uppercase tracking-wider">Stylist's Advice</h4>
+          <p className="mt-2 text-platinum/80">{advice}</p>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-white/60 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50 overflow-hidden">
+    <div className="bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20 overflow-hidden">
       <div className="p-6 min-h-[400px] flex flex-col justify-center">
         {renderContent()}
       </div>

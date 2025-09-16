@@ -21,7 +21,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
 };
 
 const CheckIcon: React.FC = () => (
-    <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+    <svg className="h-6 w-6 text-dark-blue" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
     </svg>
 );
@@ -78,21 +78,21 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ user, managedWardr
     const remainingSlots = maxFiles - uploadedItems.length - selectedWardrobeIds.size;
 
     return (
-        <div className="bg-white/60 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-white/50">
-            <h3 className="text-xl font-semibold text-slate-900">2. Choose Your Wardrobe Items</h3>
-            <p className="text-sm text-slate-500 mt-1">Select up to {maxFiles} items to compare with your new piece.</p>
+        <div className="bg-dark-blue/80 backdrop-blur-lg p-6 rounded-2xl shadow-lg border border-platinum/20">
+            <h3 className="text-xl font-semibold text-platinum uppercase tracking-wider">2. Choose Your Wardrobe Items</h3>
+            <p className="text-sm text-platinum/60 mt-1">Select up to {maxFiles} items to compare with your new piece.</p>
 
-            <div className="mt-4 border-b border-slate-200">
+            <div className="mt-4 border-b border-platinum/20">
                 <nav className="-mb-px flex space-x-4" aria-label="Tabs">
                     <button
                         onClick={() => setActiveTab('upload')}
-                        className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'upload' ? 'border-purple-500 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                        className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'upload' ? 'border-platinum text-platinum' : 'border-transparent text-platinum/60 hover:text-platinum/80 hover:border-platinum/40'}`}
                     >
                         Upload Photos
                     </button>
                     <button
                         onClick={() => setActiveTab('select')}
-                        className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'select' ? 'border-purple-500 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 disabled:text-slate-400 disabled:hover:border-transparent'}`}
+                        className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm focus:outline-none ${activeTab === 'select' ? 'border-platinum text-platinum' : 'border-transparent text-platinum/60 hover:text-platinum/80 hover:border-platinum/40 disabled:text-platinum/40 disabled:hover:border-transparent'}`}
                         disabled={isGuest}
                     >
                         Select from My Wardrobe
@@ -113,7 +113,7 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ user, managedWardr
                 )}
                  {activeTab === 'select' && (
                     <div>
-                        <p className="text-sm text-slate-500 mb-4">You can select {remainingSlots} more item{remainingSlots !== 1 && 's'}.</p>
+                        <p className="text-sm text-platinum/60 mb-4">You can select {remainingSlots} more item{remainingSlots !== 1 && 's'}.</p>
                         {managedWardrobe.length > 0 ? (
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                                 {managedWardrobe.map(item => {
@@ -122,13 +122,13 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ user, managedWardr
                                         <button 
                                             key={item.id}
                                             onClick={() => toggleWardrobeSelection(item.id)}
-                                            className="relative aspect-square focus:outline-none group rounded-2xl focus:ring-4 focus:ring-purple-500/50"
+                                            className="relative aspect-square focus:outline-none group rounded-2xl focus:ring-4 focus:ring-platinum/50"
                                             aria-pressed={isSelected}
                                         >
-                                            <img src={item.dataUrl} alt={item.description || 'wardrobe item'} className={`h-full w-full object-cover rounded-2xl shadow-md transition-all duration-200 ${isSelected ? 'ring-4 ring-purple-500' : 'ring-1 ring-slate-200 group-hover:ring-2 group-hover:ring-purple-300'}`} />
+                                            <img src={item.dataUrl} alt={item.description || 'wardrobe item'} className={`h-full w-full object-cover rounded-2xl shadow-md transition-all duration-200 ${isSelected ? 'ring-4 ring-platinum' : 'ring-1 ring-platinum/20 group-hover:ring-2 group-hover:ring-platinum/40'}`} />
                                             {isSelected && (
-                                                <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
-                                                    <div className="bg-gradient-to-r from-purple-600 to-blue-500 rounded-full p-1.5 shadow-lg">
+                                                <div className="absolute inset-0 bg-platinum/80 rounded-2xl flex items-center justify-center">
+                                                    <div className="bg-platinum rounded-full p-1.5 shadow-lg">
                                                         <CheckIcon />
                                                     </div>
                                                 </div>
@@ -138,7 +138,7 @@ export const WardrobeInput: React.FC<WardrobeInputProps> = ({ user, managedWardr
                                 })}
                             </div>
                         ) : (
-                            <p className="text-sm text-center text-slate-500 py-8">Your wardrobe is empty. Add items in the "My Wardrobe" section below.</p>
+                            <p className="text-sm text-center text-platinum/60 py-8">Your wardrobe is empty. Add items in the "My Wardrobe" section below.</p>
                         )}
                     </div>
                 )}

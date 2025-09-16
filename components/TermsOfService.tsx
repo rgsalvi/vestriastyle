@@ -13,10 +13,10 @@ interface TermsOfServiceProps {
 export const TermsOfService: React.FC<TermsOfServiceProps> = ({ onBack }) => {
   return (
     <main className="container mx-auto p-4 md:p-8">
-      <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50 p-6 md:p-10">
+      <div className="max-w-4xl mx-auto bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20 p-6 md:p-10">
         <button
           onClick={onBack}
-          className="mb-6 inline-flex items-center text-sm font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+          className="mb-6 inline-flex items-center text-sm font-semibold text-platinum/80 hover:text-white transition-colors"
           aria-label="Back to main application"
         >
           <BackArrowIcon />
@@ -24,7 +24,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({ onBack }) => {
         </button>
         <div className="prose prose-slate max-w-none">
           <h1>Terms of Service</h1>
-          <p className="text-sm text-slate-500">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-sm text-platinum/50">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
           <h2>1. Acceptance of Terms</h2>
           <p>By accessing or using the Vestria Style application ("Service"), provided by Gilded Technologies Pvt Ltd, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to all of these Terms, do not use the Service.</p>

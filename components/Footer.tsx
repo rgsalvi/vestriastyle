@@ -25,6 +25,37 @@ const PinterestIcon: React.FC<{className?: string}> = ({className}) => (
     </svg>
 );
 
+const Logo: React.FC<{ className?: string }> = ({ className }) => (
+    <div className={`flex items-center ${className}`}>
+         <svg width="24" height="24" viewBox="0 0 100 100" className="mr-3 text-platinum" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <rect id="rect" x="10" y="10" width="80" height="80" />
+                <clipPath id="clip">
+                    <use xlinkHref="#rect"/>
+                </clipPath>
+            </defs>
+            <g clipPath="url(#clip)">
+                <circle cx="20" cy="20" r="8"/>
+                <circle cx="50" cy="20" r="8"/>
+                <circle cx="80" cy="20" r="8"/>
+                <circle cx="20" cy="50" r="8"/>
+                <circle cx="50" cy="50" r="8"/>
+                <circle cx="80" cy="50" r="8"/>
+                <circle cx="20" cy="80" r="8"/>
+                <circle cx="50" cy="80" r="8"/>
+                <circle cx="80" cy="80" r="8"/>
+                <line x1="10" y1="50" x2="90" y2="50" strokeWidth="10" stroke="#C2BEBA" transform="rotate(45, 50, 50)" />
+                <line x1="50" y1="10" x2="50" y2="90" strokeWidth="10" stroke="#C2BEBA" transform="rotate(45, 50, 50)" />
+            </g>
+        </svg>
+        <div className="flex flex-col justify-center">
+            <span className="text-xl font-semibold tracking-[0.2em] text-platinum leading-none">VESTRIA</span>
+            <span className="block text-[10px] font-mono tracking-[0.3em] text-platinum/70 mt-1">STYLE</span>
+        </div>
+    </div>
+);
+
+
 interface FooterProps {
     onNavigateToPrivacy: () => void;
     onNavigateToTerms: () => void;
@@ -32,16 +63,14 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateToTerms }) => {
     return (
-        <footer className="bg-slate-900/95 text-slate-300 backdrop-blur-lg border-t border-slate-700/50">
+        <footer className="bg-dark-blue text-platinum/70 backdrop-blur-lg border-t border-platinum/20">
             <div className="container mx-auto px-4 md:px-8 py-12">
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
                     {/* Company Info */}
                     <div className="col-span-2 lg:col-span-2">
-                         <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-500 to-blue-400 text-transparent bg-clip-text">
-                            Vestria Style
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-400 max-w-sm">
-                            Your personal AI stylist. Making fashion sustainable and smart, powered by Gilded Technologies.
+                         <Logo />
+                        <p className="mt-4 text-sm text-platinum/50 max-w-sm">
+                            Your wardrobe, intelligently styled.
                         </p>
                     </div>
 
@@ -50,32 +79,27 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
 
                     {/* Links */}
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-100 tracking-wider uppercase">Legal</h3>
+                        <h3 className="text-sm font-semibold text-platinum tracking-wider uppercase">Legal</h3>
                         <ul className="mt-4 space-y-2">
-                            <li><button onClick={onNavigateToPrivacy} className="text-sm text-left text-slate-400 hover:text-white transition-colors">Privacy Policy</button></li>
-                            <li><button onClick={onNavigateToTerms} className="text-sm text-left text-slate-400 hover:text-white transition-colors">Terms of Service</button></li>
+                            <li><button onClick={onNavigateToPrivacy} className="text-sm text-left text-platinum/60 hover:text-white transition-colors">Privacy Policy</button></li>
+                            <li><button onClick={onNavigateToTerms} className="text-sm text-left text-platinum/60 hover:text-white transition-colors">Terms of Service</button></li>
                         </ul>
                     </div>
 
                     {/* Social */}
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-100 tracking-wider uppercase">Follow Us</h3>
+                        <h3 className="text-sm font-semibold text-platinum tracking-wider uppercase">Follow Us</h3>
                         <div className="mt-4 flex space-x-4">
-                            <a href="#" className="text-slate-400 hover:text-purple-400 transition-colors" aria-label="Instagram"><InstagramIcon /></a>
-                            <a href="#" className="text-slate-400 hover:text-purple-400 transition-colors" aria-label="TikTok"><TikTokIcon /></a>
-                            <a href="#" className="text-slate-400 hover:text-purple-400 transition-colors" aria-label="Pinterest"><PinterestIcon /></a>
+                            <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon /></a>
+                            <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon /></a>
+                            <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="Pinterest"><PinterestIcon /></a>
                         </div>
                     </div>
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="mt-12 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-                    <p className="font-medium text-slate-400">&copy; {new Date().getFullYear()} Gilded Technologies Pvt Ltd. All rights reserved.</p>
-                    <div className="mt-2 space-x-1 sm:space-x-4 flex flex-col sm:flex-row justify-center items-center">
-                        <span>CIN: U72900PN2021PTC206389</span>
-                        <span className="hidden sm:inline">|</span>
-                        <span>GSTIN: 27AAJCG4298C1ZF</span>
-                    </div>
+                <div className="mt-12 pt-8 border-t border-platinum/20 text-center text-xs text-platinum/40">
+                    <p className="font-medium text-platinum/60">&copy; {new Date().getFullYear()} Gilded Technologies Pvt Ltd. All rights reserved.</p>
                 </div>
             </div>
         </footer>

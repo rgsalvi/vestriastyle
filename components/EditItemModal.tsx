@@ -28,7 +28,7 @@ const WandIcon: React.FC = () => (
 
 
 const Spinner: React.FC = () => (
-    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-dark-blue mr-2"></div>
 );
 
 export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onSave, onClose }) => {
@@ -89,75 +89,75 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onSave, onCl
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true"></div>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg z-10 transform transition-all opacity-100 scale-100">
+      <div className="bg-[#1F2937] rounded-2xl shadow-xl w-full max-w-lg z-10 transform transition-all opacity-100 scale-100 border border-platinum/20">
         <div className="p-6">
-          <h3 className="text-xl font-semibold text-slate-900">{mode === 'edit' ? 'Edit Item Details' : 'Create New Item'}</h3>
+          <h3 className="text-xl font-semibold text-platinum">{mode === 'edit' ? 'Edit Item Details' : 'Create New Item'}</h3>
         </div>
         <form onSubmit={handleSave}>
           <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-            <div className="w-full aspect-square bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-200">
+            <div className="w-full aspect-square bg-dark-blue rounded-2xl overflow-hidden flex items-center justify-center border border-platinum/20">
                  {formData.dataUrl ? (
                     <img src={formData.dataUrl} alt="Wardrobe item" className="max-h-full max-w-full object-contain" />
                  ) : (
-                    <div className="text-center text-slate-500 p-4">
+                    <div className="text-center text-platinum/50 p-4">
                          <svg className="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="1" /></svg>
                         <p className="mt-2 text-sm">Image will be generated here</p>
                     </div>
                  )}
             </div>
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-slate-700">Description</label>
+              <label htmlFor="description" className="block text-sm font-medium text-platinum/80">Description</label>
               <textarea
                 id="description"
                 name="description"
                 rows={3}
-                className="mt-1 block w-full shadow-sm sm:text-sm border-slate-200 rounded-lg focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                className="mt-1 block w-full shadow-sm sm:text-sm bg-dark-blue border-platinum/30 rounded-lg focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50"
                 value={formData.description}
                 onChange={handleInputChange}
                 placeholder="e.g., A red, short-sleeve cotton t-shirt with a crew neck."
                 required
               />
-               <p className="mt-1 text-xs text-slate-500">Provide a clear description for the AI to generate an image.</p>
+               <p className="mt-1 text-xs text-platinum/50">Provide a clear description for the AI to generate an image.</p>
             </div>
              <button
               type="button"
               onClick={handleGenerateImage}
               disabled={isGenerating || !formData.description}
-              className="w-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-500 text-white font-bold py-3 px-4 rounded-full shadow-lg shadow-purple-500/20 hover:scale-105 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-slate-400/20 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-purple-500/50"
+              className="w-full flex items-center justify-center bg-platinum text-dark-blue font-bold py-3 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 disabled:bg-platinum/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
             >
               {isGenerating ? <><Spinner/> Generating...</> : <><WandIcon/>{formData.dataUrl ? 'Regenerate Image' : 'Generate Image'}</>}
             </button>
-            {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
+            {error && <p className="text-red-400 text-sm text-center font-medium">{error}</p>}
 
             <div className="space-y-4 pt-2">
                 <div>
-                    <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Core Details</h4>
+                    <h4 className="text-sm font-semibold text-platinum/60 uppercase tracking-wider mb-2">Core Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="category" className="block text-sm font-medium text-slate-700">Category</label>
-                            <select id="category" name="category" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-200 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-lg transition-colors" value={formData.category} onChange={handleInputChange}>
+                            <label htmlFor="category" className="block text-sm font-medium text-platinum/80">Category</label>
+                            <select id="category" name="category" className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-dark-blue border-platinum/30 focus:outline-none focus:ring-platinum focus:border-platinum sm:text-sm rounded-lg transition-colors" value={formData.category} onChange={handleInputChange}>
                             {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label htmlFor="color" className="block text-sm font-medium text-slate-700">Color</label>
-                            <input type="text" id="color" name="color" className="mt-1 block w-full shadow-sm sm:text-sm border-slate-200 rounded-lg focus:ring-purple-500 focus:border-purple-500 transition-colors" value={formData.color} onChange={handleInputChange} placeholder="e.g., Navy Blue, Floral" />
+                            <label htmlFor="color" className="block text-sm font-medium text-platinum/80">Color</label>
+                            <input type="text" id="color" name="color" className="mt-1 block w-full shadow-sm sm:text-sm bg-dark-blue border-platinum/30 rounded-lg focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50" value={formData.color} onChange={handleInputChange} placeholder="e.g., Navy Blue, Floral" />
                         </div>
                     </div>
                 </div>
-                <div className="border-t border-slate-200 pt-4">
-                    <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Additional Details</h4>
+                <div className="border-t border-platinum/20 pt-4">
+                    <h4 className="text-sm font-semibold text-platinum/60 uppercase tracking-wider mb-2">Additional Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="fabric" className="block text-sm font-medium text-slate-700">Fabric Type</label>
-                            <input type="text" id="fabric" name="fabric" list="fabric-suggestions" className="mt-1 block w-full shadow-sm sm:text-sm border-slate-200 rounded-lg focus:ring-purple-500 focus:border-purple-500 transition-colors" value={formData.fabric} onChange={handleInputChange} placeholder="e.g., Cotton, Wool" />
+                            <label htmlFor="fabric" className="block text-sm font-medium text-platinum/80">Fabric Type</label>
+                            <input type="text" id="fabric" name="fabric" list="fabric-suggestions" className="mt-1 block w-full shadow-sm sm:text-sm bg-dark-blue border-platinum/30 rounded-lg focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50" value={formData.fabric} onChange={handleInputChange} placeholder="e.g., Cotton, Wool" />
                             <datalist id="fabric-suggestions">
                             {FABRIC_SUGGESTIONS.map(fab => <option key={fab} value={fab} />)}
                             </datalist>
                         </div>
                         <div>
-                            <label htmlFor="season" className="block text-sm font-medium text-slate-700">Season</label>
-                            <select id="season" name="season" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-200 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-lg transition-colors" value={formData.season} onChange={handleInputChange}>
+                            <label htmlFor="season" className="block text-sm font-medium text-platinum/80">Season</label>
+                            <select id="season" name="season" className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-dark-blue border-platinum/30 focus:outline-none focus:ring-platinum focus:border-platinum sm:text-sm rounded-lg transition-colors" value={formData.season} onChange={handleInputChange}>
                             <option value="">Select a season</option>
                             {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -166,11 +166,11 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onSave, onCl
                 </div>
             </div>
           </div>
-          <div className="bg-slate-50 px-6 py-4 flex justify-end space-x-3 rounded-b-2xl border-t border-slate-200">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-white border border-slate-300 rounded-full shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+          <div className="bg-dark-blue px-6 py-4 flex justify-end space-x-3 rounded-b-2xl border-t border-platinum/20">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-[#1F2937] border border-platinum/30 rounded-full shadow-sm text-sm font-medium text-platinum/80 hover:bg-black/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum transition-colors">
               Cancel
             </button>
-            <button type="submit" disabled={!formData.dataUrl || isGenerating} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-500 border border-transparent rounded-full shadow-sm text-sm font-medium text-white hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed disabled:scale-100 transition-transform">
+            <button type="submit" disabled={!formData.dataUrl || isGenerating} className="px-4 py-2 bg-platinum border border-transparent rounded-full shadow-sm text-sm font-medium text-dark-blue hover:bg-platinum/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum disabled:bg-platinum/50 disabled:cursor-not-allowed transition-transform">
               Save Changes
             </button>
           </div>

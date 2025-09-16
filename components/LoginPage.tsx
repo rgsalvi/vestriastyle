@@ -38,20 +38,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn, onBack }) 
     }, [onGoogleSignIn]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 p-4 animate-fade-in">
-            <div className="w-full max-w-md text-center bg-white/60 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-white/50 relative">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-dark-blue p-4 animate-fade-in">
+            <div className="w-full max-w-md text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative">
                 <button
                   onClick={onBack}
-                  className="absolute top-4 left-4 inline-flex items-center text-sm font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+                  className="absolute top-4 left-4 inline-flex items-center text-sm font-semibold text-platinum/80 hover:text-white transition-colors"
                   aria-label="Back to main application"
                 >
                   <BackArrowIcon />
                   Back
                 </button>
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tight mt-8">Create an Account</h2>
-                <p className="mt-2 text-lg text-slate-500">Sign in to save your wardrobe and get hyper-personalized advice.</p>
+                <h2 className="text-3xl font-bold text-platinum tracking-tight mt-8">Create an Account</h2>
+                <p className="mt-2 text-lg text-platinum/60">Sign in to save your wardrobe and get hyper-personalized advice.</p>
                 <div id="google-signin-button" className="mt-8 flex justify-center"></div>
-                <p className="mt-8 text-xs text-slate-400">
+                <p className="mt-8 text-xs text-platinum/40">
                     By signing in, you agree to our Terms of Service and Privacy Policy.
                 </p>
             </div>

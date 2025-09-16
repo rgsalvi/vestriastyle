@@ -13,10 +13,10 @@ interface PrivacyPolicyProps {
 export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
   return (
     <main className="container mx-auto p-4 md:p-8">
-      <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50 p-6 md:p-10">
+      <div className="max-w-4xl mx-auto bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20 p-6 md:p-10">
         <button
           onClick={onBack}
-          className="mb-6 inline-flex items-center text-sm font-semibold text-purple-600 hover:text-purple-800 transition-colors"
+          className="mb-6 inline-flex items-center text-sm font-semibold text-platinum/80 hover:text-white transition-colors"
           aria-label="Back to main application"
         >
           <BackArrowIcon />
@@ -24,7 +24,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
         </button>
         <div className="prose prose-slate max-w-none">
           <h1>Privacy Policy</h1>
-          <p className="text-sm text-slate-500">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-sm text-platinum/50">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
           <p>Gilded Technologies Pvt Ltd ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Vestria Style application (the "Service").</p>
 
