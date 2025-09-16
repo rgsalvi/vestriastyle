@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
     <div className="flex-1"></div>
     <div className="flex-1">
       <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
-        AI Wardrobe Curator
+        Vestria Style
       </h1>
       <p className="hidden md:block mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Make smarter wardrobe decisions.</p>
     </div>

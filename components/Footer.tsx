@@ -38,7 +38,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
                     {/* Company Info */}
                     <div className="col-span-2 lg:col-span-2">
                          <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-500 to-blue-400 text-transparent bg-clip-text">
-                            AI Wardrobe Curator
+                            Vestria Style
                         </h2>
                         <p className="mt-2 text-sm text-slate-400 max-w-sm">
                             Your personal AI stylist. Making fashion sustainable and smart, powered by Gilded Technologies.

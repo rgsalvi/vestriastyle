@@ -27,7 +27,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({ onBack }) => {
           <p className="text-sm text-slate-500">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
           <h2>1. Acceptance of Terms</h2>
-          <p>By accessing or using the AI Wardrobe Curator application ("Service"), provided by Gilded Technologies Pvt Ltd, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to all of these Terms, do not use the Service.</p>
+          <p>By accessing or using the Vestria Style application ("Service"), provided by Gilded Technologies Pvt Ltd, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to all of these Terms, do not use the Service.</p>
 
           <h2>2. Description of Service</h2>
           <p>The Service is an AI-powered styling application that helps you digitally curate your wardrobe. It provides style compatibility analysis, outfit suggestions, and general fashion advice based on images and information you provide.</p>
