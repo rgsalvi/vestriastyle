@@ -2,7 +2,7 @@
 // for ImportMeta and ImportMetaEnv. This addresses both the type definition file error
 // and provides TypeScript with the necessary information about Vite's environment variables.
 interface ImportMetaEnv {
-  readonly VITE_GOOGLE_CLIENT_ID: string;
+  readonly VITE_GOOGLE_CLIENT_ID_WEB: string;
   // Add other environment variables here if needed
 }
 

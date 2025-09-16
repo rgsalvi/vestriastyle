@@ -9,7 +9,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onGoogleSignIn }) => {
         const initGoogleSignIn = () => {
             if (window.google) {
                 window.google.accounts.id.initialize({
-                    client_id: '79620949788-t60dqkvohch844h6rqe9iunvhdusduom.apps.googleusercontent.com',
+                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID_WEB,
                     callback: onGoogleSignIn,
                 });
                 window.google.accounts.id.renderButton(
