@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import type { WardrobeItem } from '../types';
+import { anonymizeImage } from '../utils/imageProcessor';
 
 interface ImageUploaderProps {
   title: string;
@@ -24,32 +25,64 @@ const XIcon: React.FC = () => (
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description, onFilesSelect, multiple, maxFiles = 5 }) => {
   const [items, setItems] = useState<WardrobeItem[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     onFilesSelect(items);
+    // This effect should not depend on onFilesSelect to avoid re-renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
+  
+  // Effect for cleaning up Object URLs on unmount
+  useEffect(() => {
+    return () => {
+      items.forEach(item => URL.revokeObjectURL(item.preview));
+    };
+  }, [items]);
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
+      setIsProcessing(true);
       const newFiles = Array.from(files);
-      const newItems: WardrobeItem[] = newFiles.map((file: File) => ({
+      
+      const anonymizedFilesPromises = newFiles.map(file => anonymizeImage(file));
+      const anonymizedFiles = await Promise.all(anonymizedFilesPromises);
+
+      const newItems: WardrobeItem[] = anonymizedFiles.map((file: File) => ({
         file,
         preview: URL.createObjectURL(file),
       }));
 
       if (multiple) {
-        setItems(prev => [...prev, ...newItems].slice(0, maxFiles));
+        setItems(prev => {
+          const combined = [...prev, ...newItems];
+          const toKeep = combined.slice(0, maxFiles);
+          // Clean up URLs for items that are sliced off
+          const toRemove = combined.slice(maxFiles);
+          toRemove.forEach(item => URL.revokeObjectURL(item.preview));
+          return toKeep;
+        });
       } else {
-        setItems(newItems.slice(0, 1));
+        setItems(prev => {
+          // Clean up old object URLs before setting the new one
+          prev.forEach(item => URL.revokeObjectURL(item.preview));
+          return newItems.slice(0, 1);
+        });
       }
+      setIsProcessing(false);
     }
     event.target.value = '';
   }, [multiple, maxFiles]);
 
   const removeItem = (index: number) => {
-    setItems(prev => prev.filter((_, i) => i !== index));
+    setItems(prev => {
+      const itemToRemove = prev[index];
+      if (itemToRemove) {
+        URL.revokeObjectURL(itemToRemove.preview);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
   };
   
   const fileInputId = `file-upload-${title.replace(/\s+/g, '-')}`;
@@ -61,16 +94,24 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description
       {description && <p className="text-sm text-platinum/60 mt-1">{description}</p>}
       
       <div className="mt-4">
-        <label htmlFor={fileInputId} className="relative cursor-pointer bg-black/20 rounded-xl font-medium text-platinum hover:text-white focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-dark-blue focus-within:ring-platinum transition-colors duration-200">
+        <label htmlFor={fileInputId} className={`relative rounded-xl font-medium text-platinum transition-colors duration-200 ${isProcessing ? 'cursor-wait opacity-70' : 'cursor-pointer bg-black/20 hover:text-white focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-dark-blue focus-within:ring-platinum'}`}>
           <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-platinum/30 border-dashed rounded-xl hover:border-platinum/50">
+             {isProcessing ? (
+              <div className="space-y-1 text-center">
+                 <svg className="mx-auto h-12 w-12 text-platinum/40 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                 <p className="text-sm text-platinum/80">Processing for privacy...</p>
+                 <p className="text-xs text-platinum/50">Faces will be automatically blurred.</p>
+              </div>
+            ) : (
             <div className="space-y-1 text-center">
               <UploadIcon/>
               <div className="flex text-sm text-platinum/80">
                 <span className="p-1">Upload files</span>
-                <input id={fileInputId} name={fileInputId} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" multiple={multiple} />
+                <input id={fileInputId} name={fileInputId} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" multiple={multiple} disabled={isProcessing} />
               </div>
               <p className="text-xs text-platinum/50">PNG, JPG, up to 10MB</p>
             </div>
+            )}
           </div>
         </label>
       </div>
@@ -78,7 +119,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ title, description
       {items.length > 0 && (
         <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
           {items.map((item, index) => (
-            <div key={index} className="relative aspect-square group">
+            <div key={item.preview} className="relative aspect-square group">
               <img src={item.preview} alt={`preview ${index}`} className="h-full w-full object-cover rounded-xl shadow-md" />
                 <button
                   onClick={() => removeItem(index)}
