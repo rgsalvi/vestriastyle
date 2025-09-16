@@ -1,6 +1,6 @@
-import type { AnalysisItem, AiResponse, BodyType } from '../types';
+import type { AnalysisItem, AiResponse, StyleProfile } from '../types';
 
-export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: AnalysisItem[], bodyType: BodyType): Promise<AiResponse> => {
+export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: AnalysisItem[], styleProfile: StyleProfile): Promise<AiResponse> => {
   try {
     const newItemPayload = {
       base64: newItem.base64,
@@ -19,7 +19,7 @@ export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: Analy
       body: JSON.stringify({
         newItem: newItemPayload,
         wardrobeItems: wardrobeItemsPayload,
-        bodyType: bodyType,
+        styleProfile: styleProfile,
       }),
     });
 

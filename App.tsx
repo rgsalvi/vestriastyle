@@ -8,19 +8,47 @@ import { WardrobeInput } from './components/WardrobeInput';
 import { Footer } from './components/Footer';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
+import { LoginPage } from './components/LoginPage';
+import { OnboardingWizard } from './components/OnboardingWizard';
 import { getStyleAdvice } from './services/geminiService';
-import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem } from './types';
+import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile } from './types';
+import { jwtDecode } from 'jwt-decode';
 
-const Header: React.FC = () => (
-  <header className="text-center p-6 md:p-8 bg-white/60 backdrop-blur-lg sticky top-0 z-20 border-b border-slate-200">
-    <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
-      AI Wardrobe Curator
-    </h1>
-    <p className="mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Make smarter wardrobe decisions. See how a new item fits before you buy.</p>
+interface HeaderProps {
+  user: User | null;
+  onSignOut: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ user, onSignOut }) => (
+  <header className="text-center p-4 md:p-6 bg-white/60 backdrop-blur-lg sticky top-0 z-20 border-b border-slate-200 flex justify-between items-center">
+    <div className="flex-1"></div>
+    <div className="flex-1">
+      <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-blue-500 text-transparent bg-clip-text">
+        AI Wardrobe Curator
+      </h1>
+      <p className="hidden md:block mt-2 text-lg text-slate-500 max-w-2xl mx-auto">Make smarter wardrobe decisions.</p>
+    </div>
+    <div className="flex-1 flex justify-end items-center space-x-4">
+      {user && (
+        <div className="relative group">
+          <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer" />
+          <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+            <p className="font-semibold text-sm px-3 py-1 text-slate-800 truncate">{user.name}</p>
+            <p className="text-xs px-3 text-slate-500 truncate mb-1">{user.email}</p>
+            <div className="h-px bg-slate-200 my-1"></div>
+            <button onClick={onSignOut} className="w-full text-left text-sm text-red-600 px-3 py-1 hover:bg-slate-100 rounded-md">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   </header>
 );
 
 const WARDROBE_STORAGE_KEY = 'ai-wardrobe-items';
+const USER_STORAGE_KEY = 'ai-wardrobe-user';
+const STYLE_PROFILE_KEY = 'ai-wardrobe-style-profile';
 
 const fileToDataUrl = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -33,6 +61,13 @@ const fileToDataUrl = (file: File): Promise<string> => {
 
 type Page = 'main' | 'privacy' | 'terms';
 
+// Fix: Augment the Window interface to declare the 'google' property for Google Sign-In, preventing redeclaration errors.
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('main');
   const [newItem, setNewItem] = useState<AnalysisItem | null>(null);
@@ -41,30 +76,94 @@ const App: React.FC = () => {
   const [recommendation, setRecommendation] = useState<AiResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
   const [managedWardrobe, setManagedWardrobe] = useState<PersistentWardrobeItem[]>([]);
   const [unsavedItemsFromAnalysis, setUnsavedItemsFromAnalysis] = useState<AnalysisItem[]>([]);
+  
+  const [user, setUser] = useState<User | null>(null);
+  const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // Load wardrobe from localStorage on initial render
+  // Auth and User Data Logic
   useEffect(() => {
-    try {
-      const savedWardrobe = localStorage.getItem(WARDROBE_STORAGE_KEY);
-      if (savedWardrobe) {
-        setManagedWardrobe(JSON.parse(savedWardrobe));
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      setUser(userData);
+      const userProfile = localStorage.getItem(`${STYLE_PROFILE_KEY}-${userData.id}`);
+      if (userProfile) {
+        const profileData = JSON.parse(userProfile);
+        setStyleProfile(profileData);
+        setBodyType(profileData.bodyType || 'None');
+      } else {
+        setShowOnboarding(true);
       }
-    } catch (e) {
-      console.error("Failed to load wardrobe from localStorage", e);
     }
+    setIsAuthLoading(false);
   }, []);
+  
+  const handleGoogleSignIn = (res: any) => {
+    const decoded: { name: string; email: string; sub: string; picture: string } = jwtDecode(res.credential);
+    const userData: User = {
+        id: decoded.sub,
+        name: decoded.name,
+        email: decoded.email,
+        picture: decoded.picture,
+    };
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+    setUser(userData);
 
-  // Save wardrobe to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(WARDROBE_STORAGE_KEY, JSON.stringify(managedWardrobe));
-    } catch (e) {
-      console.error("Failed to save wardrobe to localStorage", e);
+    const userProfile = localStorage.getItem(`${STYLE_PROFILE_KEY}-${userData.id}`);
+    if (!userProfile) {
+        setShowOnboarding(true);
+    } else {
+        setStyleProfile(JSON.parse(userProfile));
     }
-  }, [managedWardrobe]);
+  };
+  
+  const handleSignOut = () => {
+    setUser(null);
+    setStyleProfile(null);
+    setManagedWardrobe([]);
+    localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem(WARDROBE_STORAGE_KEY);
+    // Note: We keep style profiles in case the user logs back in
+    if (window.google) {
+        // Fix: Use window.google to access the globally declared google object.
+        window.google.accounts.id.disableAutoSelect();
+    }
+  };
+
+  const handleOnboardingComplete = (profile: StyleProfile) => {
+    if (user) {
+        localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(profile));
+        setStyleProfile(profile);
+        setBodyType(profile.bodyType || 'None');
+        setShowOnboarding(false);
+    }
+  };
+
+  // Wardrobe Logic
+  useEffect(() => {
+    if (user) {
+      try {
+        const savedWardrobe = localStorage.getItem(`${WARDROBE_STORAGE_KEY}-${user.id}`);
+        if (savedWardrobe) setManagedWardrobe(JSON.parse(savedWardrobe));
+      } catch (e) {
+        console.error("Failed to load wardrobe", e);
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      try {
+        localStorage.setItem(`${WARDROBE_STORAGE_KEY}-${user.id}`, JSON.stringify(managedWardrobe));
+      } catch (e) {
+        console.error("Failed to save wardrobe", e);
+      }
+    }
+  }, [managedWardrobe, user]);
 
 
   const handleNewItemSelect = async (items: WardrobeItem[]) => {
@@ -104,12 +203,10 @@ const App: React.FC = () => {
 
   const handleSaveWardrobeItem = (itemData: Omit<PersistentWardrobeItem, 'id'>, existingId?: string) => {
     if (existingId) {
-      // Update existing item
       setManagedWardrobe(prev => prev.map(item =>
         item.id === existingId ? { ...item, ...itemData, id: existingId } : item
       ));
     } else {
-      // Create new item
       const newItem: PersistentWardrobeItem = {
         id: `item-${Date.now()}`,
         ...itemData
@@ -127,30 +224,22 @@ const App: React.FC = () => {
     const newManagedItems: PersistentWardrobeItem[] = unsavedItemsFromAnalysis.map((item, index) => ({
       id: `item-${Date.now()}-${index}`,
       dataUrl: item.dataUrl,
-      description: '', // Can be enhanced later
+      description: '',
       category: 'Uncategorized',
       color: '',
       fabric: '',
       season: '',
     }));
     setManagedWardrobe(prev => [...prev, ...newManagedItems]);
-    setUnsavedItemsFromAnalysis([]); // Clear after saving
+    setUnsavedItemsFromAnalysis([]);
   };
 
 
   const handleGetAdvice = useCallback(async () => {
-    if (!newItem) {
-      setError('Please upload a new item to analyze.');
-      return;
-    }
-    if (wardrobeItems.length === 0) {
-      setError('Please upload or select at least one item from your existing wardrobe.');
-      return;
-    }
-    if (bodyType === 'None') {
-      setError('Please select your body type for personalized advice.');
-      return;
-    }
+    if (!newItem) { setError('Please upload a new item to analyze.'); return; }
+    if (wardrobeItems.length === 0) { setError('Please upload or select at least one item from your existing wardrobe.'); return; }
+    if (bodyType === 'None') { setError('Please select your body type for personalized advice.'); return; }
+    if (!styleProfile) { setError('Please complete your style profile.'); return; }
 
     setIsLoading(true);
     setError(null);
@@ -158,10 +247,9 @@ const App: React.FC = () => {
     setUnsavedItemsFromAnalysis([]);
 
     try {
-      const response = await getStyleAdvice(newItem, wardrobeItems, bodyType);
+      const response = await getStyleAdvice(newItem, wardrobeItems, styleProfile);
       setRecommendation(response);
 
-      // After successful analysis, determine which items are not already saved.
       const allAnalysisItems = [newItem, ...wardrobeItems];
       const savedDataUrls = new Set(managedWardrobe.map(item => item.dataUrl));
       const unsaved = allAnalysisItems.filter(item => !savedDataUrls.has(item.dataUrl));
@@ -173,9 +261,19 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newItem, wardrobeItems, bodyType, managedWardrobe]);
+  }, [newItem, wardrobeItems, bodyType, managedWardrobe, styleProfile]);
   
   const renderPage = () => {
+    if (isAuthLoading) {
+        return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div></div>;
+    }
+    if (!user) {
+        return <LoginPage onGoogleSignIn={handleGoogleSignIn} />;
+    }
+    if (showOnboarding) {
+        return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
+    }
+
     switch (currentPage) {
       case 'privacy':
         return <PrivacyPolicy onBack={() => setCurrentPage('main')} />;
@@ -242,7 +340,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <div className="flex-grow">
-        <Header />
+        <Header user={user} onSignOut={handleSignOut} />
         {renderPage()}
       </div>
       <Footer 

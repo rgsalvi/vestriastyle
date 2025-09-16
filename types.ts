@@ -40,3 +40,17 @@ export interface StyleRecipe {
   description: string;
   items: string[];
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  picture: string;
+}
+
+export interface StyleProfile {
+  styleArchetypes: string[];
+  colorPalettes: string[];
+  favoriteBrands: string;
+  bodyType: BodyType;
+}

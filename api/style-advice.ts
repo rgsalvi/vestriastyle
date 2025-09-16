@@ -13,11 +13,11 @@ const responseSchema = {
     properties: {
         compatibility: {
             type: Type.STRING,
-            description: 'A paragraph explaining how well the new item fits with the existing wardrobe in terms of style, color, and versatility. This advice MUST be tailored to the provided body type.',
+            description: 'A paragraph explaining how well the new item fits with the existing wardrobe in terms of style, color, and versatility. This advice MUST be tailored to the provided body type and style profile.',
         },
         outfits: {
             type: Type.ARRAY,
-            description: 'Suggest 2-3 specific, complete outfit combinations using the new item and items from the existing wardrobe that would be flattering for the user\'s body type.',
+            description: 'Suggest 2-3 specific, complete outfit combinations using the new item and items from the existing wardrobe that would be flattering for the user\'s body type and align with their style profile.',
             items: {
                 type: Type.OBJECT,
                 properties: {
@@ -36,7 +36,7 @@ const responseSchema = {
         },
         advice: {
             type: Type.STRING,
-            description: 'Provide one key piece of styling advice or suggest one type of item that might be missing from their wardrobe that would complement the new piece well, keeping the user\'s body type in mind.',
+            description: 'Provide one key piece of styling advice or suggest one type of item that might be missing from their wardrobe that would complement the new piece well, keeping the user\'s body type and style profile in mind.',
         },
         verdict: {
             type: Type.STRING,
@@ -53,18 +53,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     
     try {
-        const { newItem, wardrobeItems, bodyType } = req.body;
+        const { newItem, wardrobeItems, styleProfile } = req.body;
 
-        if (!newItem || !wardrobeItems || !bodyType) {
-            return res.status(400).json({ message: 'Missing required fields: newItem, wardrobeItems, or bodyType' });
+        if (!newItem || !wardrobeItems || !styleProfile) {
+            return res.status(400).json({ message: 'Missing required fields: newItem, wardrobeItems, or styleProfile' });
         }
+        
+        const { bodyType, styleArchetypes, colorPalettes, favoriteBrands } = styleProfile;
 
         const model = 'gemini-2.5-flash';
-        const prompt = `You are an expert fashion stylist and wardrobe curator. Analyze the user's potential new clothing item in the context of their existing wardrobe.
+        const prompt = `You are an expert fashion stylist and wardrobe curator with a deep understanding of body types and personal aesthetics. Analyze the user's potential new clothing item in the context of their existing wardrobe and their detailed style profile.
 
-The user has identified their body type as: **${bodyType}**. Tailor all your advice to be flattering for this body type. For example, for a 'Pear' shape, you might suggest A-line cuts for the new item if it's a skirt, or for an 'Apple' shape, you might suggest empire waists. Your outfit suggestions and compatibility analysis must reflect this personalization.
+**User's Style DNA:**
+*   **Body Type:** ${bodyType}
+*   **Style Archetypes:** ${styleArchetypes.join(', ')}
+*   **Preferred Color Palettes:** ${colorPalettes.join(', ')}
+*   **Favorite Brands (for style inspiration):** ${favoriteBrands || 'Not specified'}
 
-Based on the provided images (the first image is the new item, the rest are from their existing wardrobe) and the user's body type, provide a detailed analysis.
+**Your Task:**
+Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape and perfectly aligned with their specified style archetypes and color preferences. Your outfit suggestions, compatibility analysis, and final verdict must reflect this deep level of personalization. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
 
 Your response MUST be a valid JSON object that adheres to the provided schema. Do not include any text, backticks, or markdown formatting before or after the JSON object.`;
         
@@ -89,12 +96,11 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
         const jsonText = textResponse.text.trim();
         const parsedJson = JSON.parse(jsonText);
         
-        // Generate an image for each outfit recommendation
         if (parsedJson.outfits && parsedJson.outfits.length > 0) {
             const imagePromises = parsedJson.outfits.map(async (outfit: { items: string[] }) => {
                 try {
                     const outfitDescription = outfit.items.join(', ');
-                    const imageGenPrompt = `Using the provided image as the main clothing item, build a complete outfit around it based on this description: ${outfitDescription}. Show the full outfit on a person with an '${bodyType}' body shape, photographed in a clean, minimalist style with a plain light-colored background.`;
+                    const imageGenPrompt = `Using the provided image as the main clothing item, build a complete outfit around it based on this description: ${outfitDescription}. Show the full outfit on a person with a '${bodyType}' body shape and a style that matches '${styleArchetypes.join(', ')}'. The photo should be in a clean, minimalist style with a plain light-colored background.`;
 
                     const imageResponse = await ai.models.generateContent({
                         model: 'gemini-2.5-flash-image-preview',
@@ -117,7 +123,7 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
                     return null;
                 } catch (imageError) {
                     console.error("Error generating an outfit image:", imageError);
-                    return null; // Return null if a specific image generation fails
+                    return null; 
                 }
             });
 
