@@ -23,24 +23,19 @@ interface HeaderProps {
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`flex items-center ${className}`}>
         <svg width="32" height="32" viewBox="0 0 100 100" className="mr-4 text-platinum" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <rect id="rect" x="10" y="10" width="80" height="80" />
-                <clipPath id="clip">
-                    <use xlinkHref="#rect"/>
-                </clipPath>
-            </defs>
-            <g clipPath="url(#clip)">
-                <circle cx="20" cy="20" r="8"/>
-                <circle cx="50" cy="20" r="8"/>
-                <circle cx="80" cy="20" r="8"/>
-                <circle cx="20" cy="50" r="8"/>
-                <circle cx="50" cy="50" r="8"/>
-                <circle cx="80" cy="50" r="8"/>
-                <circle cx="20" cy="80" r="8"/>
-                <circle cx="50" cy="80" r="8"/>
-                <circle cx="80" cy="80" r="8"/>
-                <line x1="10" y1="50" x2="90" y2="50" strokeWidth="10" stroke="#C2BEBA" transform="rotate(45, 50, 50)" />
-                <line x1="50" y1="10" x2="50" y2="90" strokeWidth="10" stroke="#C2BEBA" transform="rotate(45, 50, 50)" />
+            <g fill="currentColor" stroke="currentColor" strokeWidth="8" strokeLinecap="round">
+                <circle cx="20" cy="20" r="8" stroke="none"/>
+                <circle cx="50" cy="20" r="8" stroke="none"/>
+                <circle cx="80" cy="20" r="8" stroke="none"/>
+                <circle cx="20" cy="50" r="8" stroke="none"/>
+                <circle cx="50" cy="50" r="8" stroke="none"/>
+                <circle cx="80" cy="50" r="8" stroke="none"/>
+                <circle cx="20" cy="80" r="8" stroke="none"/>
+                <circle cx="50" cy="80" r="8" stroke="none"/>
+                <circle cx="80" cy="80" r="8" stroke="none"/>
+                <line x1="80" y1="20" x2="20" y2="80"/>
+                <line x1="20" y1="20" x2="42" y2="42"/>
+                <line x1="58" y1="58" x2="80" y2="80"/>
             </g>
         </svg>
         <div className="flex flex-col justify-center">
