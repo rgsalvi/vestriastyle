@@ -80,12 +80,9 @@ const Logo: React.FC<{ className?: string }> = ({ className }) => (
 
 
 const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
-  <header className="text-center p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
-    <div className="flex-1"></div>
-    <div className="flex-1 flex flex-col items-center">
-      <Logo className="h-16 w-auto" />
-    </div>
-    <div className="flex-1 flex justify-end items-center space-x-4 pr-4">
+  <header className="p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
+    <Logo className="h-24 w-auto" />
+    <div className="flex items-center space-x-4">
       {user ? (
         <div className="relative group">
           <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30" />

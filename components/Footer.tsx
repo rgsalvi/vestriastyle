@@ -93,40 +93,28 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
     return (
         <footer className="bg-dark-blue text-platinum/70 backdrop-blur-lg border-t border-platinum/20">
             <div className="container mx-auto px-4 md:px-8 py-12">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-                    {/* Company Info */}
-                    <div className="col-span-2 lg:col-span-2">
-                         <Logo className="h-10 w-auto" />
-                        <p className="mt-4 text-sm text-platinum/50 max-w-sm">
-                            Your wardrobe, intelligently styled.
-                        </p>
-                    </div>
+                <div className="flex flex-col items-center text-center">
+                    {/* Centered Logo and Tagline */}
+                    <Logo className="h-12 w-auto" />
+                    <p className="mt-4 text-sm text-platinum/50 max-w-sm">
+                        Your wardrobe, intelligently styled.
+                    </p>
 
-                    {/* Spacer */}
-                    <div className="hidden lg:block"></div>
-
-                    {/* Links */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-platinum tracking-wider uppercase">Legal</h3>
-                        <ul className="mt-4 space-y-2">
-                            <li><button onClick={onNavigateToPrivacy} className="text-sm text-left text-platinum/60 hover:text-white transition-colors">Privacy Policy</button></li>
-                            <li><button onClick={onNavigateToTerms} className="text-sm text-left text-platinum/60 hover:text-white transition-colors">Terms of Service</button></li>
-                        </ul>
-                    </div>
-
-                    {/* Social */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-platinum tracking-wider uppercase">Follow Us</h3>
-                        <div className="mt-4 flex space-x-4">
-                            <a href="https://www.instagram.com/vestria.style" target="_blank" rel="noopener noreferrer" className="text-platinum/60 hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon /></a>
-                            <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon /></a>
-                            <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="Pinterest"><PinterestIcon /></a>
-                        </div>
+                    {/* Social Links */}
+                    <div className="mt-8 flex justify-center space-x-6">
+                        <a href="https://www.instagram.com/vestria.style" target="_blank" rel="noopener noreferrer" className="text-platinum/60 hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon /></a>
+                        <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon /></a>
+                        <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="Pinterest"><PinterestIcon /></a>
                     </div>
                 </div>
 
                 {/* Bottom Bar */}
                 <div className="mt-12 pt-8 border-t border-platinum/20 text-center text-xs text-platinum/40">
+                    <div className="flex justify-center space-x-4 text-sm mb-4">
+                        <button onClick={onNavigateToPrivacy} className="text-platinum/60 hover:text-white transition-colors">Privacy Policy</button>
+                        <span className="text-platinum/40">|</span>
+                        <button onClick={onNavigateToTerms} className="text-platinum/60 hover:text-white transition-colors">Terms of Service</button>
+                    </div>
                     <p className="font-medium text-platinum/60">&copy; {new Date().getFullYear()} Gilded Technologies Pvt Ltd. All rights reserved.</p>
                 </div>
             </div>
