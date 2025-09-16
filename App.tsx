@@ -80,8 +80,15 @@ const Logo: React.FC<{ className?: string }> = ({ className }) => (
 
 
 const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
-  <header className="p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
+  <header className="relative p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
     <Logo className="h-24 w-auto" />
+
+    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:block pointer-events-none">
+        <p className="text-center text-sm font-mono text-platinum/60 tracking-widest uppercase">
+            Every wardrobe hides a world. Open yours with Vestria Style.
+        </p>
+    </div>
+
     <div className="flex items-center space-x-4">
       {user ? (
         <div className="relative group">
@@ -360,10 +367,6 @@ const App: React.FC = () => {
           <>
             <main className="container mx-auto p-4 md:p-8">
               <div className="space-y-12">
-                <div className="text-center">
-                  <h2 className="text-3xl font-semibold text-platinum tracking-[0.2em] uppercase">Style Analysis</h2>
-                  <p className="mt-3 text-lg text-platinum/60">Every wardrobe hides a world. Open yours with Vestria Style.</p>
-                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                   <div className="space-y-8">
                     <ImageUploader
