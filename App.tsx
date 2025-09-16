@@ -5,6 +5,7 @@ import { BodyTypeSelector } from './components/BodyTypeSelector';
 import { StyleRecipes } from './components/StyleRecipes';
 import { WardrobeManager } from './components/WardrobeManager';
 import { WardrobeInput } from './components/WardrobeInput';
+import { Footer } from './components/Footer';
 import { getStyleAdvice } from './services/geminiService';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem } from './types';
 
@@ -170,57 +171,60 @@ const App: React.FC = () => {
   }, [newItem, wardrobeItems, bodyType, managedWardrobe]);
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <Header />
-      <main className="container mx-auto p-4 md:p-8">
-        <div className="space-y-12">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Style Analysis</h2>
-            <p className="mt-2 text-lg text-slate-500">Get instant feedback on a new item.</p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            <div className="space-y-8">
-              <ImageUploader
-                title="1. Upload New Item"
-                description="Select a single image of an item you're thinking of buying."
-                onFilesSelect={handleNewItemSelect}
-                multiple={false}
-              />
-              <WardrobeInput 
-                managedWardrobe={managedWardrobe}
-                onAnalysisItemsChange={setWardrobeItems}
-                maxFiles={5}
-              />
-              <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
-               <div className="p-4 bg-white/60 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50">
-                {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
-                <button
-                  onClick={handleGetAdvice}
-                  disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None'}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-bold py-4 px-4 rounded-full shadow-lg shadow-purple-500/20 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/30 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-lg disabled:shadow-slate-400/20 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-purple-500/50"
-                >
-                  {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
-                </button>
+    <div className="min-h-screen bg-slate-100 flex flex-col">
+      <div className="flex-grow">
+        <Header />
+        <main className="container mx-auto p-4 md:p-8">
+          <div className="space-y-12">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Style Analysis</h2>
+              <p className="mt-2 text-lg text-slate-500">Get instant feedback on a new item.</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <div className="space-y-8">
+                <ImageUploader
+                  title="1. Upload New Item"
+                  description="Select a single image of an item you're thinking of buying."
+                  onFilesSelect={handleNewItemSelect}
+                  multiple={false}
+                />
+                <WardrobeInput 
+                  managedWardrobe={managedWardrobe}
+                  onAnalysisItemsChange={setWardrobeItems}
+                  maxFiles={5}
+                />
+                <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
+                <div className="p-4 bg-white/60 backdrop-blur-lg rounded-2xl shadow-lg border border-white/50">
+                  {error && <p className="text-red-500 text-center mb-4 font-medium">{error}</p>}
+                  <button
+                    onClick={handleGetAdvice}
+                    disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None'}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white font-bold py-4 px-4 rounded-full shadow-lg shadow-purple-500/20 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/30 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-lg disabled:shadow-slate-400/20 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-purple-500/50"
+                  >
+                    {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
+                  </button>
+                </div>
+              </div>
+              <div className="lg:sticky lg:top-28">
+                <RecommendationDisplay
+                  recommendation={recommendation}
+                  isLoading={isLoading}
+                  unsavedItems={unsavedItemsFromAnalysis}
+                  onSaveUnsavedItems={handleSaveUnsavedItems}
+                />
               </div>
             </div>
-            <div className="lg:sticky lg:top-28">
-              <RecommendationDisplay
-                recommendation={recommendation}
-                isLoading={isLoading}
-                unsavedItems={unsavedItemsFromAnalysis}
-                onSaveUnsavedItems={handleSaveUnsavedItems}
-              />
-            </div>
           </div>
-        </div>
-      </main>
-      <WardrobeManager 
-        items={managedWardrobe}
-        onAddItems={handleAddItemsToWardrobe}
-        onSaveItem={handleSaveWardrobeItem}
-        onDeleteItem={handleDeleteWardrobeItem}
-      />
-      <StyleRecipes />
+        </main>
+        <WardrobeManager 
+          items={managedWardrobe}
+          onAddItems={handleAddItemsToWardrobe}
+          onSaveItem={handleSaveWardrobeItem}
+          onDeleteItem={handleDeleteWardrobeItem}
+        />
+        <StyleRecipes />
+      </div>
+      <Footer />
     </div>
   );
 };
