@@ -26,28 +26,61 @@ const PinterestIcon: React.FC<{className?: string}> = ({className}) => (
 );
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
-    <div className={`flex items-center ${className}`}>
-        <svg width="24" height="24" viewBox="0 0 100 100" className="mr-3 text-platinum" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <g fill="currentColor" stroke="currentColor" strokeWidth="8" strokeLinecap="round">
-                <circle cx="20" cy="20" r="8" stroke="none"/>
-                <circle cx="50" cy="20" r="8" stroke="none"/>
-                <circle cx="80" cy="20" r="8" stroke="none"/>
-                <circle cx="20" cy="50" r="8" stroke="none"/>
-                <circle cx="50" cy="50" r="8" stroke="none"/>
-                <circle cx="80" cy="50" r="8" stroke="none"/>
-                <circle cx="20" cy="80" r="8" stroke="none"/>
-                <circle cx="50" cy="80" r="8" stroke="none"/>
-                <circle cx="80" cy="80" r="8" stroke="none"/>
-                <line x1="80" y1="20" x2="20" y2="80"/>
-                <line x1="20" y1="20" x2="42" y2="42"/>
-                <line x1="58" y1="58" x2="80" y2="80"/>
+    <svg
+        viewBox="0 0 400 280"
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+        aria-label="Vestria Style Logo"
+    >
+        <g fill="#C2BEBA">
+            {/* Symbol */}
+            <g transform="translate(150 0) scale(1)">
+                <g stroke="#C2BEBA" strokeWidth="8" strokeLinecap="round">
+                    <circle cx="20" cy="20" r="8" stroke="none"/>
+                    <circle cx="50" cy="20" r="8" stroke="none"/>
+                    <circle cx="80" cy="20" r="8" stroke="none"/>
+                    <circle cx="20" cy="50" r="8" stroke="none"/>
+                    <circle cx="50" cy="50" r="8" stroke="none"/>
+                    <circle cx="80" cy="50" r="8" stroke="none"/>
+                    <circle cx="20" cy="80" r="8" stroke="none"/>
+                    <circle cx="50" cy="80" r="8" stroke="none"/>
+                    <circle cx="80" cy="80" r="8" stroke="none"/>
+                    <line x1="80" y1="20" x2="20" y2="80"/>
+                    <line x1="20" y1="20" x2="42" y2="42"/>
+                    <line x1="58" y1="58" x2="80" y2="80"/>
+                </g>
             </g>
-        </svg>
-        <div className="flex flex-col justify-center">
-            <span className="text-xl font-semibold tracking-[0.2em] text-platinum leading-none">VESTRIA</span>
-            <span className="block text-[10px] font-mono tracking-[0.3em] text-platinum/70 mt-1">STYLE</span>
-        </div>
-    </div>
+            {/* VESTRIA */}
+            <text
+                x="50%"
+                y="185"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="#C2BEBA"
+                fontSize="80"
+                fontFamily="Inter, sans-serif"
+                fontWeight="600"
+                letterSpacing="0.1em"
+                stroke="none"
+            >
+                VESTRIA
+            </text>
+            {/* STYLE */}
+            <text
+                x="50%"
+                y="245"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="#C2BEBA"
+                fontSize="36"
+                fontFamily="Space Grotesk, monospace"
+                letterSpacing="0.2em"
+                stroke="none"
+            >
+                STYLE
+            </text>
+        </g>
+    </svg>
 );
 
 
@@ -63,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
                     {/* Company Info */}
                     <div className="col-span-2 lg:col-span-2">
-                         <Logo />
+                         <Logo className="h-10 w-auto" />
                         <p className="mt-4 text-sm text-platinum/50 max-w-sm">
                             Your wardrobe, intelligently styled.
                         </p>
@@ -85,7 +118,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
                     <div>
                         <h3 className="text-sm font-semibold text-platinum tracking-wider uppercase">Follow Us</h3>
                         <div className="mt-4 flex space-x-4">
-                            <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon /></a>
+                            <a href="https://www.instagram.com/vestria.style" target="_blank" rel="noopener noreferrer" className="text-platinum/60 hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon /></a>
                             <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon /></a>
                             <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="Pinterest"><PinterestIcon /></a>
                         </div>

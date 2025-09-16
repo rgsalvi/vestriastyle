@@ -21,35 +21,69 @@ interface HeaderProps {
 }
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
-    <div className={`flex items-center ${className}`}>
-        <svg width="32" height="32" viewBox="0 0 100 100" className="mr-4 text-platinum" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <g fill="currentColor" stroke="currentColor" strokeWidth="8" strokeLinecap="round">
-                <circle cx="20" cy="20" r="8" stroke="none"/>
-                <circle cx="50" cy="20" r="8" stroke="none"/>
-                <circle cx="80" cy="20" r="8" stroke="none"/>
-                <circle cx="20" cy="50" r="8" stroke="none"/>
-                <circle cx="50" cy="50" r="8" stroke="none"/>
-                <circle cx="80" cy="50" r="8" stroke="none"/>
-                <circle cx="20" cy="80" r="8" stroke="none"/>
-                <circle cx="50" cy="80" r="8" stroke="none"/>
-                <circle cx="80" cy="80" r="8" stroke="none"/>
-                <line x1="80" y1="20" x2="20" y2="80"/>
-                <line x1="20" y1="20" x2="42" y2="42"/>
-                <line x1="58" y1="58" x2="80" y2="80"/>
+    <svg
+        viewBox="0 0 400 280"
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+        aria-label="Vestria Style Logo"
+    >
+        <g fill="#C2BEBA">
+            {/* Symbol */}
+            <g transform="translate(150 0) scale(1)">
+                <g stroke="#C2BEBA" strokeWidth="8" strokeLinecap="round">
+                    <circle cx="20" cy="20" r="8" stroke="none"/>
+                    <circle cx="50" cy="20" r="8" stroke="none"/>
+                    <circle cx="80" cy="20" r="8" stroke="none"/>
+                    <circle cx="20" cy="50" r="8" stroke="none"/>
+                    <circle cx="50" cy="50" r="8" stroke="none"/>
+                    <circle cx="80" cy="50" r="8" stroke="none"/>
+                    <circle cx="20" cy="80" r="8" stroke="none"/>
+                    <circle cx="50" cy="80" r="8" stroke="none"/>
+                    <circle cx="80" cy="80" r="8" stroke="none"/>
+                    <line x1="80" y1="20" x2="20" y2="80"/>
+                    <line x1="20" y1="20" x2="42" y2="42"/>
+                    <line x1="58" y1="58" x2="80" y2="80"/>
+                </g>
             </g>
-        </svg>
-        <div className="flex flex-col justify-center">
-            <span className="text-2xl font-semibold tracking-[0.2em] text-platinum leading-none">VESTRIA</span>
-            <span className="block text-xs font-mono tracking-[0.35em] text-platinum/70 mt-1">STYLE</span>
-        </div>
-    </div>
+            {/* VESTRIA */}
+            <text
+                x="50%"
+                y="185"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="#C2BEBA"
+                fontSize="80"
+                fontFamily="Inter, sans-serif"
+                fontWeight="600"
+                letterSpacing="0.1em"
+                stroke="none"
+            >
+                VESTRIA
+            </text>
+            {/* STYLE */}
+            <text
+                x="50%"
+                y="245"
+                dominantBaseline="middle"
+                textAnchor="middle"
+                fill="#C2BEBA"
+                fontSize="36"
+                fontFamily="Space Grotesk, monospace"
+                letterSpacing="0.2em"
+                stroke="none"
+            >
+                STYLE
+            </text>
+        </g>
+    </svg>
 );
+
 
 const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn }) => (
   <header className="text-center p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
     <div className="flex-1"></div>
     <div className="flex-1 flex flex-col items-center">
-      <Logo />
+      <Logo className="h-12 w-auto" />
     </div>
     <div className="flex-1 flex justify-end items-center space-x-4 pr-4">
       {user ? (
