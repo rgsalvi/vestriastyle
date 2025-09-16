@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.prose h1 {
+    @apply text-3xl font-bold text-slate-900 tracking-tight mb-4;
+}
+
+.prose h2 {
+    @apply text-2xl font-semibold text-slate-800 tracking-tight mt-8 mb-4 border-b border-slate-200 pb-2;
+}
+
+.prose p {
+    @apply text-base text-slate-700 leading-relaxed mb-4;
+}
+
+.prose ul {
+    @apply list-disc list-inside space-y-2 mb-4 pl-4;
+}
+
+.prose li {
+    @apply text-slate-700;
+}
+
+.prose a {
+    @apply text-purple-600 underline hover:text-purple-800;
+}
+
+.prose strong {
+    @apply font-semibold text-slate-800;
+}

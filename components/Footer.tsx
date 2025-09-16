@@ -25,8 +25,12 @@ const PinterestIcon: React.FC<{className?: string}> = ({className}) => (
     </svg>
 );
 
+interface FooterProps {
+    onNavigateToPrivacy: () => void;
+    onNavigateToTerms: () => void;
+}
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateToTerms }) => {
     return (
         <footer className="bg-slate-900/95 text-slate-300 backdrop-blur-lg border-t border-slate-700/50">
             <div className="container mx-auto px-4 md:px-8 py-12">
@@ -48,8 +52,8 @@ export const Footer: React.FC = () => {
                     <div>
                         <h3 className="text-sm font-semibold text-slate-100 tracking-wider uppercase">Legal</h3>
                         <ul className="mt-4 space-y-2">
-                            <li><a href="#" className="text-sm text-slate-400 hover:text-white transition-colors">Privacy Policy</a></li>
-                            <li><a href="#" className="text-sm text-slate-400 hover:text-white transition-colors">Terms of Service</a></li>
+                            <li><button onClick={onNavigateToPrivacy} className="text-sm text-left text-slate-400 hover:text-white transition-colors">Privacy Policy</button></li>
+                            <li><button onClick={onNavigateToTerms} className="text-sm text-left text-slate-400 hover:text-white transition-colors">Terms of Service</button></li>
                         </ul>
                     </div>
 
