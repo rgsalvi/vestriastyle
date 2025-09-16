@@ -65,7 +65,7 @@ export const StyleRecipes: React.FC = () => {
 
                     <div className="my-10 max-w-2xl mx-auto p-6 bg-dark-blue/80 rounded-2xl border border-platinum/20 text-center shadow-lg">
                         <h3 className="text-xl font-semibold text-platinum">Ready to bring these recipes to life?</h3>
-                        <p className="mt-2 text-platinum/60">Chat live with a professional stylist to see how you can adapt these formulas to your unique wardrobe and body type.</p>
+                        <p className="mt-2 text-platinum/60">Chat live with a professional stylist to see how you can adapt these to your unique wardrobe and body type.</p>
                         <button
                             onClick={() => setIsUpsellModalOpen(true)}
                             className="mt-4 inline-flex items-center justify-center text-sm font-semibold py-2 px-5 rounded-full bg-platinum hover:bg-platinum/90 text-dark-blue transition-colors duration-200"
