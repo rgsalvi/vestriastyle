@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { AiResponse, Outfit, AnalysisItem } from '../types';
 import { editOutfitImage } from '../services/geminiService';
+import { PremiumUpsellModal } from './PremiumUpsellModal';
 
 interface RecommendationDisplayProps {
   recommendation: AiResponse | null;
@@ -56,6 +57,12 @@ const WandIcon: React.FC = () => (
     </svg>
 );
 
+const ChatIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
+    </svg>
+);
+
 
 interface OutfitCarouselProps {
     outfits: Outfit[];
@@ -69,6 +76,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
     const [editText, setEditText] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isUpsellModalOpen, setIsUpsellModalOpen] = useState(false);
 
     const goToPrevious = () => {
         setActiveIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
@@ -110,6 +118,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
     const currentOutfit = outfits[activeIndex];
 
     return (
+      <>
       <div className="space-y-4">
           <div className="relative">
               <div className="rounded-2xl overflow-hidden shadow-lg border border-platinum/20 aspect-square">
@@ -144,7 +153,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                             type="text"
                             value={editText}
                             onChange={(e) => setEditText(e.target.value)}
-                            placeholder="e.g., 'Remove the jacket'"
+                            placeholder="e.g., 'Change the shoes to sneakers'"
                             className="block w-full shadow-sm sm:text-sm bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50"
                             aria-label="Edit outfit prompt"
                         />
@@ -162,13 +171,23 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                         </div>
                     </div>
                 ) : (
-                    <button
-                        onClick={handleRefineClick}
-                        className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum transition-colors duration-200 ring-1 ring-platinum/20"
-                    >
-                        <WandIcon />
-                        Refine Outfit
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={handleRefineClick}
+                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum transition-colors duration-200 ring-1 ring-platinum/20"
+                        >
+                            <WandIcon />
+                            Refine Outfit
+                        </button>
+                        <button
+                            onClick={() => setIsUpsellModalOpen(true)}
+                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum hover:bg-platinum/90 text-dark-blue transition-colors duration-200"
+                        >
+                            <ChatIcon />
+                            Chat with a Stylist
+                            <span className="ml-1.5 inline-block bg-dark-blue text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">PRO</span>
+                        </button>
+                    </div>
                 )}
             </div>
           </div>
@@ -181,6 +200,8 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
               </div>
           )}
       </div>
+      {isUpsellModalOpen && <PremiumUpsellModal onClose={() => setIsUpsellModalOpen(false)} />}
+      </>
     );
 }
 
