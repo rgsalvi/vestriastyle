@@ -17,7 +17,7 @@ const responseSchema = {
         },
         outfits: {
             type: Type.ARRAY,
-            description: 'Suggest 2-3 specific, complete outfit combinations using the new item and items from the existing wardrobe that would be flattering for the user\'s body type.',
+            description: 'Suggest 2-3 specific, complete outfit combinations using the new item and items from the existing wardrobe. Each outfit MUST include specific suggestions for footwear and at least one accessory (e.g., bag, jewelry, scarf). The outfits must be flattering for the user\'s body type.',
             items: {
                 type: Type.OBJECT,
                 properties: {
@@ -27,7 +27,7 @@ const responseSchema = {
                     },
                     items: {
                         type: Type.ARRAY,
-                        description: 'A list of items that make up this outfit, describing them based on the images.',
+                        description: 'A list of items that make up this outfit, describing them based on the images. This list MUST include specific footwear and at least one accessory.',
                         items: { type: Type.STRING },
                     },
                 },
@@ -72,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 *   **Favorite Brands (for style inspiration):** ${favoriteBrands || 'Not specified'}
 
 **Your Task:**
-Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape and perfectly aligned with their specified style archetypes and color preferences. Your outfit suggestions, compatibility analysis, and final verdict must reflect this deep level of personalization. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
+Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape and perfectly aligned with their specified style archetypes and color preferences. When creating outfit suggestions, you MUST include specific recommendations for both footwear and accessories (like a bag, jewelry, or belt) to create a complete look. Your outfit suggestions, compatibility analysis, and final verdict must reflect this deep level of personalization. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
 
 Your response MUST be a valid JSON object that adheres to the provided schema. Do not include any text, backticks, or markdown formatting before or after the JSON object.`;
         } else {
@@ -82,7 +82,7 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
 *   **Body Type:** ${bodyType}
 
 **Your Task:**
-Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape. Your outfit suggestions, compatibility analysis, and final verdict must focus on this. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
+Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape. When creating outfit suggestions, you MUST include specific recommendations for both footwear and accessories (like a bag, jewelry, or belt) to create a complete look. Your outfit suggestions, compatibility analysis, and final verdict must focus on this. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
 
 Your response MUST be a valid JSON object that adheres to the provided schema. Do not include any text, backticks, or markdown formatting before or after the JSON object.`;
         }
