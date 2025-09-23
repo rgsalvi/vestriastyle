@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { AiResponse, Outfit, AnalysisItem, User } from '../types';
 import { editOutfitImage } from '../services/geminiService';
@@ -153,10 +154,6 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                       className="w-full h-full object-cover transition-opacity duration-300"
                       key={activeIndex}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none"></div>
-                  <div className="absolute bottom-4 left-4 right-4 text-white">
-                     <h4 className="font-semibold text-lg drop-shadow-md">{currentOutfit.title}</h4>
-                  </div>
               </div>
               {images.length > 1 && (
                   <>
@@ -171,7 +168,8 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
           </div>
           
           <div className="text-center">
-            <p className="text-sm text-platinum/60">Items: {currentOutfit.items.join(', ')}</p>
+            <h4 className="font-semibold text-lg text-platinum">{currentOutfit.title}</h4>
+            <p className="text-sm text-platinum/60 mt-1">Items: {currentOutfit.items.join(', ')}</p>
           </div>
 
           {editingIndex === activeIndex ? (
@@ -246,8 +244,8 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
 
             {!isLoading && recommendation && (
                 <div className="p-4 md:p-6 space-y-4">
-                    <div className={`p-4 rounded-xl text-center ${recommendation.verdict.includes('great') ? 'bg-green-900/40 text-green-300' : 'bg-orange-900/40 text-orange-300'} ring-1 ${recommendation.verdict.includes('great') ? 'ring-green-300/30' : 'ring-orange-300/30'}`}>
-                        <p className="font-semibold text-lg">{recommendation.verdict.replace('Verdict: ', '')}</p>
+                    <div className={`p-4 rounded-xl text-center ${recommendation.verdict.includes('great') ? 'bg-platinum/10 text-platinum ring-1 ring-platinum/40' : 'bg-black/20 text-platinum/70 ring-1 ring-platinum/20'}`}>
+                        <p className="font-semibold text-lg uppercase tracking-wider">{recommendation.verdict.replace('Verdict: ', '')}</p>
                     </div>
 
                     <p className="text-base text-platinum/80">{recommendation.compatibility}</p>
