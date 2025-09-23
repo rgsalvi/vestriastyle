@@ -150,7 +150,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                   <img
                       src={`data:image/png;base64,${images[activeIndex]}`}
                       alt={`AI-generated visualization for ${currentOutfit.title}`}
-                      className="w-full h-full object-cover transition-opacity duration-300"
+                      className="w-full h-full object-contain transition-opacity duration-300"
                       key={activeIndex}
                   />
               </div>
