@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { User, AiResponse, ChatMessage } from '../types';
 import { initiateChatSession } from '../services/geminiService';
@@ -29,7 +30,7 @@ const Spinner: React.FC = () => (
 
 export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [connectionState, setConnectionState] = useState<'initializing' | 'connecting' | 'connected' | 'failed'>('initializing');
     const [error, setError] = useState<string | null>(null);
     const [stylist, setStylist] = useState<{ name: string; title: string; avatarUrl: string } | null>(null);
     const [input, setInput] = useState('');
@@ -42,9 +43,10 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     useEffect(() => {
         const setupChat = async () => {
             if (isOpen && analysisContext && user) {
-                setIsLoading(true);
+                setConnectionState('initializing');
                 setError(null);
                 setMessages([]);
+                setStylist(null);
 
                 try {
                     const sessionData = await initiateChatSession(analysisContext, user);
@@ -57,53 +59,64 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     const client = new Client(sessionData.token);
                     clientRef.current = client;
 
-                    await new Promise<void>((resolve, reject) => {
-                        client.on('connectionStateChanged', (state) => {
-                            if (state === 'connected') {
-                                resolve();
-                            } else if (state === 'disconnected') {
-                                reject(new Error('Twilio client disconnected.'));
-                            }
-                        });
-                        // Timeout for connection
-                        setTimeout(() => reject(new Error("Connection to Twilio timed out.")), 10000);
-                    });
-                    
-                    const conversation = await client.getConversationBySid(sessionData.conversationSid);
-                    conversationRef.current = conversation;
+                    client.on('connectionStateChanged', async (state) => {
+                        switch (state) {
+                            case 'connecting':
+                                setConnectionState('connecting');
+                                break;
+                            case 'connected':
+                                const conversation = await client.getConversationBySid(sessionData.conversationSid);
+                                conversationRef.current = conversation;
+                                
+                                const twilioMessages = await conversation.getMessages();
+                                const formattedMessages: ChatMessage[] = twilioMessages.items.map(msg => ({
+                                    id: msg.sid,
+                                    sender: msg.author === user.id ? 'user' : (msg.author === 'system' ? 'system' : 'stylist'),
+                                    text: msg.body ?? '',
+                                    timestamp: msg.dateCreated.toISOString(),
+                                }));
+                                setMessages(formattedMessages);
 
-                    const twilioMessages = await conversation.getMessages();
-                    const formattedMessages: ChatMessage[] = twilioMessages.items.map(msg => ({
-                        id: msg.sid,
-                        sender: msg.author === user.id ? 'user' : (msg.author === 'system' ? 'system' : 'stylist'),
-                        text: msg.body ?? '',
-                        timestamp: msg.dateCreated.toISOString(),
-                    }));
-                    
-                    setMessages(formattedMessages);
-                    setIsLoading(false);
+                                conversation.on('messageAdded', (message: Message) => {
+                                    setMessages(prev => [...prev, {
+                                        id: message.sid,
+                                        sender: message.author === user.id ? 'user' : 'stylist',
+                                        text: message.body ?? '',
+                                        timestamp: message.dateCreated.toISOString(),
+                                    }]);
+                                });
+                                
+                                conversation.on('typingStarted', (participant) => {
+                                    if (participant.identity !== user.id) setIsStylistTyping(true);
+                                });
+                                
+                                conversation.on('typingEnded', (participant) => {
+                                     if (participant.identity !== user.id) setIsStylistTyping(false);
+                                });
+                                
+                                setConnectionState('connected');
+                                break;
+                            case 'disconnecting':
+                            case 'disconnected':
+                                // You might want to handle reconnection logic here
+                                break;
+                            case 'denied':
+                                setConnectionState('failed');
+                                setError('Connection denied. The chat token might be invalid or expired.');
+                                break;
+                        }
+                    });
 
-                    conversation.on('messageAdded', (message: Message) => {
-                        setMessages(prev => [...prev, {
-                            id: message.sid,
-                            sender: message.author === user.id ? 'user' : 'stylist',
-                            text: message.body ?? '',
-                            timestamp: message.dateCreated.toISOString(),
-                        }]);
-                    });
-                    
-                    conversation.on('typingStarted', (participant) => {
-                        if (participant.identity !== user.id) setIsStylistTyping(true);
-                    });
-                    
-                    conversation.on('typingEnded', (participant) => {
-                         if (participant.identity !== user.id) setIsStylistTyping(false);
+                    client.on('connectionError', (error) => {
+                        console.error('Twilio Connection Error:', error);
+                        setConnectionState('failed');
+                        setError(`Connection failed: ${error.message}`);
                     });
 
                 } catch (err) {
                     console.error("Error setting up chat:", err);
                     setError(err instanceof Error ? err.message : 'Could not connect to the stylist service.');
-                    setIsLoading(false);
+                    setConnectionState('failed');
                 }
             }
         };
@@ -111,7 +124,10 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         setupChat();
 
         return () => {
-            clientRef.current?.shutdown();
+            if (clientRef.current) {
+                clientRef.current.shutdown();
+                clientRef.current = null;
+            }
             conversationRef.current = null;
         };
 
@@ -132,6 +148,8 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
       setInput(e.target.value);
       conversationRef.current?.typing();
     }
+    
+    const isLoading = connectionState !== 'connected' && connectionState !== 'failed';
 
     if (!isOpen) return null;
 
@@ -160,11 +178,12 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-full text-center">
                             <Spinner />
-                            <p className="mt-4 text-platinum/80">Connecting you to a stylist...</p>
+                            <p className="mt-4 text-platinum/80 capitalize">{connectionState}...</p>
                         </div>
                     ) : error ? (
                          <div className="flex flex-col items-center justify-center h-full text-center">
-                            <p className="text-red-400">{error}</p>
+                            <p className="text-red-400 font-semibold">Connection Error</p>
+                            <p className="text-red-400/80 mt-1 text-sm">{error}</p>
                          </div>
                     ) : (
                         messages.map(msg => (
