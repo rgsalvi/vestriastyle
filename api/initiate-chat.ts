@@ -17,11 +17,29 @@ const client = twilio(twilioApiKey, twilioApiSecret, { accountSid: twilioAccount
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 
-// Single source of truth for stylist information, including their unique ID.
+// Single source of truth for stylist information, including their unique ID and bio.
 const availableStylists = [
-    { id: 'tanvi_sankhe', name: 'Tanvi Sankhe', title: 'Lead Stylist', avatarUrl: 'https://picsum.photos/seed/tanvi/100/100' },
-    { id: 'muskaan_datt', name: 'Muskaan Datt', title: 'Senior Stylist', avatarUrl: 'https://picsum.photos/seed/muskaan/100/100' },
-    { id: 'riddhi_jogani', name: 'Riddhi Jogani', title: 'Stylist', avatarUrl: 'https://picsum.photos/seed/riddhi/100/100' },
+    { 
+        id: 'tanvi_sankhe', 
+        name: 'Tanvi Sankhe', 
+        title: 'Lead Stylist', 
+        avatarUrl: 'https://picsum.photos/seed/tanvi/100/100',
+        bio: 'With over 10 years in the fashion industry, Tanvi specializes in creating timeless, elegant wardrobes that blend classic silhouettes with modern trends. She believes in the power of a well-curated closet to inspire confidence every day.'
+    },
+    { 
+        id: 'muskaan_datt', 
+        name: 'Muskaan Datt', 
+        title: 'Senior Stylist', 
+        avatarUrl: 'https://picsum.photos/seed/muskaan/100/100',
+        bio: 'Muskaan has a keen eye for streetwear and contemporary fashion. She loves helping clients express their unique personality through bold colors, exciting textures, and the latest must-have pieces.'
+    },
+    { 
+        id: 'riddhi_jogani', 
+        name: 'Riddhi Jogani', 
+        title: 'Stylist', 
+        avatarUrl: 'https://picsum.photos/seed/riddhi/100/100',
+        bio: 'Riddhi is passionate about sustainable and minimalist fashion. Her approach focuses on building versatile, high-quality capsule wardrobes that are both stylish and eco-conscious.'
+    },
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -84,7 +102,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             stylist: {
                 name: assignedStylist.name,
                 title: assignedStylist.title,
-                avatarUrl: assignedStylist.avatarUrl
+                avatarUrl: assignedStylist.avatarUrl,
+                bio: assignedStylist.bio
             },
         });
 

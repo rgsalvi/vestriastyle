@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { User, AiResponse, ChatMessage, AnalysisItem } from '../types';
 import { initiateChatSession } from '../services/geminiService';
 import { Client, Conversation, Message } from '@twilio/conversations';
-import Video, { Room, LocalTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
+// Fix: Import specific LocalVideoTrack and LocalAudioTrack types to resolve method errors.
+import Video, { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
 
 // ... (Icon components remain the same)
 const CloseIcon: React.FC = () => (
@@ -17,7 +18,7 @@ const SendIcon: React.FC = () => (
 );
 const AttachIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.497a1.5 1.5 0 012.121-2.121l-1.414-1.414a.5.5 0 00-.707.707l1.414 1.414a2.5 2.5 0 01-3.536 3.536l-.496.496a4 4 0 01-5.657-5.657l7-7a4 4 0 015.657 5.657h-.001l-.496.497a2.5 2.5 0 01-3.536-3.536l1.414-1.414a.5.5 0 00.707-.707l-1.414-1.414a1.5 1.5 0 01-2.121 2.121l.497.497a3 3 0 004.242 0z" clipRule="evenodd" />
+      <path fillRule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.497a1.5 1.5 0 012.121-2.121l-1.414-1.414a.5.5 0 00-.707.707l1.414 1.414a2.5 2.5 0 01-3.536 3.536l-.496.496a4 4 0 01-5.657-5.657l7-7a4 4 0 015.657 5.657h-.001l-.496.497a2.5 2.5 0 01-3.536-3.536l1.414-1.414a.5.5 Svg 00.707-.707l-1.414-1.414a1.5 1.5 0 01-2.121 2.121l.497.497a3 3 0 004.242 0z" clipRule="evenodd" />
     </svg>
 );
 const Spinner: React.FC = () => (
@@ -100,15 +101,17 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [connectionState, setConnectionState] = useState<'initializing' | 'connecting' | 'connected' | 'failed'>('initializing');
     const [error, setError] = useState<string | null>(null);
-    const [stylist, setStylist] = useState<{ name: string; title: string; avatarUrl: string } | null>(null);
+    const [stylist, setStylist] = useState<{ name: string; title: string; avatarUrl: string; bio?: string; } | null>(null);
     const [input, setInput] = useState('');
     const [isStylistTyping, setIsStylistTyping] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
     
     // New state for video
     const [videoRoom, setVideoRoom] = useState<Room | null>(null);
     const [isConnectingVideo, setIsConnectingVideo] = useState(false);
-    const [localVideoTrack, setLocalVideoTrack] = useState<LocalTrack | null>(null);
-    const [localAudioTrack, setLocalAudioTrack] = useState<LocalTrack | null>(null);
+    // Fix: Use specific LocalVideoTrack and LocalAudioTrack types.
+    const [localVideoTrack, setLocalVideoTrack] = useState<LocalVideoTrack | null>(null);
+    const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<any>(null); // RemoteAudioTrack
     const [isMuted, setIsMuted] = useState(false);
 
@@ -231,8 +234,9 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
             // 2. Create local tracks (video and audio)
             const tracks = await createLocalTracks({ audio: true, video: { width: 640 } });
-            const videoTrack = tracks.find(t => t.kind === 'video') as LocalTrack;
-            const audioTrack = tracks.find(t => t.kind === 'audio') as LocalTrack;
+            // Fix: Cast to the specific track types to access their methods.
+            const videoTrack = tracks.find(t => t.kind === 'video') as LocalVideoTrack;
+            const audioTrack = tracks.find(t => t.kind === 'audio') as LocalAudioTrack;
             setLocalVideoTrack(videoTrack);
             setLocalAudioTrack(audioTrack);
 
@@ -317,7 +321,34 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             <div className="fixed inset-0" onClick={handleClose} aria-hidden="true"></div>
             <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col z-10 border border-platinum/20">
                 <header className="flex-shrink-0 p-4 flex justify-between items-center border-b border-platinum/20">
-                    {/* ... (header content) */}
+                    {stylist ? (
+                        <div className="relative flex items-center space-x-3">
+                            <img src={stylist.avatarUrl} alt={stylist.name} className="w-10 h-10 rounded-full border-2 border-platinum/20" />
+                            <div>
+                                <p className="font-semibold text-platinum">{stylist.name}</p>
+                                <p className="text-xs text-platinum/60">{stylist.title}</p>
+                            </div>
+                            {stylist.bio && (
+                                <button onClick={() => setIsProfileOpen(prev => !prev)} className="ml-1 text-platinum/50 hover:text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                                </button>
+                            )}
+                            {isProfileOpen && stylist.bio && (
+                                <div className="absolute top-full left-0 mt-2 w-72 bg-[#121826] rounded-xl shadow-lg p-4 z-20 border border-platinum/20 animate-fade-in">
+                                    <div className="flex items-center space-x-3 mb-3">
+                                        <img src={stylist.avatarUrl} alt={stylist.name} className="w-12 h-12 rounded-full" />
+                                        <div>
+                                            <p className="font-bold text-platinum">{stylist.name}</p>
+                                            <p className="text-sm text-platinum/70">{stylist.title}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-platinum/80 leading-relaxed">{stylist.bio}</p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="h-10"></div> // Placeholder
+                    )}
                     <button onClick={handleClose} className="text-platinum/60 hover:text-white transition-colors" aria-label="Close chat">
                         <CloseIcon />
                     </button>

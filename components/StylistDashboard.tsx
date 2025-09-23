@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Client, Conversation, Message, Participant } from '@twilio/conversations';
-import Video, { Room, LocalTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
+// Fix: Import specific LocalAudioTrack type to resolve method errors.
+import Video, { Room, LocalAudioTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
 
 // ... (STYLISTS array and icons remain the same)
 const STYLISTS = [
@@ -118,7 +119,8 @@ export const StylistDashboard: React.FC = () => {
     // New video state
     const [videoRoom, setVideoRoom] = useState<Room | null>(null);
     const [isConnectingVideo, setIsConnectingVideo] = useState(false);
-    const [localAudioTrack, setLocalAudioTrack] = useState<LocalTrack | null>(null);
+    // Fix: Use specific LocalAudioTrack type.
+    const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
     const [remoteVideoTrack, setRemoteVideoTrack] = useState<any>(null); // RemoteVideoTrack
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<any>(null); // RemoteAudioTrack
     const [isMuted, setIsMuted] = useState(false);
@@ -185,7 +187,8 @@ export const StylistDashboard: React.FC = () => {
             
             // CRITICAL: Request audio only for stylist
             const tracks = await createLocalTracks({ audio: true, video: false });
-            const audioTrack = tracks.find(t => t.kind === 'audio') as LocalTrack;
+            // Fix: Cast to the specific track type to access its methods.
+            const audioTrack = tracks.find(t => t.kind === 'audio') as LocalAudioTrack;
             setLocalAudioTrack(audioTrack);
 
             const room = await Video.connect(data.token, { name: activeConversation.sid, tracks });

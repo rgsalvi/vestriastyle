@@ -101,6 +101,7 @@ export interface ChatSessionData {
         name: string;
         title: string;
         avatarUrl: string;
+        bio?: string;
     };
 }
 
