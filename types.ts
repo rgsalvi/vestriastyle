@@ -51,6 +51,7 @@ export interface User {
 export interface StyleProfile {
   styleArchetypes: string[];
   colorPalettes: string[];
+  favoriteColors?: string;
   favoriteBrands: string;
   bodyType: BodyType;
 }

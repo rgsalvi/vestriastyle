@@ -62,14 +62,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let prompt: string;
 
         if (styleProfile) {
-            const { styleArchetypes, colorPalettes, favoriteBrands } = styleProfile;
+            const { styleArchetypes, colorPalettes, favoriteBrands, favoriteColors } = styleProfile;
+            
+            let styleDnaPrompt = `*   **Body Type:** ${bodyType}
+*   **Style Archetypes:** ${styleArchetypes.join(', ')}
+*   **Preferred Color Palettes:** ${colorPalettes.join(', ')}`;
+
+            if (favoriteColors && favoriteColors.trim() !== '') {
+                styleDnaPrompt += `\n*   **Favorite Specific Colors:** ${favoriteColors}`;
+            }
+
+            styleDnaPrompt += `\n*   **Favorite Brands (for style inspiration):** ${favoriteBrands || 'Not specified'}`;
+
+
             prompt = `You are an expert fashion stylist and wardrobe curator with a deep understanding of body types and personal aesthetics. Analyze the user's potential new clothing item in the context of their existing wardrobe and their detailed style profile.
 
 **User's Style DNA:**
-*   **Body Type:** ${bodyType}
-*   **Style Archetypes:** ${styleArchetypes.join(', ')}
-*   **Preferred Color Palettes:** ${colorPalettes.join(', ')}
-*   **Favorite Brands (for style inspiration):** ${favoriteBrands || 'Not specified'}
+${styleDnaPrompt}
 
 **Your Task:**
 Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape and perfectly aligned with their specified style archetypes and color preferences. When creating outfit suggestions, you MUST include specific, descriptive recommendations for both footwear and accessories to create a complete look. For example, instead of just "heels," suggest "strappy black stiletto heels." Instead of "earrings," suggest "delicate gold hoop earrings." Your outfit suggestions, compatibility analysis, and final verdict must reflect this deep level of personalization. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.

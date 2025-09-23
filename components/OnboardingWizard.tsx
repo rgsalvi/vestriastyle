@@ -7,7 +7,7 @@ interface OnboardingWizardProps {
   onComplete: (profile: StyleProfile) => void;
 }
 
-const steps = ['Style Vibe', 'Color Palette', 'Favorite Brands', 'Body Type'];
+const steps = ['Style Vibe', 'Color Palette', 'Favorite Colors', 'Favorite Brands', 'Body Type'];
 
 const styleArchetypes = [
     { name: 'Minimalist', description: 'Clean lines, neutral colors, and simple silhouettes.' },
@@ -40,6 +40,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
     const [profile, setProfile] = useState<Partial<StyleProfile>>({
         styleArchetypes: [],
         colorPalettes: [],
+        favoriteColors: '',
         favoriteBrands: '',
         bodyType: 'None',
     });
@@ -52,7 +53,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
             const current = prev.styleArchetypes || [];
             const isSelected = current.includes(name);
             const newSelection = isSelected ? current.filter(item => item !== name) : [...current, name];
-            return { ...prev, styleArchetypes: newSelection.slice(0, 2) };
+            return { ...prev, styleArchetypes: newSelection.slice(0, 3) };
         });
     };
     
@@ -68,7 +69,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
     const isNextDisabled = () => {
         if (currentStep === 0 && (profile.styleArchetypes?.length || 0) === 0) return true;
         if (currentStep === 1 && (profile.colorPalettes?.length || 0) === 0) return true;
-        if (currentStep === 3 && profile.bodyType === 'None') return true;
+        if (currentStep === 4 && profile.bodyType === 'None') return true;
         return false;
     };
     
@@ -78,7 +79,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                 return (
                     <div>
                         <h2 className="text-2xl font-bold text-platinum">What's your style vibe?</h2>
-                        <p className="mt-2 text-platinum/60">Choose one or two that best describe you. This helps us understand your core aesthetic.</p>
+                        <p className="mt-2 text-platinum/60">Choose up to three that best describe you. This helps us understand your core aesthetic.</p>
                         <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-4">
                             {styleArchetypes.map(({ name, description }) => {
                                 const isSelected = profile.styleArchetypes?.includes(name);
@@ -113,6 +114,22 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                     </div>
                 );
             case 2:
+                return (
+                     <div>
+                        <h2 className="text-2xl font-bold text-platinum">Any favorite colors? (Optional)</h2>
+                        <p className="mt-2 text-platinum/60">Tell us about specific colors or palettes you love. This adds another layer of personalization.</p>
+                        <div className="mt-6">
+                            <input
+                                type="text"
+                                value={profile.favoriteColors}
+                                onChange={(e) => setProfile(p => ({...p, favoriteColors: e.target.value}))}
+                                placeholder="e.g., forest green, lavender, terracotta"
+                                className="block w-full shadow-sm sm:text-lg bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3"
+                            />
+                        </div>
+                    </div>
+                );
+            case 3:
                  return (
                      <div>
                         <h2 className="text-2xl font-bold text-platinum">Any favorite brands? (Optional)</h2>
@@ -128,7 +145,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         </div>
                     </div>
                 );
-            case 3:
+            case 4:
                 return (
                     <BodyTypeSelector 
                         selectedBodyType={profile.bodyType || 'None'} 
