@@ -17,13 +17,11 @@ const client = twilio(twilioApiKey, twilioApiSecret, { accountSid: twilioAccount
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 
-// For the MVP, we'll hardcode the stylist identities.
-const STYLIST_IDENTITIES = ['tanvi_sankhe', 'muskaan_datt', 'riddhi_jogani'];
-
+// Single source of truth for stylist information, including their unique ID.
 const availableStylists = [
-    { name: 'Tanvi Sankhe', title: 'Lead Stylist', avatarUrl: 'https://picsum.photos/seed/tanvi/100/100' },
-    { name: 'Muskaan Datt', title: 'Senior Stylist', avatarUrl: 'https://picsum.photos/seed/muskaan/100/100' },
-    { name: 'Riddhi Jogani', title: 'Stylist', avatarUrl: 'https://picsum.photos/seed/riddhi/100/100' },
+    { id: 'tanvi_sankhe', name: 'Tanvi Sankhe', title: 'Lead Stylist', avatarUrl: 'https://picsum.photos/seed/tanvi/100/100' },
+    { id: 'muskaan_datt', name: 'Muskaan Datt', title: 'Senior Stylist', avatarUrl: 'https://picsum.photos/seed/muskaan/100/100' },
+    { id: 'riddhi_jogani', name: 'Riddhi Jogani', title: 'Stylist', avatarUrl: 'https://picsum.photos/seed/riddhi/100/100' },
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -38,25 +36,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ success: false, message: 'Missing analysis context or user info.' });
         }
 
-        const randomStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
+        // Randomly assign one stylist for a 1-on-1 chat
+        const assignedStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
+        
         const conversationService = client.conversations.v1.services(twilioConversationServiceSid);
 
         const conversation = await conversationService.conversations.create({
             friendlyName: `Style Session for ${user.name}`
         });
 
+        // Add the user to the conversation
         await conversationService.conversations(conversation.sid).participants.create({
             identity: user.id
         });
         
-        await Promise.all(STYLIST_IDENTITIES.map(stylistIdentity =>
-            conversationService.conversations(conversation.sid).participants.create({
-                identity: stylistIdentity
-            })
-        ));
+        // Add ONLY the assigned stylist to the conversation
+        await conversationService.conversations(conversation.sid).participants.create({
+            identity: assignedStylist.id
+        });
         
         // --- Send TEXT ONLY context to Stylist ---
-        // This is a lightweight operation and won't crash the API.
         const textContext = `New style session for ${user.name}.\n\nVerdict: ${analysisContext.verdict}\n\nCompatibility: ${analysisContext.compatibility}\n\nAdvice: ${analysisContext.advice}`;
         
         await conversationService.conversations(conversation.sid).messages.create({
@@ -76,12 +75,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
         token.addGrant(chatGrant);
         
+        // Return the details of the assigned stylist to the user's UI
         return res.status(200).json({
             success: true,
             message: 'Chat session initiated successfully.',
             token: token.toJwt(),
             conversationSid: conversation.sid,
-            stylist: randomStylist,
+            stylist: {
+                name: assignedStylist.name,
+                title: assignedStylist.title,
+                avatarUrl: assignedStylist.avatarUrl
+            },
         });
 
     } catch (error) {
