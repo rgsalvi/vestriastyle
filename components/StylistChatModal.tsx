@@ -27,6 +27,14 @@ const Spinner: React.FC = () => (
     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-platinum"></div>
 );
 
+const parseMessageAttributes = (message: Message) => {
+    try {
+        return message.attributes ? JSON.parse(message.attributes as string) : null;
+    } catch (e) {
+        return null;
+    }
+};
+
 export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [connectionState, setConnectionState] = useState<'initializing' | 'connecting' | 'connected' | 'failed'>('initializing');
@@ -68,15 +76,18 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 conversationRef.current = conversation;
                                 
                                 const twilioMessages = await conversation.getMessages();
-                                const formattedMessages: ChatMessage[] = twilioMessages.items.map(msg => ({
-                                    id: msg.sid,
-                                    sender: msg.author === user.id ? 'user' : (msg.author === 'system' ? 'system' : 'stylist'),
-                                    text: msg.body ?? '',
-                                    timestamp: msg.dateCreated.toISOString(),
-                                }));
+                                const formattedMessages: ChatMessage[] = twilioMessages.items
+                                    .filter(msg => parseMessageAttributes(msg)?.type !== 'initial_context')
+                                    .map(msg => ({
+                                        id: msg.sid,
+                                        sender: msg.author === user.id ? 'user' : (msg.author === 'system' ? 'system' : 'stylist'),
+                                        text: msg.body ?? '',
+                                        timestamp: msg.dateCreated.toISOString(),
+                                    }));
                                 setMessages(formattedMessages);
 
                                 conversation.on('messageAdded', (message: Message) => {
+                                    if (parseMessageAttributes(message)?.type === 'initial_context') return; // Don't show context to user
                                     setMessages(prev => [...prev, {
                                         id: message.sid,
                                         sender: message.author === user.id ? 'user' : 'stylist',

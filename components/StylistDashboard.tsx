@@ -34,12 +34,37 @@ const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin 
     );
 };
 
+const ContextDisplay: React.FC<{ context: any }> = ({ context }) => (
+    <div className="mb-4 p-3 rounded-2xl bg-dark-blue ring-1 ring-platinum/20 space-y-3">
+        <h3 className="font-semibold text-platinum text-center text-sm border-b border-platinum/20 pb-2">Session Context</h3>
+        <div className="text-xs text-platinum/80 space-y-1">
+            <p><strong className="text-platinum/90">Verdict:</strong> {context.analysis.verdict}</p>
+            <p><strong className="text-platinum/90">Advice:</strong> {context.analysis.advice}</p>
+            <p><strong className="text-platinum/90">Compatibility:</strong> {context.analysis.compatibility}</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="space-y-1">
+                <p className="text-xs text-center text-platinum/60">{context.newItem.label}</p>
+                <img src={context.newItem.dataUrl} alt={context.newItem.label} className="rounded-lg w-full object-cover aspect-square" />
+            </div>
+            {context.outfitImages.map((image: any, index: number) => (
+                <div key={index} className="space-y-1">
+                    <p className="text-xs text-center text-platinum/60">{image.label}</p>
+                    <img src={image.dataUrl} alt={image.label} className="rounded-lg w-full object-cover aspect-square" />
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+
 export const StylistDashboard: React.FC = () => {
     const [identity, setIdentity] = useState<string | null>(null);
     const [client, setClient] = useState<Client | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [initialContext, setInitialContext] = useState<any | null>(null);
     const [input, setInput] = useState('');
     const messageEndRef = useRef<HTMLDivElement>(null);
     
@@ -64,7 +89,6 @@ export const StylistDashboard: React.FC = () => {
         }
     };
     
-    // Effect for initializing and managing the Twilio client connection
     useEffect(() => {
         if (!client) return;
 
@@ -92,15 +116,37 @@ export const StylistDashboard: React.FC = () => {
         }
     }, [client]);
 
-    // Effect for handling the active conversation and its messages
     useEffect(() => {
         if (!activeConversation) return;
         
         const setupConversation = async () => {
+            setInitialContext(null); // Reset context on new conversation
             const msgs = await activeConversation.getMessages();
-            setMessages(msgs.items);
+            
+            const contextMsg = msgs.items.find(m => {
+                try {
+                    const attrs = m.attributes ? JSON.parse(m.attributes as string) : null;
+                    return attrs?.type === 'initial_context';
+                } catch { return false; }
+            });
+
+            if (contextMsg) {
+                setInitialContext(JSON.parse(contextMsg.attributes as string));
+            }
+
+            const chatMessages = msgs.items.filter(m => {
+                try {
+                    const attrs = m.attributes ? JSON.parse(m.attributes as string) : null;
+                    return attrs?.type !== 'initial_context';
+                } catch { return true; }
+            });
+            setMessages(chatMessages);
             
             const onMessageAdded = (message: Message) => {
+                 try {
+                    const attrs = message.attributes ? JSON.parse(message.attributes as string) : null;
+                    if (attrs?.type === 'initial_context') return; // Don't add context to live chat
+                } catch {}
                 setMessages(prev => [...prev, message]);
             };
 
@@ -171,24 +217,9 @@ export const StylistDashboard: React.FC = () => {
                             {/* Message Area */}
                             <div className="flex flex-col h-full overflow-y-auto mb-4">
                                 <div className="flex flex-col h-full space-y-2">
+                                    {initialContext && <ContextDisplay context={initialContext} />}
                                     {messages.map(msg => {
                                         const isStylist = msg.author === identity;
-                                        
-                                        let attributes;
-                                        try {
-                                            attributes = msg.attributes ? JSON.parse(msg.attributes as string) : null;
-                                        } catch (e) { attributes = null; }
-
-                                        if (attributes && attributes.type === 'context-image' && msg.body) {
-                                            return (
-                                                <div key={msg.sid} className="flex justify-start">
-                                                    <div className="max-w-xs p-2 rounded-2xl bg-dark-blue ring-1 ring-platinum/20">
-                                                        <p className="text-xs text-platinum/60 px-1 pb-1">{attributes.label}</p>
-                                                        <img src={msg.body} alt={attributes.label} className="rounded-xl" />
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
                                         
                                         if (msg.author === 'system' && msg.body) {
                                              return (
@@ -201,7 +232,7 @@ export const StylistDashboard: React.FC = () => {
                                         }
 
                                         return (
-                                            <div key={msg.sid} className={`flex ${isStylist ? 'justify-end' : 'justify-start'}`}>
+                                            <div key={msg.sid} className={`flex items-end ${isStylist ? 'justify-end' : 'justify-start'}`}>
                                                 <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${
                                                       isStylist 
                                                       ? 'bg-platinum/90 text-dark-blue rounded-br-none' 

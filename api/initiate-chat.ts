@@ -18,7 +18,6 @@ const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 
 // For the MVP, we'll hardcode the stylist identities.
-// In a real app, this would come from a database of online stylists.
 const STYLIST_IDENTITIES = ['tanvi_sankhe', 'muskaan_datt', 'riddhi_jogani'];
 
 const availableStylists = [
@@ -40,63 +39,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const randomStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
-        
-        // Scope all actions to our specific Conversation Service
         const conversationService = client.conversations.v1.services(twilioConversationServiceSid);
 
-        // Create a new conversation within the service
         const conversation = await conversationService.conversations.create({
             friendlyName: `Style Session for ${user.name}`
         });
 
-        // Add the user to the conversation
         await conversationService.conversations(conversation.sid).participants.create({
             identity: user.id
         });
         
-        // Add all available stylists so any can pick it up
         await Promise.all(STYLIST_IDENTITIES.map(stylistIdentity =>
             conversationService.conversations(conversation.sid).participants.create({
                 identity: stylistIdentity
             })
         ));
         
-        // --- Send Full Context to Stylist ---
-
-        // 1. Send initial text context message
-        const contextMessage = `
-New session started for: ${user.name}
-AI Verdict: ${analysisContext.verdict}
-AI Advice: ${analysisContext.advice}
-Compatibility: ${analysisContext.compatibility}
-        `.trim();
+        // --- Send Full Context to Stylist in a single, robust message ---
+        const contextAttributes = {
+            type: 'initial_context',
+            analysis: {
+                verdict: analysisContext.verdict,
+                advice: analysisContext.advice,
+                compatibility: analysisContext.compatibility,
+            },
+            newItem: {
+                dataUrl: newItem.dataUrl,
+                label: "User's New Item"
+            },
+            outfitImages: analysisContext.generatedOutfitImages?.map((base64Image: string, index: number) => ({
+                dataUrl: `data:image/png;base64,${base64Image}`,
+                label: `AI Outfit Suggestion ${index + 1}`
+            })) || []
+        };
         
         await conversationService.conversations(conversation.sid).messages.create({
             author: 'system',
-            body: contextMessage,
+            body: `New style session for ${user.name}. Full details attached.`,
+            attributes: JSON.stringify(contextAttributes)
         });
-
-        // 2. Send the user's new item image
-        await conversationService.conversations(conversation.sid).messages.create({
-            author: 'system',
-            body: newItem.dataUrl,
-            attributes: JSON.stringify({ type: 'context-image', label: "User's New Item" })
-        });
-        
-        // 3. Send the AI-generated outfit images
-        if (analysisContext.generatedOutfitImages && analysisContext.generatedOutfitImages.length > 0) {
-            for (const [index, base64Image] of analysisContext.generatedOutfitImages.entries()) {
-                await conversationService.conversations(conversation.sid).messages.create({
-                    author: 'system',
-                    body: `data:image/png;base64,${base64Image}`,
-                    attributes: JSON.stringify({ type: 'context-image', label: `AI Outfit Suggestion ${index + 1}` })
-                });
-            }
-        }
         
         // --- End of Context Sending ---
 
-        // Create an access token for the user
         const chatGrant = new ChatGrant({
             serviceSid: twilioConversationServiceSid,
         });
