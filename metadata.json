@@ -1,5 +1,8 @@
 {
   "name": "Vestria Style",
   "description": "Vestria Style is an AI-powered styling app that helps you digitally curate your wardrobe. Upload a new item and your existing clothes to see if they're a good match and get outfit ideas from a personal AI stylist.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }
