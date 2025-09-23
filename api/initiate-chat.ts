@@ -1,3 +1,4 @@
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import twilio from 'twilio';
 
@@ -77,4 +78,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const textContext = `New style session for ${user.name}.\n\nVerdict: ${analysisContext.verdict}\n\nCompatibility: ${analysisContext.compatibility}\n\nAdvice: ${analysisContext.advice}`;
         
         await conversationService.conversations(conversation.sid).messages.create({
-            author: 'system
+            author: 'system',
+            body: textContext,
+        });
+
+        // Now, create a token for the user to join the conversation
+        const chatGrant = new ChatGrant({
+            serviceSid: twilioConversationServiceSid,
+        });
+
+        const token = new AccessToken(twilioAccountSid, twilioApiKey, twilioApiSecret, {
+            identity: user.id,
+            ttl: 3600 // Token valid for 1 hour
+        });
+        token.addGrant(chatGrant);
+
+        // Send the token and conversation details back to the client
+        return res.status(200).json({
+            success: true,
+            message: 'Chat session initiated.',
+            token: token.toJwt(),
+            conversationSid: conversation.sid,
+            stylist: assignedStylist,
+        });
+        
+    } catch (error) {
+        console.error("Error in initiate-chat API:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        return res.status(500).json({ success: false, message: 'Failed to initiate chat session.', error: errorMessage });
+    }
+}
