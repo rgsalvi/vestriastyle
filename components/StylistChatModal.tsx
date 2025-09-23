@@ -62,6 +62,8 @@ interface StylistChatModalProps {
     newItemContext: AnalysisItem | null;
 }
 
+const isDataUrl = (s: string | null): boolean => !!s && s.startsWith('data:image');
+
 const processTwilioMessage = async (message: Message, currentUser: User): Promise<ChatMessage> => {
     let mediaUrl;
     if (message.type === 'media' && message.media) {
@@ -87,17 +89,6 @@ const processTwilioMessage = async (message: Message, currentUser: User): Promis
         imageUrl: mediaUrl,
     };
 }
-
-const base64ToBlob = (base64: string, mimeType: string): Blob => {
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mimeType });
-};
-
 
 export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
     const [status, setStatus] = useState<'connecting' | 'connected' | 'error' | 'idle'>('idle');
@@ -174,20 +165,16 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
                 if (newItem) {
                     await conversation.sendMessage('New Item for Analysis:');
-                    const blob = base64ToBlob(newItem.base64, newItem.mimeType);
-                    const formData = new FormData();
-                    formData.append('file', blob, 'new-item.jpg');
-                    await conversation.sendMessage(formData);
+                    const newItemDataUrl = `data:${newItem.mimeType};base64,${newItem.base64}`;
+                    await conversation.sendMessage(newItemDataUrl);
                 }
 
                 if (outfits && outfits.length > 0) {
                     await conversation.sendMessage('AI-Generated Outfit Ideas:');
                     for (let i = 0; i < outfits.length; i++) {
                         const outfitBase64 = outfits[i];
-                        const blob = base64ToBlob(outfitBase64, 'image/png');
-                        const formData = new FormData();
-                        formData.append('file', blob, `outfit-${i + 1}.png`);
-                        await conversation.sendMessage(formData);
+                        const outfitDataUrl = `data:image/png;base64,${outfitBase64}`;
+                        await conversation.sendMessage(outfitDataUrl);
                     }
                 }
                 
@@ -338,6 +325,8 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                              <a href={message.imageUrl} target="_blank" rel="noopener noreferrer">
                                                  <img src={message.imageUrl} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" />
                                              </a>
+                                         ) : isDataUrl(message.text) ? (
+                                            <img src={message.text} alt="Context image" className="max-w-xs max-h-48 rounded-lg" />
                                          ) : (
                                              <p className="whitespace-pre-wrap">{message.text}</p>
                                          )}

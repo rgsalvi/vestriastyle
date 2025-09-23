@@ -100,6 +100,8 @@ const processTwilioMessage = async (message: Message): Promise<ProcessedMessage>
     };
 };
 
+const isDataUrl = (s: string | null): boolean => !!s && s.startsWith('data:image');
+
 export const StylistDashboard: React.FC = () => {
     const [identity, setIdentity] = useState<string | null>(null);
     const [client, setClient] = useState<Client | null>(null);
@@ -375,7 +377,13 @@ export const StylistDashboard: React.FC = () => {
                                          <div className="col-start-6 col-end-13 p-3 rounded-lg">
                                              <div className="flex items-center justify-start flex-row-reverse">
                                                  <div className="relative ml-3 text-sm bg-platinum/10 py-2 px-4 shadow rounded-xl">
-                                                     {message.media ? <a href={message.media.url} target="_blank" rel="noopener noreferrer"><img src={message.media.url} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" /></a> : <div className="whitespace-pre-wrap">{message.body}</div>}
+                                                     {message.media ? (
+                                                        <a href={message.media.url} target="_blank" rel="noopener noreferrer"><img src={message.media.url} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" /></a>
+                                                     ) : isDataUrl(message.body) ? (
+                                                        <img src={message.body!} alt="Context Image" className="max-w-xs max-h-48 rounded-lg" />
+                                                     ) : (
+                                                        <div className="whitespace-pre-wrap">{message.body}</div>
+                                                     )}
                                                  </div>
                                              </div>
                                          </div>
@@ -383,7 +391,13 @@ export const StylistDashboard: React.FC = () => {
                                           <div className="col-start-1 col-end-8 p-3 rounded-lg">
                                              <div className="flex flex-row items-start">
                                                  <div className="relative mr-3 text-sm bg-[#1F2937] py-2 px-4 shadow rounded-xl">
-                                                     {message.media ? <a href={message.media.url} target="_blank" rel="noopener noreferrer"><img src={message.media.url} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" /></a> : <div className="whitespace-pre-wrap">{message.body}</div>}
+                                                      {message.media ? (
+                                                        <a href={message.media.url} target="_blank" rel="noopener noreferrer"><img src={message.media.url} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" /></a>
+                                                     ) : isDataUrl(message.body) ? (
+                                                        <img src={message.body!} alt="Context Image" className="max-w-xs max-h-48 rounded-lg" />
+                                                     ) : (
+                                                        <div className="whitespace-pre-wrap">{message.body}</div>
+                                                     )}
                                                  </div>
                                              </div>
                                          </div>
