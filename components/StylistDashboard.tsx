@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Client, Conversation, Paginator, Message, Participant } from '@twilio/conversations';
+import { Client, Conversation, Message, Participant } from '@twilio/conversations';
 
 const STYLISTS = [
     { id: 'tanvi_sankhe', name: 'Tanvi Sankhe' },
@@ -7,16 +7,13 @@ const STYLISTS = [
     { id: 'riddhi_jogani', name: 'Riddhi Jogani' },
 ];
 
-interface SessionContext {
-    text: string | null;
-    images: { url: string; label: string }[];
-}
-
 interface ProcessedMessage {
     sid: string;
     author: string | null;
     body: string | null;
     imageUrl?: string;
+    attributes: Record<string, any>;
+    dateCreated: Date;
 }
 
 const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin }) => {
@@ -46,57 +43,39 @@ const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin 
     );
 };
 
-const ContextDisplay: React.FC<{ context: SessionContext }> = ({ context }) => (
-    <div className="mb-4 p-3 rounded-2xl bg-dark-blue ring-1 ring-platinum/20 space-y-3">
-        <h3 className="font-semibold text-platinum text-center text-sm border-b border-platinum/20 pb-2">Session Context</h3>
-        {context.text && (
-            <div className="text-xs text-platinum/80 space-y-1 whitespace-pre-wrap p-2 bg-black/20 rounded-lg">
-                <p>{context.text}</p>
-            </div>
-        )}
-        {context.images.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {context.images.map((image, index) => (
-                    <div key={index} className="space-y-1">
-                        <p className="text-xs text-center text-platinum/60">{image.label}</p>
-                        <a href={image.url} target="_blank" rel="noopener noreferrer">
-                            <img src={image.url} alt={image.label} className="rounded-lg w-full object-cover aspect-square" />
-                        </a>
-                    </div>
-                ))}
-            </div>
-        )}
-    </div>
-);
-
-// A more robust message attribute parser
-const parseMessageAttributes = (message: Message): Record<string, any> => {
-    try {
-        if (typeof message.attributes === 'object' && message.attributes !== null) {
-            return message.attributes as Record<string, any>;
-        }
-        if (typeof message.attributes === 'string') {
-            return JSON.parse(message.attributes);
-        }
-        return {};
-    } catch (e) {
-        console.error("Failed to parse message attributes:", message.attributes, e);
-        return {};
-    }
-};
-
+// Centralized message processor
 const processTwilioMessage = async (message: Message): Promise<ProcessedMessage> => {
+    const attributes = (() => {
+        try {
+            if (typeof message.attributes === 'object' && message.attributes !== null) {
+                return message.attributes as Record<string, any>;
+            }
+            if (typeof message.attributes === 'string') {
+                return JSON.parse(message.attributes);
+            }
+            return {};
+        } catch (e) {
+            console.error("Failed to parse message attributes:", message.attributes, e);
+            return {};
+        }
+    })();
+    
     const processed: ProcessedMessage = {
         sid: message.sid,
         author: message.author,
         body: message.body,
+        attributes: attributes,
+        dateCreated: message.dateCreated,
     };
     if (message.type === 'media' && message.media) {
-        processed.imageUrl = await message.media.getContentTemporaryUrl();
+        try {
+            processed.imageUrl = await message.media.getContentTemporaryUrl();
+        } catch (e) {
+            console.error(`Failed to get media URL for message ${message.sid}`, e);
+        }
     }
     return processed;
 };
-
 
 export const StylistDashboard: React.FC = () => {
     const [identity, setIdentity] = useState<string | null>(null);
@@ -104,7 +83,6 @@ export const StylistDashboard: React.FC = () => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<ProcessedMessage[]>([]);
-    const [sessionContext, setSessionContext] = useState<SessionContext>({ text: null, images: [] });
     const [input, setInput] = useState('');
     const [isUserTyping, setIsUserTyping] = useState(false);
     const messageEndRef = useRef<HTMLDivElement>(null);
@@ -153,7 +131,9 @@ export const StylistDashboard: React.FC = () => {
         client.on('conversationJoined', onConversationJoined);
 
         return () => {
-            client.shutdown();
+            if (client.connectionState === 'connected') {
+                client.shutdown();
+            }
         }
     }, [client]);
     
@@ -162,76 +142,21 @@ export const StylistDashboard: React.FC = () => {
         
         const setupConversation = async () => {
             setIsUserTyping(false);
-            let context: SessionContext = { text: null, images: [] };
-            const chatMessages: ProcessedMessage[] = [];
             
-            const allTwilioMessages = (await activeConversation.getMessages()).items;
-
-            for (const msg of allTwilioMessages) {
-                const attrs = parseMessageAttributes(msg);
-                
-                if (attrs.type === 'context_text' && msg.author === 'system') {
-                    context.text = msg.body;
-                    continue;
-                }
-                
-                if (attrs.type === 'context_image' && msg.type === 'media' && msg.media) {
-                    try {
-                        const url = await msg.media.getContentTemporaryUrl();
-                        if (!context.images.some(img => img.url === url)) {
-                            context.images.push({ url, label: attrs.label || 'Context Image' });
-                        }
-                    } catch(e) {
-                        console.error("Could not get media URL for context image", e);
-                    }
-                    continue; 
-                }
-
-                try {
-                    const processedMsg = await processTwilioMessage(msg);
-                    chatMessages.push(processedMsg);
-                } catch (e) {
-                    console.error("Could not process a regular chat message", e);
-                }
-            }
-            
-            setSessionContext(context);
-            setMessages(chatMessages);
+            const twilioMessages = (await activeConversation.getMessages()).items;
+            const processedMessages = await Promise.all(twilioMessages.map(processTwilioMessage));
+            setMessages(processedMessages.sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime()));
             
             const onMessageAdded = async (message: Message) => {
-                const attrs = parseMessageAttributes(message);
-                
-                if (attrs.type === 'context_image' && message.type === 'media' && message.media) {
-                    try {
-                        const url = await message.media.getContentTemporaryUrl();
-                        setSessionContext(prev => {
-                            if (prev.images.some(img => img.url === url)) return prev;
-                            return { ...prev, images: [...prev.images, { url, label: attrs.label || 'Context Image' }]};
-                        });
-                    } catch (e) {
-                         console.error("Could not get media URL for new context image", e);
-                    }
-                    return;
-                }
-
-                try {
-                    const processedMsg = await processTwilioMessage(message);
-                    setMessages(prev => [...prev, processedMsg]);
-                } catch (e) {
-                    console.error("Could not process new chat message", e);
-                }
+                const processedMsg = await processTwilioMessage(message);
+                setMessages(prev => [...prev, processedMsg]);
             };
 
             const onTypingStarted = (participant: Participant) => {
-                if (participant.identity !== identity) {
-                    setIsUserTyping(true);
-                }
+                if (participant.identity !== identity) setIsUserTyping(true);
             };
-
             const onTypingEnded = (participant: Participant) => {
-                if (participant.identity !== identity) {
-                    setIsUserTyping(false);
-                }
+                if (participant.identity !== identity) setIsUserTyping(false);
             };
 
             activeConversation.on('messageAdded', onMessageAdded);
@@ -254,6 +179,7 @@ export const StylistDashboard: React.FC = () => {
     }, [messages, isUserTyping]);
 
     const selectConversation = (conversation: Conversation) => {
+        setMessages([]); // Clear previous messages immediately
         setActiveConversation(conversation);
     };
     
@@ -274,6 +200,11 @@ export const StylistDashboard: React.FC = () => {
     if (!identity || !client) {
         return <LoginPage onLogin={handleLogin} />;
     }
+    
+    // Render-time filtering of messages
+    const contextText = messages.find(m => m.attributes.type === 'context_text')?.body || null;
+    const contextImages = messages.filter(m => m.attributes.type === 'context_image' && m.imageUrl);
+    const chatMessages = messages.filter(m => !m.attributes.type?.startsWith('context_'));
 
     return (
         <div className="h-screen w-screen flex antialiased text-platinum bg-dark-blue">
@@ -296,7 +227,7 @@ export const StylistDashboard: React.FC = () => {
                                     className={`flex flex-row items-center hover:bg-platinum/10 rounded-xl p-2 text-left ${activeConversation?.sid === conv.sid ? 'bg-platinum/20' : ''}`}
                                 >
                                     <div className="ml-2 text-sm font-semibold">
-                                        <p>{conv.friendlyName || conv.sid}</p>
+                                        <p className="truncate">{conv.friendlyName || conv.sid}</p>
                                         <p className="text-xs text-platinum/60">Last updated: {conv.lastMessage?.dateCreated.toLocaleString() || conv.dateUpdated.toLocaleString()}</p>
                                     </div>
                                 </button>
@@ -312,16 +243,29 @@ export const StylistDashboard: React.FC = () => {
                             {/* Message Area */}
                             <div className="flex flex-col h-full overflow-y-auto mb-4">
                                 <div className="flex flex-col h-full space-y-2">
-                                    {(sessionContext.text || sessionContext.images.length > 0) && <ContextDisplay context={sessionContext} />}
-                                    {messages.map(msg => {
+                                    {(contextText || contextImages.length > 0) && (
+                                        <div className="mb-4 p-3 rounded-2xl bg-dark-blue ring-1 ring-platinum/20 space-y-3">
+                                            <h3 className="font-semibold text-platinum text-center text-sm border-b border-platinum/20 pb-2">Session Context</h3>
+                                            {contextText && <p className="text-xs text-platinum/80 space-y-1 whitespace-pre-wrap p-2 bg-black/20 rounded-lg">{contextText}</p>}
+                                            {contextImages.length > 0 && (
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                    {contextImages.map((image, index) => (
+                                                        <div key={index} className="space-y-1">
+                                                            <p className="text-xs text-center text-platinum/60">{image.attributes.label || 'Context Image'}</p>
+                                                            <a href={image.imageUrl} target="_blank" rel="noopener noreferrer">
+                                                                <img src={image.imageUrl} alt={image.attributes.label} className="rounded-lg w-full object-cover aspect-square" />
+                                                            </a>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {chatMessages.map(msg => {
                                         const isStylist = msg.author === identity;
                                         return (
                                             <div key={msg.sid} className={`flex items-end ${isStylist ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${
-                                                      isStylist 
-                                                      ? 'bg-platinum/90 text-dark-blue rounded-br-none' 
-                                                      : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'
-                                                  }`}>
+                                                <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${isStylist ? 'bg-platinum/90 text-dark-blue rounded-br-none' : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'}`}>
                                                     {msg.imageUrl ? (
                                                         <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
                                                             <img src={msg.imageUrl} alt="Shared media" className="rounded-lg max-w-xs" />
