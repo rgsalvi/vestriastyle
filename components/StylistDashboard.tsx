@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Client, Conversation, Paginator, Message } from '@twilio/conversations';
+import { Client, Conversation, Paginator, Message, Participant } from '@twilio/conversations';
 
 const STYLISTS = [
     { id: 'tanvi_sankhe', name: 'Tanvi Sankhe' },
@@ -106,6 +106,7 @@ export const StylistDashboard: React.FC = () => {
     const [messages, setMessages] = useState<ProcessedMessage[]>([]);
     const [sessionContext, setSessionContext] = useState<SessionContext>({ text: null, images: [] });
     const [input, setInput] = useState('');
+    const [isUserTyping, setIsUserTyping] = useState(false);
     const messageEndRef = useRef<HTMLDivElement>(null);
     
     const handleLogin = async (id: string) => {
@@ -157,9 +158,10 @@ export const StylistDashboard: React.FC = () => {
     }, [client]);
     
     useEffect(() => {
-        if (!activeConversation) return;
+        if (!activeConversation || !identity) return;
         
         const setupConversation = async () => {
+            setIsUserTyping(false);
             let context: SessionContext = { text: null, images: [] };
             const chatMessages: ProcessedMessage[] = [];
             
@@ -220,20 +222,36 @@ export const StylistDashboard: React.FC = () => {
                 }
             };
 
+            const onTypingStarted = (participant: Participant) => {
+                if (participant.identity !== identity) {
+                    setIsUserTyping(true);
+                }
+            };
+
+            const onTypingEnded = (participant: Participant) => {
+                if (participant.identity !== identity) {
+                    setIsUserTyping(false);
+                }
+            };
+
             activeConversation.on('messageAdded', onMessageAdded);
+            activeConversation.on('typingStarted', onTypingStarted);
+            activeConversation.on('typingEnded', onTypingEnded);
             
             return () => {
                 activeConversation.off('messageAdded', onMessageAdded);
+                activeConversation.off('typingStarted', onTypingStarted);
+                activeConversation.off('typingEnded', onTypingEnded);
             };
         };
         
         setupConversation();
 
-    }, [activeConversation]);
+    }, [activeConversation, identity]);
 
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, isUserTyping]);
 
     const selectConversation = (conversation: Conversation) => {
         setActiveConversation(conversation);
@@ -243,6 +261,13 @@ export const StylistDashboard: React.FC = () => {
         if (input.trim() && activeConversation) {
             activeConversation.sendMessage(input);
             setInput('');
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value);
+        if (activeConversation) {
+            activeConversation.typing();
         }
     };
 
@@ -308,6 +333,15 @@ export const StylistDashboard: React.FC = () => {
                                             </div>
                                         );
                                     })}
+                                    {isUserTyping && (
+                                        <div className="flex items-end justify-start">
+                                            <div className="max-w-md lg:max-w-lg p-3 rounded-2xl bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none flex items-center space-x-1.5">
+                                                <span className="w-2 h-2 bg-platinum/50 rounded-full animate-bounce"></span>
+                                                <span className="w-2 h-2 bg-platinum/50 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
+                                                <span className="w-2 h-2 bg-platinum/50 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div ref={messageEndRef}></div>
                                 </div>
                             </div>
@@ -317,7 +351,7 @@ export const StylistDashboard: React.FC = () => {
                                     <input
                                         type="text"
                                         value={input}
-                                        onChange={e => setInput(e.target.value)}
+                                        onChange={handleInputChange}
                                         onKeyDown={e => e.key === 'Enter' && sendMessage()}
                                         placeholder="Type your message..."
                                         className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-platinum"
