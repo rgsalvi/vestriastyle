@@ -13,11 +13,11 @@ const responseSchema = {
     properties: {
         compatibility: {
             type: Type.STRING,
-            description: 'A paragraph explaining how well the new item fits with the existing wardrobe in terms of style, color, and versatility. This advice MUST be tailored to the provided body type.',
+            description: 'A paragraph explaining how well the new item fits with the existing wardrobe in terms of style, color, and versatility. This advice MUST be tailored to the provided body type and occasion.',
         },
         outfits: {
             type: Type.ARRAY,
-            description: 'Suggest 2-3 specific, complete outfit combinations using the new item and items from the existing wardrobe. Each outfit MUST include specific suggestions for footwear and at least one accessory (e.g., bag, jewelry, scarf). The outfits must be flattering for the user\'s body type.',
+            description: 'Suggest 2-3 specific, complete outfit combinations using the new item and items from the existing wardrobe. Each outfit MUST include specific suggestions for footwear and at least one accessory (e.g., bag, jewelry, scarf). The outfits must be flattering for the user\'s body type and appropriate for the specified occasion.',
             items: {
                 type: Type.OBJECT,
                 properties: {
@@ -36,7 +36,7 @@ const responseSchema = {
         },
         advice: {
             type: Type.STRING,
-            description: 'Provide one key piece of styling advice or suggest one type of item that might be missing from their wardrobe that would complement the new piece well, keeping the user\'s body type in mind.',
+            description: 'Provide one key piece of styling advice or suggest one type of item that might be missing from their wardrobe that would complement the new piece well, keeping the user\'s body type and the occasion in mind.',
         },
         verdict: {
             type: Type.STRING,
@@ -53,10 +53,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     
     try {
-        const { newItem, wardrobeItems, bodyType, styleProfile } = req.body;
+        const { newItem, wardrobeItems, bodyType, occasion, styleProfile } = req.body;
 
-        if (!newItem || !wardrobeItems || !bodyType) {
-            return res.status(400).json({ message: 'Missing required fields: newItem, wardrobeItems, or bodyType' });
+        if (!newItem || !wardrobeItems || !bodyType || !occasion) {
+            return res.status(400).json({ message: 'Missing required fields: newItem, wardrobeItems, bodyType, or occasion' });
         }
         
         let prompt: string;
@@ -75,23 +75,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             styleDnaPrompt += `\n*   **Favorite Brands (for style inspiration):** ${favoriteBrands || 'Not specified'}`;
 
 
-            prompt = `You are an expert fashion stylist and wardrobe curator with a deep understanding of body types and personal aesthetics. Analyze the user's potential new clothing item in the context of their existing wardrobe and their detailed style profile.
+            prompt = `You are an expert fashion stylist and wardrobe curator with a deep understanding of body types, occasions, and personal aesthetics. Analyze the user's potential new clothing item in the context of their existing wardrobe and their detailed style profile.
+
+**Context for this Request:**
+*   **Occasion:** ${occasion}
 
 **User's Style DNA:**
 ${styleDnaPrompt}
 
 **Your Task:**
-Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape and perfectly aligned with their specified style archetypes and color preferences. When creating outfit suggestions, you MUST include specific, descriptive recommendations for both footwear and accessories to create a complete look. For example, instead of just "heels," suggest "strappy black stiletto heels." Instead of "earrings," suggest "delicate gold hoop earrings." Your outfit suggestions, compatibility analysis, and final verdict must reflect this deep level of personalization. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
+Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape, perfectly aligned with their specified style archetypes and color preferences, and appropriate for the **${occasion}**. When creating outfit suggestions, you MUST include specific, descriptive recommendations for both footwear and accessories to create a complete look. For example, instead of just "heels," suggest "strappy black stiletto heels." Instead of "earrings," suggest "delicate gold hoop earrings." Your outfit suggestions, compatibility analysis, and final verdict must reflect this deep level of personalization. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
 
 Your response MUST be a valid JSON object that adheres to the provided schema. Do not include any text, backticks, or markdown formatting before or after the JSON object.`;
         } else {
-             prompt = `You are an expert fashion stylist and wardrobe curator with a deep understanding of body types. Analyze the user's potential new clothing item in the context of their existing wardrobe.
+             prompt = `You are an expert fashion stylist and wardrobe curator with a deep understanding of body types and occasions. Analyze the user's potential new clothing item in the context of their existing wardrobe.
 
-**User's Profile:**
+**User's Profile & Context:**
 *   **Body Type:** ${bodyType}
+*   **Occasion:** ${occasion}
 
 **Your Task:**
-Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape. When creating outfit suggestions, you MUST include specific, descriptive recommendations for both footwear and accessories to create a complete look. For example, instead of just "heels," suggest "strappy black stiletto heels." Instead of "earrings," suggest "delicate gold hoop earrings." Your outfit suggestions, compatibility analysis, and final verdict must focus on this. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
+Tailor ALL your advice to be extremely flattering for their **${bodyType}** body shape and appropriate for the specified **${occasion}**. When creating outfit suggestions, you MUST include specific, descriptive recommendations for both footwear and accessories to create a complete look. For example, instead of just "heels," suggest "strappy black stiletto heels." Instead of "earrings," suggest "delicate gold hoop earrings." Your outfit suggestions, compatibility analysis, and final verdict must focus on this. Analyze the provided images (the first is the new item, the rest are their wardrobe) and provide a detailed analysis.
 
 Your response MUST be a valid JSON object that adheres to the provided schema. Do not include any text, backticks, or markdown formatting before or after the JSON object.`;
         }
@@ -123,7 +127,7 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
             const imagePromises = parsedJson.outfits.map(async (outfit: { items: string[] }) => {
                 try {
                     const outfitDescription = outfit.items.join(', ');
-                    const imageGenPrompt = `Create a photorealistic visualization of a complete outfit. The main clothing item is provided in the image. The rest of the outfit is described as: "${outfitDescription}". The outfit should be styled to be flattering for a '${bodyType}' body shape. Display the full outfit on a mannequin or as a professional flat-lay photograph. Crucially, ensure the image is a full-length view that clearly displays the entire outfit from the torso down to the footwear. The style should be clean and minimalist, with a plain light-colored background, like a studio fashion shoot.`;
+                    const imageGenPrompt = `Create a photorealistic visualization of a complete outfit for a '${occasion}' occasion. The main clothing item is provided in the image. The rest of the outfit is described as: "${outfitDescription}". The outfit should be styled to be flattering for a '${bodyType}' body shape. Display the full outfit on a mannequin or as a professional flat-lay photograph. Crucially, ensure the image is a full-length view that clearly displays the entire outfit from the torso down to the footwear. The style should be clean and minimalist, with a plain light-colored background, like a studio fashion shoot.`;
 
                     const imageResponse = await ai.models.generateContent({
                         model: 'gemini-2.5-flash-image-preview',

@@ -1,6 +1,6 @@
-import type { AnalysisItem, AiResponse, StyleProfile, BodyType } from '../types';
+import type { AnalysisItem, AiResponse, StyleProfile, BodyType, Occasion } from '../types';
 
-export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: AnalysisItem[], bodyType: BodyType, styleProfile: StyleProfile | null): Promise<AiResponse> => {
+export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: AnalysisItem[], bodyType: BodyType, occasion: Occasion, styleProfile: StyleProfile | null): Promise<AiResponse> => {
   try {
     const newItemPayload = {
       base64: newItem.base64,
@@ -20,6 +20,7 @@ export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: Analy
         newItem: newItemPayload,
         wardrobeItems: wardrobeItemsPayload,
         bodyType: bodyType,
+        occasion: occasion,
         styleProfile: styleProfile,
       }),
     });

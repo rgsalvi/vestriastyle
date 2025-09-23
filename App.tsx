@@ -12,7 +12,7 @@ import { RefundPolicy } from './components/RefundPolicy';
 import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { getStyleAdvice } from './services/geminiService';
-import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile } from './types';
+import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { jwtDecode } from 'jwt-decode';
 
 interface HeaderProps {
@@ -152,6 +152,7 @@ const App: React.FC = () => {
   const [newItem, setNewItem] = useState<AnalysisItem | null>(null);
   const [wardrobeItems, setWardrobeItems] = useState<AnalysisItem[]>([]);
   const [bodyType, setBodyType] = useState<BodyType>('None');
+  const [occasion, setOccasion] = useState<Occasion>('None');
   const [recommendation, setRecommendation] = useState<AiResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -329,6 +330,7 @@ const App: React.FC = () => {
   const handleGetAdvice = useCallback(async () => {
     if (!newItem) { setError('Please upload a new item to analyze.'); return; }
     if (wardrobeItems.length === 0) { setError('Please upload or select at least one item from your existing wardrobe.'); return; }
+    if (occasion === 'None') { setError('Please select an occasion.'); return; }
     if (bodyType === 'None') { setError('Please select your body type for personalized advice.'); return; }
 
     setIsLoading(true);
@@ -338,7 +340,7 @@ const App: React.FC = () => {
 
     try {
       const currentProfile = user ? styleProfile : null;
-      const response = await getStyleAdvice(newItem, wardrobeItems, bodyType, currentProfile);
+      const response = await getStyleAdvice(newItem, wardrobeItems, bodyType, occasion, currentProfile);
       setRecommendation(response);
 
       if (user) {
@@ -354,7 +356,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newItem, wardrobeItems, bodyType, managedWardrobe, styleProfile, user]);
+  }, [newItem, wardrobeItems, bodyType, occasion, managedWardrobe, styleProfile, user]);
 
   const handleWardrobeClick = () => {
     const element = document.getElementById('wardrobe-manager');
@@ -398,13 +400,15 @@ const App: React.FC = () => {
                       managedWardrobe={managedWardrobe}
                       onAnalysisItemsChange={setWardrobeItems}
                       maxFiles={5}
+                      onOccasionChange={setOccasion}
+                      selectedOccasion={occasion}
                     />
                     <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
                     <div className="p-4 bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20">
                       {error && <p className="text-red-400 text-center mb-4 font-medium">{error}</p>}
                       <button
                         onClick={handleGetAdvice}
-                        disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None'}
+                        disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None' || occasion === 'None'}
                         className="w-full bg-platinum text-dark-blue font-bold py-4 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 hover:shadow-glow disabled:bg-platinum/50 disabled:text-dark-blue/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
                       >
                         {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}

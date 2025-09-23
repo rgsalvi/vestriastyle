@@ -1,4 +1,5 @@
 export type BodyType = 'Apple' | 'Pear' | 'Rectangle' | 'Inverted Triangle' | 'Hourglass' | 'None';
+export type Occasion = 'Everyday' | 'Casual' | 'Work' | 'Date Night' | 'Weekend' | 'Special Event' | 'None';
 
 export interface WardrobeItem {
   file: File;
