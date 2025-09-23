@@ -114,7 +114,7 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
             const imagePromises = parsedJson.outfits.map(async (outfit: { items: string[] }) => {
                 try {
                     const outfitDescription = outfit.items.join(', ');
-                    const imageGenPrompt = `Create a photorealistic visualization of a complete outfit. The main clothing item is provided in the image. The rest of the outfit is described as: "${outfitDescription}". The outfit should be styled to be flattering for a '${bodyType}' body shape. Display the full outfit on a mannequin or as a professional flat-lay photograph. The style should be clean and minimalist, with a plain light-colored background, like a studio fashion shoot.`;
+                    const imageGenPrompt = `Create a photorealistic visualization of a complete outfit. The main clothing item is provided in the image. The rest of the outfit is described as: "${outfitDescription}". The outfit should be styled to be flattering for a '${bodyType}' body shape. Display the full outfit on a mannequin or as a professional flat-lay photograph. Crucially, ensure the image is a full-length view that clearly displays the entire outfit from the torso down to the footwear. The style should be clean and minimalist, with a plain light-colored background, like a studio fashion shoot.`;
 
                     const imageResponse = await ai.models.generateContent({
                         model: 'gemini-2.5-flash-image-preview',
