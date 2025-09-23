@@ -23,6 +23,12 @@ const SendIcon: React.FC = () => (
     </svg>
 );
 
+const AttachIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.497a1.5 1.5 0 012.121-2.121l-1.414-1.414a.5.5 0 00-.707.707l1.414 1.414a2.5 2.5 0 01-3.536 3.536l-.496.496a4 4 0 01-5.657-5.657l7-7a4 4 0 015.657 5.657h-.001l-.496.497a2.5 2.5 0 01-3.536-3.536l1.414-1.414a.5.5 0 00.707-.707l-1.414-1.414a1.5 1.5 0 01-2.121 2.121l.497.497a3 3 0 004.242 0z" clipRule="evenodd" />
+    </svg>
+);
+
 const Spinner: React.FC = () => (
     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-platinum"></div>
 );
@@ -60,7 +66,12 @@ const processTwilioMessage = async (message: Message, currentUser: User): Promis
         timestamp: message.dateCreated.toISOString(),
     };
     if (message.type === 'media' && message.media) {
-        chatMessage.imageUrl = await message.media.getContentTemporaryUrl();
+        const url = await message.media.getContentTemporaryUrl();
+        if (message.media.contentType.startsWith('image/')) {
+            chatMessage.imageUrl = url;
+        } else if (message.media.contentType.startsWith('video/')) {
+            chatMessage.videoUrl = url;
+        }
     }
     return chatMessage;
 };
@@ -76,6 +87,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const messageEndRef = useRef<HTMLDivElement>(null);
     const conversationRef = useRef<Conversation | null>(null);
     const clientRef = useRef<Client | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const setupChat = async () => {
@@ -197,6 +209,22 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
       conversationRef.current?.typing();
     }
     
+    const handleAttachClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && conversationRef.current) {
+            conversationRef.current.sendMessage({
+                contentType: file.type,
+                media: file,
+            });
+        }
+        // Reset file input
+        if(event.target) event.target.value = '';
+    };
+
     const isLoading = connectionState !== 'connected' && connectionState !== 'failed';
 
     if (!isOpen) return null;
@@ -241,13 +269,15 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                     <p className="w-full text-center text-xs text-platinum/50 italic py-2 px-4">{msg.text}</p>
                                 ) : (
                                     <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${msg.sender === 'user' ? 'bg-platinum/90 text-dark-blue rounded-br-none' : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'}`}>
-                                        {msg.imageUrl ? (
+                                        {msg.imageUrl && (
                                             <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
                                                 <img src={msg.imageUrl} alt="Shared media" className="rounded-lg max-w-xs" />
                                             </a>
-                                        ) : (
-                                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                         )}
+                                        {msg.videoUrl && (
+                                            <video src={msg.videoUrl} controls className="rounded-lg max-w-xs" />
+                                        )}
+                                        {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
                                     </div>
                                 )}
                             </div>
@@ -268,6 +298,22 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 
                 <footer className="flex-shrink-0 p-4 border-t border-platinum/20">
                     <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                          accept="image/*,video/*"
+                        />
+                        <button 
+                            type="button" 
+                            onClick={handleAttachClick}
+                            disabled={isLoading || error !== null}
+                            className="p-3 text-platinum/60 hover:text-white transition-colors disabled:text-platinum/30"
+                            aria-label="Attach file"
+                        >
+                            <AttachIcon />
+                        </button>
                         <input
                             type="text"
                             value={input}

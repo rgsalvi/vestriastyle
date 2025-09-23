@@ -12,9 +12,17 @@ interface ProcessedMessage {
     author: string | null;
     body: string | null;
     imageUrl?: string;
+    videoUrl?: string;
     attributes: Record<string, any>;
     dateCreated: Date;
 }
+
+const AttachIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.497a1.5 1.5 0 012.121-2.121l-1.414-1.414a.5.5 0 00-.707.707l1.414 1.414a2.5 2.5 0 01-3.536 3.536l-.496.496a4 4 0 01-5.657-5.657l7-7a4 4 0 015.657 5.657h-.001l-.496.497a2.5 2.5 0 01-3.536-3.536l1.414-1.414a.5.5 0 00.707-.707l-1.414-1.414a1.5 1.5 0 01-2.121 2.121l.497.497a3 3 0 004.242 0z" clipRule="evenodd" />
+    </svg>
+);
+
 
 const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin }) => {
     const [identity, setIdentity] = useState('');
@@ -69,7 +77,12 @@ const processTwilioMessage = async (message: Message): Promise<ProcessedMessage>
     };
     if (message.type === 'media' && message.media) {
         try {
-            processed.imageUrl = await message.media.getContentTemporaryUrl();
+            const url = await message.media.getContentTemporaryUrl();
+            if (message.media.contentType.startsWith('image/')) {
+                processed.imageUrl = url;
+            } else if (message.media.contentType.startsWith('video/')) {
+                processed.videoUrl = url;
+            }
         } catch (e) {
             console.error(`Failed to get media URL for message ${message.sid}`, e);
         }
@@ -86,6 +99,7 @@ export const StylistDashboard: React.FC = () => {
     const [input, setInput] = useState('');
     const [isUserTyping, setIsUserTyping] = useState(false);
     const messageEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     
     const handleLogin = async (id: string) => {
         try {
@@ -197,6 +211,21 @@ export const StylistDashboard: React.FC = () => {
         }
     };
 
+    const handleAttachClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && activeConversation) {
+            activeConversation.sendMessage({
+                contentType: file.type,
+                media: file,
+            });
+        }
+        if (event.target) event.target.value = '';
+    };
+
     if (!identity || !client) {
         return <LoginPage onLogin={handleLogin} />;
     }
@@ -266,13 +295,15 @@ export const StylistDashboard: React.FC = () => {
                                         return (
                                             <div key={msg.sid} className={`flex items-end ${isStylist ? 'justify-end' : 'justify-start'}`}>
                                                 <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${isStylist ? 'bg-platinum/90 text-dark-blue rounded-br-none' : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'}`}>
-                                                    {msg.imageUrl ? (
+                                                    {msg.imageUrl && (
                                                         <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
                                                             <img src={msg.imageUrl} alt="Shared media" className="rounded-lg max-w-xs" />
                                                         </a>
-                                                    ) : (
-                                                        <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
                                                     )}
+                                                    {msg.videoUrl && (
+                                                        <video src={msg.videoUrl} controls className="rounded-lg max-w-xs" />
+                                                    )}
+                                                    {msg.body && <p className="text-sm whitespace-pre-wrap">{msg.body}</p>}
                                                 </div>
                                             </div>
                                         );
@@ -291,6 +322,10 @@ export const StylistDashboard: React.FC = () => {
                             </div>
                             {/* Input Area */}
                             <div className="flex flex-row items-center h-16 rounded-xl bg-dark-blue w-full px-4 ring-1 ring-platinum/20">
+                                <button type="button" onClick={handleAttachClick} className="px-3 text-platinum/60 hover:text-white transition-colors" aria-label="Attach file">
+                                    <AttachIcon />
+                                </button>
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,video/*" />
                                 <div className="flex-grow">
                                     <input
                                         type="text"

@@ -63,4 +63,5 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
   imageUrl?: string;
+  videoUrl?: string;
 }
