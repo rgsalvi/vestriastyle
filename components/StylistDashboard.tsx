@@ -44,55 +44,83 @@ export const StylistDashboard: React.FC = () => {
     const messageEndRef = useRef<HTMLDivElement>(null);
     
     const handleLogin = async (id: string) => {
-        const response = await fetch('/api/generate-stylist-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identity: id }),
-        });
-        const data = await response.json();
-        if (data.success) {
-            const twilioClient = new Client(data.token);
-            setClient(twilioClient);
-            setIdentity(id);
-        } else {
-            alert('Login failed. Please try again.');
+        try {
+            const response = await fetch('/api/generate-stylist-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identity: id }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                const twilioClient = new Client(data.token);
+                setClient(twilioClient);
+                setIdentity(id);
+            } else {
+                alert(`Login failed: ${data.message || 'Please try again.'}`);
+            }
+        } catch (error) {
+            console.error("Login request failed:", error);
+            alert("Login request failed. Check the console for details.");
         }
     };
     
+    // Effect for initializing and managing the Twilio client connection
     useEffect(() => {
         if (!client) return;
 
+        const onConnected = () => {
+            client.getSubscribedConversations().then(paginator => {
+                setConversations(paginator.items);
+            });
+        };
+        
+        const onConversationJoined = (conversation: Conversation) => {
+             setConversations(prev => {
+                const filtered = prev.filter(c => c.sid !== conversation.sid);
+                return [conversation, ...filtered];
+            });
+        };
+
         client.on('connectionStateChanged', state => {
-            if (state === 'connected') {
-                client.getSubscribedConversations().then(paginator => {
-                    setConversations(paginator.items);
-                });
-            }
+            if (state === 'connected') onConnected();
         });
-
-        client.on('conversationJoined', conversation => {
-            setConversations(prev => [conversation, ...prev.filter(c => c.sid !== conversation.sid)]);
-        });
-
-        client.on('messageAdded', message => {
-            if (message.conversation.sid === activeConversation?.sid) {
-                setMessages(prev => [...prev, message]);
-            }
-        });
+        
+        client.on('conversationJoined', onConversationJoined);
 
         return () => {
             client.shutdown();
         }
-    }, [client, activeConversation]);
+    }, [client]);
+
+    // Effect for handling the active conversation and its messages
+    useEffect(() => {
+        if (!activeConversation) return;
+        
+        const setupConversation = async () => {
+            const msgs = await activeConversation.getMessages();
+            setMessages(msgs.items);
+            
+            const onMessageAdded = (message: Message) => {
+                setMessages(prev => [...prev, message]);
+            };
+
+            activeConversation.on('messageAdded', onMessageAdded);
+            
+            return () => {
+                activeConversation.off('messageAdded', onMessageAdded);
+            };
+        };
+        
+        setupConversation();
+
+    }, [activeConversation]);
 
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const selectConversation = async (conversation: Conversation) => {
+    const selectConversation = (conversation: Conversation) => {
         setActiveConversation(conversation);
-        const msgs = await conversation.getMessages();
-        setMessages(msgs.items);
     };
     
     const sendMessage = () => {
@@ -124,11 +152,11 @@ export const StylistDashboard: React.FC = () => {
                                 <button
                                     key={conv.sid}
                                     onClick={() => selectConversation(conv)}
-                                    className={`flex flex-row items-center hover:bg-platinum/10 rounded-xl p-2 ${activeConversation?.sid === conv.sid ? 'bg-platinum/20' : ''}`}
+                                    className={`flex flex-row items-center hover:bg-platinum/10 rounded-xl p-2 text-left ${activeConversation?.sid === conv.sid ? 'bg-platinum/20' : ''}`}
                                 >
-                                    <div className="ml-2 text-sm font-semibold text-left">
+                                    <div className="ml-2 text-sm font-semibold">
                                         <p>{conv.friendlyName || conv.sid}</p>
-                                        <p className="text-xs text-platinum/60">Last updated: {conv.lastMessage?.dateCreated.toLocaleString()}</p>
+                                        <p className="text-xs text-platinum/60">Last updated: {conv.lastMessage?.dateCreated.toLocaleString() || conv.dateUpdated.toLocaleString()}</p>
                                     </div>
                                 </button>
                             ))}
@@ -141,40 +169,39 @@ export const StylistDashboard: React.FC = () => {
                     {activeConversation ? (
                         <div className="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-black/20 h-full p-4">
                             {/* Message Area */}
-                            <div className="flex flex-col h-full overflow-x-auto mb-4">
-                                <div className="flex flex-col h-full">
-                                    <div className="grid grid-cols-12 gap-y-2">
-                                        {messages.map(msg => {
-                                            const isStylist = msg.author === identity;
-                                            return (
-                                                <div key={msg.sid} className={`col-start-1 col-end-12 p-3 rounded-lg ${isStylist ? 'col-start-2 justify-end' : ''}`}>
-                                                    <div className={`flex items-center ${isStylist ? 'justify-start flex-row-reverse' : 'flex-row'}`}>
-                                                        <div className={`relative text-sm ${isStylist ? 'bg-platinum/90 text-dark-blue mr-3' : 'bg-dark-blue ring-1 ring-platinum/20 ml-3'} py-2 px-4 shadow rounded-xl`}>
-                                                            <div className="whitespace-pre-wrap">{msg.body}</div>
-                                                        </div>
-                                                    </div>
+                            <div className="flex flex-col h-full overflow-y-auto mb-4">
+                                <div className="flex flex-col h-full space-y-2">
+                                    {messages.map(msg => {
+                                        const isStylist = msg.author === identity;
+                                        return (
+                                            <div key={msg.sid} className={`flex ${isStylist ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${
+                                                      isStylist 
+                                                      ? 'bg-platinum/90 text-dark-blue rounded-br-none' 
+                                                      : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'
+                                                  }`}>
+                                                    <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
                                                 </div>
-                                            );
-                                        })}
-                                        <div ref={messageEndRef}></div>
-                                    </div>
+                                            </div>
+                                        );
+                                    })}
+                                    <div ref={messageEndRef}></div>
                                 </div>
                             </div>
                             {/* Input Area */}
-                            <div className="flex flex-row items-center h-16 rounded-xl bg-dark-blue w-full px-4">
+                            <div className="flex flex-row items-center h-16 rounded-xl bg-dark-blue w-full px-4 ring-1 ring-platinum/20">
                                 <div className="flex-grow">
-                                    <div className="relative w-full">
-                                        <input
-                                            type="text"
-                                            value={input}
-                                            onChange={e => setInput(e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                                            className="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10 bg-dark-blue border-platinum/30"
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        value={input}
+                                        onChange={e => setInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                                        placeholder="Type your message..."
+                                        className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-platinum"
+                                    />
                                 </div>
                                 <div className="ml-4">
-                                    <button onClick={sendMessage} className="flex items-center justify-center bg-platinum hover:bg-platinum/80 rounded-xl text-dark-blue px-4 py-1 flex-shrink-0">
+                                    <button onClick={sendMessage} disabled={!input.trim()} className="flex items-center justify-center bg-platinum hover:bg-platinum/80 rounded-xl text-dark-blue px-4 py-2 flex-shrink-0 disabled:opacity-50 transition-all">
                                         <span>Send</span>
                                         <span className="ml-2">
                                             <svg className="w-4 h-4 transform rotate-45 -mt-px" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
