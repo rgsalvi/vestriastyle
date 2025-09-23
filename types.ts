@@ -56,3 +56,11 @@ export interface StyleProfile {
   favoriteBrands: string;
   bodyType: BodyType;
 }
+
+export interface ChatMessage {
+  id: string;
+  sender: 'user' | 'stylist' | 'system';
+  text: string;
+  timestamp: string;
+  imageUrl?: string;
+}

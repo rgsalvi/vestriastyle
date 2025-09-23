@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import type { AiResponse, Outfit, AnalysisItem } from '../types';
+import type { AiResponse, Outfit, AnalysisItem, User } from '../types';
 import { editOutfitImage } from '../services/geminiService';
 import { PremiumUpsellModal } from './PremiumUpsellModal';
 
@@ -8,6 +9,8 @@ interface RecommendationDisplayProps {
   isLoading: boolean;
   unsavedItems: AnalysisItem[];
   onSaveUnsavedItems: () => void;
+  user: User | null;
+  onOpenChat: (context: AiResponse) => void;
 }
 
 const VestriaSymbol: React.FC<{ className?: string }> = ({ className }) => (
@@ -34,7 +37,6 @@ const VestriaSymbol: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
-
 const InitialState: React.FC = () => (
     <div className="text-center p-8">
         <VestriaSymbol className="mx-auto h-20 w-20 text-platinum/20" />
@@ -45,7 +47,7 @@ const InitialState: React.FC = () => (
 
 const Stardust: React.FC = () => (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: 50 }).map((_, i) => (
             <div
                 key={i}
                 className="absolute bg-platinum/70 rounded-full"
@@ -63,7 +65,7 @@ const Stardust: React.FC = () => (
 );
 
 const LoadingState: React.FC = () => (
-    <div className="text-center p-8 relative">
+    <div className="text-center p-8 relative overflow-hidden">
         <Stardust />
         <VestriaSymbol className="mx-auto h-20 w-20 text-platinum animate-pulse-gentle" />
         <h3 className="mt-6 text-xl font-medium text-platinum">Curating Your Look...</h3>
@@ -88,9 +90,11 @@ interface OutfitCarouselProps {
     outfits: Outfit[];
     images: string[];
     onImageUpdate: (index: number, newImage: string) => void;
+    user: User | null;
+    onOpenChat: () => void;
 }
 
-const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImageUpdate }) => {
+const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImageUpdate, user, onOpenChat }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [editText, setEditText] = useState('');
@@ -123,7 +127,6 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
         setError(null);
         try {
             const originalImageBase64 = images[editingIndex];
-            // The image editing model usually returns PNGs.
             const mimeType = 'image/png'; 
             const newImage = await editOutfitImage(originalImageBase64, mimeType, editText);
             onImageUpdate(editingIndex, newImage);
@@ -135,217 +138,152 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
         }
     };
     
+    const handleChatClick = () => {
+        if (user) {
+            onOpenChat();
+        } else {
+            setIsUpsellModalOpen(true);
+        }
+    };
+    
     const currentOutfit = outfits[activeIndex];
 
     return (
       <>
       <div className="space-y-4">
           <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-lg border border-platinum/20 aspect-square">
+              <div className="rounded-2xl overflow-hidden shadow-lg border border-platinum/20 aspect-square bg-dark-blue/80">
                   <img
                       src={`data:image/png;base64,${images[activeIndex]}`}
                       alt={`AI-generated visualization for ${currentOutfit.title}`}
                       className="w-full h-full object-cover transition-opacity duration-300"
                       key={activeIndex}
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none"></div>
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                     <h4 className="font-semibold text-lg drop-shadow-md">{currentOutfit.title}</h4>
+                  </div>
               </div>
               {images.length > 1 && (
                   <>
-                      <button onClick={goToPrevious} className="absolute left-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                      <button onClick={goToPrevious} className="absolute left-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                       </button>
-                      <button onClick={goToNext} className="absolute right-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                      <button onClick={goToNext} className="absolute right-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                       </button>
                   </>
               )}
           </div>
           
-          <div className="p-4 bg-black/20 rounded-2xl border border-platinum/20">
-              <p className="font-semibold text-platinum">{currentOutfit.title}</p>
-              <ul className="mt-2 list-disc list-inside text-platinum/70 space-y-1 text-sm">
-                  {currentOutfit.items.map((item, i) => <li key={i}>{item}</li>)}
-              </ul>
-              <div className="mt-3 pt-3 border-t border-platinum/20">
-                {editingIndex === activeIndex ? (
-                    <div className="space-y-2">
-                        <input
-                            type="text"
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            placeholder="e.g., 'Change the shoes to sneakers'"
-                            className="block w-full shadow-sm sm:text-sm bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50"
-                            aria-label="Edit outfit prompt"
-                        />
-                        {error && <p className="text-red-400 text-xs text-center">{error}</p>}
-                        <div className="flex justify-end space-x-2">
-                            <button onClick={handleCancelEdit} className="px-3 py-1 bg-dark-blue border border-platinum/30 rounded-full text-xs font-medium text-platinum/80 hover:bg-black/20">Cancel</button>
-                            <button 
-                                onClick={handleGenerateEdit} 
-                                disabled={isGenerating || !editText}
-                                className="px-3 py-1 bg-platinum border border-transparent rounded-full text-xs font-medium text-dark-blue hover:bg-platinum/90 disabled:bg-platinum/50 disabled:cursor-not-allowed flex items-center"
-                            >
-                                {isGenerating && <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-dark-blue mr-1.5"></div>}
-                                {isGenerating ? 'Generating...' : 'Generate'}
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={handleRefineClick}
-                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 hover:shadow-glow text-platinum transition-all duration-200 ring-1 ring-platinum/20"
-                        >
-                            <WandIcon />
-                            Refine Outfit
-                        </button>
-                        <button
-                            onClick={() => setIsUpsellModalOpen(true)}
-                            className="w-full flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum hover:bg-platinum/90 hover:shadow-glow text-dark-blue transition-all duration-200"
-                        >
-                            <ChatIcon />
-                            Chat with a Stylist
-                            <span className="ml-1.5 inline-block bg-dark-blue text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">PRO</span>
-                        </button>
-                    </div>
-                )}
-            </div>
+          <div className="text-center">
+            <p className="text-sm text-platinum/60">Items: {currentOutfit.items.join(', ')}</p>
           </div>
 
-          {images.length > 1 && (
-              <div className="flex justify-center space-x-2 pt-2">
-                  {images.map((_, index) => (
-                      <button key={index} onClick={() => setActiveIndex(index)} className={`h-2.5 w-2.5 rounded-full transition-all duration-200 ${activeIndex === index ? 'bg-platinum scale-125' : 'bg-platinum/40 hover:bg-platinum/60'}`}></button>
-                  ))}
+          {editingIndex === activeIndex ? (
+              <div className="p-3 bg-black/20 rounded-xl space-y-2">
+                 <input
+                    type="text"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    placeholder="e.g., 'Change the shoes to white sneakers'"
+                    className="block w-full text-sm bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-4 py-2"
+                 />
+                 {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+                 <div className="flex justify-end space-x-2">
+                    <button onClick={handleCancelEdit} className="text-xs font-semibold text-platinum/70 hover:text-white px-3 py-1">Cancel</button>
+                    <button onClick={handleGenerateEdit} disabled={isGenerating} className="text-xs font-semibold text-dark-blue bg-platinum rounded-full px-3 py-1 disabled:bg-platinum/50 transition-colors">
+                        {isGenerating ? 'Generating...' : 'Generate'}
+                    </button>
+                 </div>
               </div>
+          ) : (
+             <div className="grid grid-cols-2 gap-3">
+                 <button onClick={handleRefineClick} className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200">
+                    <WandIcon />
+                    Refine This Look
+                 </button>
+                 <button onClick={handleChatClick} className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200">
+                    <ChatIcon />
+                    Chat with a Stylist
+                    {!user && <span className="ml-1.5 inline-block bg-dark-blue text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">PRO</span>}
+                 </button>
+             </div>
           )}
       </div>
       {isUpsellModalOpen && <PremiumUpsellModal onClose={() => setIsUpsellModalOpen(false)} />}
       </>
     );
-}
-
-const UnsavedItems: React.FC<{ items: AnalysisItem[], onSave: () => void }> = ({ items, onSave }) => {
-    if (items.length === 0) return null;
-
-    return (
-        <div className="mt-6 p-4 bg-black/20 border-t-2 border-b-2 border-platinum/20">
-            <h4 className="text-lg font-semibold text-platinum text-center">Save New Items</h4>
-            <p className="text-sm text-platinum/60 mt-1 text-center">Add the items from this session to your permanent wardrobe.</p>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {items.map((item, index) => (
-                    <img key={index} src={item.preview} alt={`unsaved item ${index}`} className="h-16 w-16 object-cover rounded-lg shadow-md border-2 border-dark-blue" />
-                ))}
-            </div>
-            <button
-                onClick={onSave}
-                className="mt-4 w-full bg-platinum text-dark-blue font-semibold py-2 px-4 rounded-full shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
-            >
-                Save to My Wardrobe
-            </button>
-        </div>
-    );
 };
 
-export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems }) => {
-  const [internalRecommendation, setInternalRecommendation] = useState<AiResponse | null>(null);
-  const [runRevealAnimation, setRunRevealAnimation] = useState(false);
-  const prevIsLoading = useRef(isLoading);
-
-  useEffect(() => {
-    if (recommendation) {
-      setInternalRecommendation(recommendation);
-    }
-  }, [recommendation]);
-  
-  useEffect(() => {
-    if (prevIsLoading.current && !isLoading && internalRecommendation) {
-      setRunRevealAnimation(true);
-      const timer = setTimeout(() => {
-        setRunRevealAnimation(false);
-      }, 1000); // Match animation duration
-      return () => clearTimeout(timer);
-    }
-    prevIsLoading.current = isLoading;
-  }, [isLoading, internalRecommendation]);
-  
-  const handleImageUpdate = (index: number, newImage: string) => {
-    if (!internalRecommendation || !internalRecommendation.generatedOutfitImages) return;
-
-    const newImages = [...internalRecommendation.generatedOutfitImages];
-    newImages[index] = newImage;
-    setInternalRecommendation({
-        ...internalRecommendation,
-        generatedOutfitImages: newImages,
-    });
-  };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return <LoadingState />;
-    }
-    if (!internalRecommendation) {
-      return <InitialState />;
-    }
+export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems, user, onOpenChat }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [updatedImages, setUpdatedImages] = useState<string[]>([]);
     
-    const { verdict, compatibility, advice, outfits, generatedOutfitImages } = internalRecommendation;
-
-    const verdictClasses = verdict.includes('go for it')
-      ? "bg-platinum/10 text-platinum border-platinum/30"
-      : "bg-slate-700 text-platinum/80 border-slate-600";
-
-    const hasVisuals = generatedOutfitImages && generatedOutfitImages.length > 0;
+    useEffect(() => {
+        if (recommendation?.generatedOutfitImages) {
+            setUpdatedImages(recommendation.generatedOutfitImages);
+        }
+    }, [recommendation]);
     
-    const revealClasses = runRevealAnimation ? 'animate-shimmer relative overflow-hidden' : '';
-
+    useEffect(() => {
+        if (isLoading || recommendation) {
+            containerRef.current?.classList.remove('animate-fade-in');
+            // This is a trick to re-trigger the animation
+            void containerRef.current?.offsetWidth;
+            containerRef.current?.classList.add('animate-fade-in');
+        }
+    }, [isLoading, recommendation]);
+    
+    const handleImageUpdate = (index: number, newImage: string) => {
+        setUpdatedImages(prev => {
+            const newImages = [...prev];
+            newImages[index] = newImage;
+            return newImages;
+        });
+    };
+    
+    const hasGeneratedImages = updatedImages && updatedImages.length > 0;
+    
     return (
-      <div className={`space-y-6 ${revealClasses}`}>
-        <div className={`p-4 rounded-2xl border ${verdictClasses}`}>
-          <p className="text-lg font-semibold text-center uppercase tracking-widest">{verdict}</p>
-        </div>
-        
-        {hasVisuals && (
-          <div>
-            <h4 className="text-lg font-semibold text-platinum mb-2 uppercase tracking-wider">Outfit Visualizations</h4>
-            <OutfitCarousel outfits={outfits} images={generatedOutfitImages!} onImageUpdate={handleImageUpdate} />
-          </div>
-        )}
-        
-        <div>
-          <h4 className="text-lg font-semibold text-platinum uppercase tracking-wider">Compatibility Analysis</h4>
-          <p className="mt-2 text-platinum/80">{compatibility}</p>
-        </div>
+        <div ref={containerRef} className="bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20 min-h-[400px] flex flex-col justify-center transition-all duration-300">
+            {isLoading && <LoadingState />}
 
-        {!hasVisuals && (
-           <div>
-              <h4 className="text-lg font-semibold text-platinum uppercase tracking-wider">Outfit Ideas</h4>
-              <div className="mt-2 space-y-4">
-                {outfits.map((outfit, index) => (
-                  <div key={index} className="p-4 bg-black/20 rounded-2xl border border-platinum/20">
-                    <p className="font-semibold text-platinum">{outfit.title}</p>
-                    <ul className="mt-2 list-disc list-inside text-platinum/70 space-y-1">
-                      {outfit.items.map((item, i) => <li key={i}>{item}</li>)}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-        )}
+            {!isLoading && !recommendation && <InitialState />}
 
-        <div>
-          <h4 className="text-lg font-semibold text-platinum uppercase tracking-wider">Stylist's Advice</h4>
-          <p className="mt-2 text-platinum/80">{advice}</p>
+            {!isLoading && recommendation && (
+                <div className="p-4 md:p-6 space-y-4">
+                    <div className={`p-4 rounded-xl text-center ${recommendation.verdict.includes('great') ? 'bg-green-900/40 text-green-300' : 'bg-orange-900/40 text-orange-300'} ring-1 ${recommendation.verdict.includes('great') ? 'ring-green-300/30' : 'ring-orange-300/30'}`}>
+                        <p className="font-semibold text-lg">{recommendation.verdict.replace('Verdict: ', '')}</p>
+                    </div>
+
+                    <p className="text-base text-platinum/80">{recommendation.compatibility}</p>
+
+                    {hasGeneratedImages && (
+                        <OutfitCarousel
+                            outfits={recommendation.outfits}
+                            images={updatedImages}
+                            onImageUpdate={handleImageUpdate}
+                            user={user}
+                            onOpenChat={() => onOpenChat(recommendation)}
+                        />
+                    )}
+
+                    <div className="p-4 bg-black/20 rounded-xl space-y-2">
+                        <h4 className="font-semibold text-platinum">Styling Tip:</h4>
+                        <p className="text-sm text-platinum/80">{recommendation.advice}</p>
+                    </div>
+
+                    {unsavedItems.length > 0 && (
+                        <div className="p-4 bg-blue-900/40 rounded-xl text-center ring-1 ring-blue-300/30">
+                            <p className="text-sm text-blue-200">You used {unsavedItems.length} item{unsavedItems.length > 1 ? 's' : ''} not in your wardrobe.</p>
+                            <button onClick={onSaveUnsavedItems} className="mt-2 text-sm font-semibold text-dark-blue bg-blue-300 rounded-full px-3 py-1 hover:bg-blue-200 transition-colors">
+                                Save to Wardrobe
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
-      </div>
     );
-  };
-
-  return (
-    <div className="bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20 overflow-hidden">
-      <div className="p-6 min-h-[400px] flex flex-col justify-center">
-        {renderContent()}
-      </div>
-      <UnsavedItems items={unsavedItems} onSave={onSaveUnsavedItems} />
-    </div>
-  );
 };

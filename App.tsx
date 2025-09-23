@@ -11,6 +11,7 @@ import { TermsOfService } from './components/TermsOfService';
 import { RefundPolicy } from './components/RefundPolicy';
 import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
+import { StylistChatModal } from './components/StylistChatModal';
 import { getStyleAdvice } from './services/geminiService';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { jwtDecode } from 'jwt-decode';
@@ -164,6 +165,9 @@ const App: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatContext, setChatContext] = useState<AiResponse | null>(null);
 
   // Auth and User Data Logic
   useEffect(() => {
@@ -363,6 +367,11 @@ const App: React.FC = () => {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
   
+  const handleOpenChat = (context: AiResponse) => {
+    setChatContext(context);
+    setIsChatOpen(true);
+  };
+  
   const renderPage = () => {
     if (isAuthLoading) {
         return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-platinum"></div></div>;
@@ -421,6 +430,8 @@ const App: React.FC = () => {
                       isLoading={isLoading}
                       unsavedItems={unsavedItemsFromAnalysis}
                       onSaveUnsavedItems={handleSaveUnsavedItems}
+                      user={user}
+                      onOpenChat={handleOpenChat}
                     />
                   </div>
                 </div>
@@ -456,6 +467,14 @@ const App: React.FC = () => {
         onNavigateToTerms={() => setCurrentPage('terms')}
         onNavigateToRefund={() => setCurrentPage('refund')}
       />
+      {user && (
+        <StylistChatModal
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            user={user}
+            analysisContext={chatContext}
+        />
+      )}
     </div>
   );
 };

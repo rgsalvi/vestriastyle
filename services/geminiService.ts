@@ -91,3 +91,35 @@ export const editOutfitImage = async (base64Image: string, mimeType: string, pro
         throw new Error("Failed to edit outfit image.");
     }
 };
+
+export interface ChatSessionData {
+    success: boolean;
+    message: string;
+    chatSessionId: string;
+    userChatToken: string;
+    stylist: {
+        name: string;
+        title: string;
+        avatarUrl: string;
+    };
+}
+
+export const initiateChatSession = async (analysisContext: AiResponse): Promise<ChatSessionData> => {
+    try {
+        const response = await fetch('/api/initiate-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ analysisContext }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Server responded with an error');
+        }
+
+        return await response.json() as ChatSessionData;
+    } catch (error) {
+        console.error("Error initiating chat session:", error);
+        throw new Error("Could not connect to the stylist service. Please try again later.");
+    }
+};
