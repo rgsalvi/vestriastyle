@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { analysisContext, user } = req.body;
+        const { analysisContext, newItemContext, user } = req.body;
         if (!analysisContext || !user) {
             return res.status(400).json({ success: false, message: 'Missing analysis context or user info.' });
         }
@@ -93,6 +93,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
         token.addGrant(chatGrant);
 
+        // Prepare initial images to be sent by the client upon connection
+        let initialImages = null;
+        if (newItemContext && analysisContext.generatedOutfitImages) {
+            initialImages = {
+                newItem: {
+                    base64: newItemContext.base64,
+                    mimeType: newItemContext.mimeType,
+                },
+                outfits: analysisContext.generatedOutfitImages,
+            };
+        }
+
         // Send the token and conversation details back to the client
         return res.status(200).json({
             success: true,
@@ -100,6 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             token: token.toJwt(),
             conversationSid: conversation.sid,
             stylist: assignedStylist,
+            initialImages: initialImages,
         });
         
     } catch (error) {

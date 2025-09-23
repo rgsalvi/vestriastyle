@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { User, AiResponse, ChatMessage, AnalysisItem } from '../types';
-import { initiateChatSession } from '../services/geminiService';
+import { initiateChatSession, ChatSessionData } from '../services/geminiService';
 import { Client, Conversation, Message } from '@twilio/conversations';
 // Fix: Import specific LocalVideoTrack and LocalAudioTrack types to resolve method errors.
 import Video, { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
@@ -48,7 +48,7 @@ const MicOffIcon: React.FC = () => (
 );
 const EndCallIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3zM10 3a1 1 0 00-1 1v2.586l-1.293-1.293a1 1 0 10-1.414 1.414L8.586 8 6.293 10.293a1 1 0 101.414 1.414L10 9.414l2.293 2.293a1 1 0 001.414-1.414L11.414 8l2.293-2.293a1 1 0 00-1.414-1.414L10 6.586V4a1 1 0 00-1-1z" clipRule="evenodd" />
+        <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" clipRule="evenodd" />
         <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" clipRule="evenodd" />
     </svg>
 );
@@ -88,6 +88,16 @@ const processTwilioMessage = async (message: Message, currentUser: User): Promis
     };
 }
 
+const base64ToBlob = (base64: string, mimeType: string): Blob => {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+};
+
 
 export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
     const [status, setStatus] = useState<'connecting' | 'connected' | 'error' | 'idle'>('idle');
@@ -97,6 +107,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [input, setInput] = useState('');
     const [stylist, setStylist] = useState<{ name: string; title: string; avatarUrl: string; bio?: string } | null>(null);
     const [isStylistTyping, setIsStylistTyping] = useState(false);
+    const [sessionData, setSessionData] = useState<ChatSessionData | null>(null);
     
     // Video State
     const [videoRoom, setVideoRoom] = useState<Room | null>(null);
@@ -121,14 +132,15 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             if (isOpen && user && analysisContext && status === 'idle') {
                 setStatus('connecting');
                 try {
-                    const sessionData = await initiateChatSession(analysisContext, user);
-                    const twilioClient = await Client.create(sessionData.token);
+                    const data = await initiateChatSession(analysisContext, newItemContext, user);
+                    setSessionData(data);
+                    const twilioClient = await Client.create(data.token);
                     setClient(twilioClient);
                     
-                    const conv = await twilioClient.getConversationBySid(sessionData.conversationSid);
+                    const conv = await twilioClient.getConversationBySid(data.conversationSid);
                     setConversation(conv);
                     
-                    setStylist(sessionData.stylist);
+                    setStylist(data.stylist);
                     
                     const twilioMessages = (await conv.getMessages()).items;
                     const processedMessages = await Promise.all(twilioMessages.map(msg => processTwilioMessage(msg, user)));
@@ -150,9 +162,41 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 setConversation(null);
                 setMessages([]);
                 setStatus('idle');
+                setSessionData(null);
             }
         };
-    }, [isOpen, user, analysisContext, status]);
+    }, [isOpen, user, analysisContext, newItemContext, status]);
+
+    useEffect(() => {
+        if (conversation && sessionData?.initialImages) {
+            const sendInitialImages = async () => {
+                const { newItem, outfits } = sessionData.initialImages;
+
+                if (newItem) {
+                    await conversation.sendMessage('New Item for Analysis:');
+                    const blob = base64ToBlob(newItem.base64, newItem.mimeType);
+                    const formData = new FormData();
+                    formData.append('file', blob, 'new-item.jpg');
+                    await conversation.sendMessage(formData);
+                }
+
+                if (outfits && outfits.length > 0) {
+                    await conversation.sendMessage('AI-Generated Outfit Ideas:');
+                    for (let i = 0; i < outfits.length; i++) {
+                        const outfitBase64 = outfits[i];
+                        const blob = base64ToBlob(outfitBase64, 'image/png');
+                        const formData = new FormData();
+                        formData.append('file', blob, `outfit-${i + 1}.png`);
+                        await conversation.sendMessage(formData);
+                    }
+                }
+                
+                setSessionData(prev => prev ? { ...prev, initialImages: undefined } : null);
+            };
+
+            sendInitialImages();
+        }
+    }, [conversation, sessionData]);
 
     useEffect(() => {
         if (!conversation) return;
