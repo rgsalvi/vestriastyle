@@ -1,5 +1,3 @@
-
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import twilio from 'twilio';
 
@@ -36,9 +34,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { analysisContext, user } = req.body;
-        if (!analysisContext || !user) {
-            return res.status(400).json({ success: false, message: 'Missing analysis context or user info.' });
+        const { analysisContext, user, newItem } = req.body;
+        if (!analysisContext || !user || !newItem) {
+            return res.status(400).json({ success: false, message: 'Missing analysis context, user info, or new item info.' });
         }
 
         const randomStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
@@ -63,19 +61,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             })
         ));
         
-        // Send initial context message for the stylist
+        // --- Send Full Context to Stylist ---
+
+        // 1. Send initial text context message
         const contextMessage = `
-          New session started for ${user.name} (${user.email}).
-          Occasion: ${analysisContext.outfits[0].title || 'N/A'}
-          AI Verdict: ${analysisContext.verdict}
-          AI Advice: ${analysisContext.advice}
-        `;
+New session started for: ${user.name}
+AI Verdict: ${analysisContext.verdict}
+AI Advice: ${analysisContext.advice}
+Compatibility: ${analysisContext.compatibility}
+        `.trim();
         
         await conversationService.conversations(conversation.sid).messages.create({
             author: 'system',
             body: contextMessage,
         });
+
+        // 2. Send the user's new item image
+        await conversationService.conversations(conversation.sid).messages.create({
+            author: 'system',
+            body: newItem.dataUrl,
+            attributes: JSON.stringify({ type: 'context-image', label: "User's New Item" })
+        });
         
+        // 3. Send the AI-generated outfit images
+        if (analysisContext.generatedOutfitImages && analysisContext.generatedOutfitImages.length > 0) {
+            for (const [index, base64Image] of analysisContext.generatedOutfitImages.entries()) {
+                await conversationService.conversations(conversation.sid).messages.create({
+                    author: 'system',
+                    body: `data:image/png;base64,${base64Image}`,
+                    attributes: JSON.stringify({ type: 'context-image', label: `AI Outfit Suggestion ${index + 1}` })
+                });
+            }
+        }
+        
+        // --- End of Context Sending ---
+
         // Create an access token for the user
         const chatGrant = new ChatGrant({
             serviceSid: twilioConversationServiceSid,

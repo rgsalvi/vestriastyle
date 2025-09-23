@@ -1,4 +1,3 @@
-
 import type { AnalysisItem, AiResponse, StyleProfile, BodyType, Occasion, User } from '../types';
 
 export const getStyleAdvice = async (newItem: AnalysisItem, wardrobeItems: AnalysisItem[], bodyType: BodyType, occasion: Occasion, styleProfile: StyleProfile | null): Promise<AiResponse> => {
@@ -93,8 +92,6 @@ export const editOutfitImage = async (base64Image: string, mimeType: string, pro
     }
 };
 
-// Fix: Updated ChatSessionData to match the actual API response from /api/initiate-chat,
-// including 'token' and 'conversationSid' and removing incorrect fields.
 export interface ChatSessionData {
     success: boolean;
     message: string;
@@ -107,14 +104,12 @@ export interface ChatSessionData {
     };
 }
 
-// Fix: Modified initiateChatSession to accept the 'user' object as a second argument
-// and include it in the POST request body, as required by the /api/initiate-chat endpoint.
-export const initiateChatSession = async (analysisContext: AiResponse, user: User): Promise<ChatSessionData> => {
+export const initiateChatSession = async (analysisContext: AiResponse, user: User, newItem: AnalysisItem | null): Promise<ChatSessionData> => {
     try {
         const response = await fetch('/api/initiate-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ analysisContext, user }),
+            body: JSON.stringify({ analysisContext, user, newItem }),
         });
 
         if (!response.ok) {

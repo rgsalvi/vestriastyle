@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import type { AiResponse, Outfit, AnalysisItem, User } from '../types';
 import { editOutfitImage } from '../services/geminiService';
@@ -10,7 +8,8 @@ interface RecommendationDisplayProps {
   unsavedItems: AnalysisItem[];
   onSaveUnsavedItems: () => void;
   user: User | null;
-  onOpenChat: (context: AiResponse) => void;
+  onOpenChat: (context: AiResponse, newItem: AnalysisItem | null) => void;
+  newItem: AnalysisItem | null;
 }
 
 const VestriaSymbol: React.FC<{ className?: string }> = ({ className }) => (
@@ -198,7 +197,6 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                  <button onClick={handleChatClick} className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200">
                     <ChatIcon />
                     Chat with a Stylist
-                    {!user && <span className="ml-1.5 inline-block bg-dark-blue text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">PRO</span>}
                  </button>
              </div>
           )}
@@ -207,7 +205,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
     );
 };
 
-export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems, user, onOpenChat }) => {
+export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems, user, onOpenChat, newItem }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [updatedImages, setUpdatedImages] = useState<string[]>([]);
     
@@ -244,8 +242,8 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
 
             {!isLoading && recommendation && (
                 <div className="p-4 md:p-6 space-y-4">
-                    <div className={`p-4 rounded-xl text-center ${recommendation.verdict.includes('great') ? 'bg-platinum/10 text-platinum ring-1 ring-platinum/40' : 'bg-black/20 text-platinum/70 ring-1 ring-platinum/20'}`}>
-                        <p className="font-semibold text-lg uppercase tracking-wider">{recommendation.verdict.replace('Verdict: ', '')}</p>
+                    <div className="p-4 rounded-xl text-center border border-platinum/30 bg-dark-blue">
+                        <p className="font-semibold text-lg uppercase tracking-wider text-platinum">{recommendation.verdict.replace('Verdict: ', '')}</p>
                     </div>
 
                     <p className="text-base text-platinum/80">{recommendation.compatibility}</p>
@@ -256,7 +254,7 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
                             images={updatedImages}
                             onImageUpdate={handleImageUpdate}
                             user={user}
-                            onOpenChat={() => onOpenChat(recommendation)}
+                            onOpenChat={() => onOpenChat(recommendation, newItem)}
                         />
                     )}
 

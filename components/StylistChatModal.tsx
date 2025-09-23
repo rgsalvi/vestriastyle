@@ -1,7 +1,5 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
-import type { User, AiResponse, ChatMessage } from '../types';
+import type { User, AiResponse, ChatMessage, AnalysisItem } from '../types';
 import { initiateChatSession } from '../services/geminiService';
 import { Client, Conversation, Message } from '@twilio/conversations';
 
@@ -10,6 +8,7 @@ interface StylistChatModalProps {
   onClose: () => void;
   user: User;
   analysisContext: AiResponse | null;
+  newItemContext: AnalysisItem | null;
 }
 
 const CloseIcon: React.FC = () => (
@@ -28,7 +27,7 @@ const Spinner: React.FC = () => (
     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-platinum"></div>
 );
 
-export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext }) => {
+export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [connectionState, setConnectionState] = useState<'initializing' | 'connecting' | 'connected' | 'failed'>('initializing');
     const [error, setError] = useState<string | null>(null);
@@ -42,14 +41,14 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
     useEffect(() => {
         const setupChat = async () => {
-            if (isOpen && analysisContext && user) {
+            if (isOpen && analysisContext && user && newItemContext) {
                 setConnectionState('initializing');
                 setError(null);
                 setMessages([]);
                 setStylist(null);
 
                 try {
-                    const sessionData = await initiateChatSession(analysisContext, user);
+                    const sessionData = await initiateChatSession(analysisContext, user, newItemContext);
                     if (!sessionData.success || !sessionData.token) {
                         throw new Error(sessionData.message || 'Failed to get chat token.');
                     }
@@ -131,7 +130,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             conversationRef.current = null;
         };
 
-    }, [isOpen, analysisContext, user]);
+    }, [isOpen, analysisContext, user, newItemContext]);
     
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -169,6 +169,7 @@ const App: React.FC = () => {
   
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<AiResponse | null>(null);
+  const [chatNewItem, setChatNewItem] = useState<AnalysisItem | null>(null);
 
   // Auth and User Data Logic
   useEffect(() => {
@@ -368,7 +369,7 @@ const App: React.FC = () => {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleOpenChat = (context: AiResponse) => {
+  const handleOpenChat = (context: AiResponse, newItemForChat: AnalysisItem | null) => {
     if (!user) {
         const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         const newGuestUser: User = {
@@ -380,6 +381,7 @@ const App: React.FC = () => {
         setGuestUser(newGuestUser);
     }
     setChatContext(context);
+    setChatNewItem(newItemForChat);
     setIsChatOpen(true);
   };
   
@@ -443,6 +445,7 @@ const App: React.FC = () => {
                       onSaveUnsavedItems={handleSaveUnsavedItems}
                       user={user}
                       onOpenChat={handleOpenChat}
+                      newItem={newItem}
                     />
                   </div>
                 </div>
@@ -489,6 +492,7 @@ const App: React.FC = () => {
             }}
             user={activeUserForChat}
             analysisContext={chatContext}
+            newItemContext={chatNewItem}
         />
       )}
     </div>

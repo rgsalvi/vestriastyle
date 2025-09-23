@@ -173,6 +173,33 @@ export const StylistDashboard: React.FC = () => {
                                 <div className="flex flex-col h-full space-y-2">
                                     {messages.map(msg => {
                                         const isStylist = msg.author === identity;
+                                        
+                                        let attributes;
+                                        try {
+                                            attributes = msg.attributes ? JSON.parse(msg.attributes as string) : null;
+                                        } catch (e) { attributes = null; }
+
+                                        if (attributes && attributes.type === 'context-image' && msg.body) {
+                                            return (
+                                                <div key={msg.sid} className="flex justify-start">
+                                                    <div className="max-w-xs p-2 rounded-2xl bg-dark-blue ring-1 ring-platinum/20">
+                                                        <p className="text-xs text-platinum/60 px-1 pb-1">{attributes.label}</p>
+                                                        <img src={msg.body} alt={attributes.label} className="rounded-xl" />
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        
+                                        if (msg.author === 'system' && msg.body) {
+                                             return (
+                                                <div key={msg.sid} className="flex justify-center">
+                                                    <div className="max-w-md p-3 rounded-2xl bg-dark-blue ring-1 ring-platinum/20 text-center">
+                                                         <p className="text-xs text-platinum/70 whitespace-pre-wrap">{msg.body}</p>
+                                                    </div>
+                                                </div>
+                                             )
+                                        }
+
                                         return (
                                             <div key={msg.sid} className={`flex ${isStylist ? 'justify-end' : 'justify-start'}`}>
                                                 <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${
