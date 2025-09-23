@@ -104,12 +104,12 @@ export interface ChatSessionData {
     };
 }
 
-export const initiateChatSession = async (analysisContext: AiResponse, user: User, newItem: AnalysisItem | null): Promise<ChatSessionData> => {
+export const initiateChatSession = async (analysisContext: AiResponse, user: User): Promise<ChatSessionData> => {
     try {
         const response = await fetch('/api/initiate-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ analysisContext, user, newItem }),
+            body: JSON.stringify({ analysisContext, user }),
         });
 
         if (!response.ok) {

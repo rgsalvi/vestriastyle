@@ -27,11 +27,27 @@ const Spinner: React.FC = () => (
     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-platinum"></div>
 );
 
+// Helper to convert data URL to a File object
+const dataURLtoFile = (dataurl: string, filename: string): File | null => {
+    const arr = dataurl.split(',');
+    if (arr.length < 2) return null;
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch) return null;
+    const mime = mimeMatch[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, {type:mime});
+}
+
 const parseMessageAttributes = (message: Message) => {
     try {
-        return message.attributes ? JSON.parse(message.attributes as string) : null;
+        return message.attributes ? JSON.parse(message.attributes as string) : {};
     } catch (e) {
-        return null;
+        return {};
     }
 };
 
@@ -49,14 +65,14 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
     useEffect(() => {
         const setupChat = async () => {
-            if (isOpen && analysisContext && user && newItemContext) {
+            if (isOpen && analysisContext && user) {
                 setConnectionState('initializing');
                 setError(null);
                 setMessages([]);
                 setStylist(null);
 
                 try {
-                    const sessionData = await initiateChatSession(analysisContext, user, newItemContext);
+                    const sessionData = await initiateChatSession(analysisContext, user);
                     if (!sessionData.success || !sessionData.token) {
                         throw new Error(sessionData.message || 'Failed to get chat token.');
                     }
@@ -74,10 +90,24 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             case 'connected':
                                 const conversation = await client.getConversationBySid(sessionData.conversationSid);
                                 conversationRef.current = conversation;
+
+                                // UPLOAD VISUAL CONTEXT
+                                if (newItemContext) {
+                                  const file = dataURLtoFile(newItemContext.dataUrl, 'new-item.jpg');
+                                  if(file) {
+                                    conversation.sendMessage({contentType: file.type, media: file}, { type: 'context_image', label: "User's New Item" });
+                                  }
+                                }
+                                analysisContext.generatedOutfitImages?.forEach((base64, index) => {
+                                    const file = dataURLtoFile(`data:image/png;base64,${base64}`, `outfit-${index + 1}.png`);
+                                    if(file) {
+                                      conversation.sendMessage({contentType: file.type, media: file}, { type: 'context_image', label: `AI Outfit Suggestion ${index + 1}` });
+                                    }
+                                });
                                 
                                 const twilioMessages = await conversation.getMessages();
                                 const formattedMessages: ChatMessage[] = twilioMessages.items
-                                    .filter(msg => parseMessageAttributes(msg)?.type !== 'initial_context')
+                                    .filter(msg => parseMessageAttributes(msg)?.type !== 'context_image') // Don't show context images to user
                                     .map(msg => ({
                                         id: msg.sid,
                                         sender: msg.author === user.id ? 'user' : (msg.author === 'system' ? 'system' : 'stylist'),
@@ -87,7 +117,9 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 setMessages(formattedMessages);
 
                                 conversation.on('messageAdded', (message: Message) => {
-                                    if (parseMessageAttributes(message)?.type === 'initial_context') return; // Don't show context to user
+                                    const attrs = parseMessageAttributes(message);
+                                    if (attrs.type === 'context_image' && message.author === user.id) return; // Don't show self-sent context images
+                                    
                                     setMessages(prev => [...prev, {
                                         id: message.sid,
                                         sender: message.author === user.id ? 'user' : 'stylist',
@@ -108,7 +140,6 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 break;
                             case 'disconnecting':
                             case 'disconnected':
-                                // You might want to handle reconnection logic here
                                 break;
                             case 'denied':
                                 setConnectionState('failed');
@@ -200,7 +231,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 {msg.sender === 'stylist' && stylist && <img src={stylist.avatarUrl} alt="stylist" className="w-8 h-8 rounded-full self-start flex-shrink-0" />}
                                 {msg.sender === 'system' ? (
-                                    <p className="w-full text-center text-xs text-platinum/50 italic py-2 px-4 bg-black/20 rounded-full">{msg.text}</p>
+                                    <p className="w-full text-center text-xs text-platinum/50 italic py-2 px-4">{msg.text}</p>
                                 ) : (
                                     <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${msg.sender === 'user' ? 'bg-platinum/90 text-dark-blue rounded-br-none' : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'}`}>
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>

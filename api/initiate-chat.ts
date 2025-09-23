@@ -33,9 +33,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const { analysisContext, user, newItem } = req.body;
-        if (!analysisContext || !user || !newItem) {
-            return res.status(400).json({ success: false, message: 'Missing analysis context, user info, or new item info.' });
+        const { analysisContext, user } = req.body;
+        if (!analysisContext || !user) {
+            return res.status(400).json({ success: false, message: 'Missing analysis context or user info.' });
         }
 
         const randomStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
@@ -55,28 +55,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             })
         ));
         
-        // --- Send Full Context to Stylist in a single, robust message ---
-        const contextAttributes = {
-            type: 'initial_context',
-            analysis: {
-                verdict: analysisContext.verdict,
-                advice: analysisContext.advice,
-                compatibility: analysisContext.compatibility,
-            },
-            newItem: {
-                dataUrl: newItem.dataUrl,
-                label: "User's New Item"
-            },
-            outfitImages: analysisContext.generatedOutfitImages?.map((base64Image: string, index: number) => ({
-                dataUrl: `data:image/png;base64,${base64Image}`,
-                label: `AI Outfit Suggestion ${index + 1}`
-            })) || []
-        };
+        // --- Send TEXT ONLY context to Stylist ---
+        // This is a lightweight operation and won't crash the API.
+        const textContext = `New style session for ${user.name}.\n\nVerdict: ${analysisContext.verdict}\n\nCompatibility: ${analysisContext.compatibility}\n\nAdvice: ${analysisContext.advice}`;
         
         await conversationService.conversations(conversation.sid).messages.create({
             author: 'system',
-            body: `New style session for ${user.name}. Full details attached.`,
-            attributes: JSON.stringify(contextAttributes)
+            body: textContext,
+            attributes: JSON.stringify({ type: 'context_text' })
         });
         
         // --- End of Context Sending ---
