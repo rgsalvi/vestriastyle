@@ -42,20 +42,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const randomStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
+        
+        // Scope all actions to our specific Conversation Service
+        const conversationService = client.conversations.v1.services(twilioConversationServiceSid);
 
-        // Create a new conversation
-        const conversation = await client.conversations.v1.conversations.create({
+        // Create a new conversation within the service
+        const conversation = await conversationService.conversations.create({
             friendlyName: `Style Session for ${user.name}`
         });
 
         // Add the user to the conversation
-        await client.conversations.v1.conversations(conversation.sid).participants.create({
+        await conversationService.conversations(conversation.sid).participants.create({
             identity: user.id
         });
         
         // Add all available stylists so any can pick it up
         await Promise.all(STYLIST_IDENTITIES.map(stylistIdentity =>
-            client.conversations.v1.conversations(conversation.sid).participants.create({
+            conversationService.conversations(conversation.sid).participants.create({
                 identity: stylistIdentity
             })
         ));
@@ -68,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           AI Advice: ${analysisContext.advice}
         `;
         
-        await client.conversations.v1.conversations(conversation.sid).messages.create({
+        await conversationService.conversations(conversation.sid).messages.create({
             author: 'system',
             body: contextMessage,
         });
