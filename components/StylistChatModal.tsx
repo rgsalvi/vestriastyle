@@ -51,6 +51,20 @@ const parseMessageAttributes = (message: Message) => {
     }
 };
 
+// Centralized message processor
+const processTwilioMessage = async (message: Message, currentUser: User): Promise<ChatMessage> => {
+    const chatMessage: ChatMessage = {
+        id: message.sid,
+        sender: message.author === currentUser.id ? 'user' : (message.author === 'system' ? 'system' : 'stylist'),
+        text: message.body ?? '',
+        timestamp: message.dateCreated.toISOString(),
+    };
+    if (message.type === 'media' && message.media) {
+        chatMessage.imageUrl = await message.media.getContentTemporaryUrl();
+    }
+    return chatMessage;
+};
+
 export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [connectionState, setConnectionState] = useState<'initializing' | 'connecting' | 'connected' | 'failed'>('initializing');
@@ -106,26 +120,19 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 });
                                 
                                 const twilioMessages = await conversation.getMessages();
-                                const formattedMessages: ChatMessage[] = twilioMessages.items
-                                    .filter(msg => parseMessageAttributes(msg)?.type !== 'context_image') // Don't show context images to user
-                                    .map(msg => ({
-                                        id: msg.sid,
-                                        sender: msg.author === user.id ? 'user' : (msg.author === 'system' ? 'system' : 'stylist'),
-                                        text: msg.body ?? '',
-                                        timestamp: msg.dateCreated.toISOString(),
-                                    }));
+                                const messagePromises = twilioMessages.items
+                                    .filter(msg => parseMessageAttributes(msg)?.type !== 'context_image')
+                                    .map(msg => processTwilioMessage(msg, user));
+                                
+                                const formattedMessages = await Promise.all(messagePromises);
                                 setMessages(formattedMessages);
 
-                                conversation.on('messageAdded', (message: Message) => {
+                                conversation.on('messageAdded', async (message: Message) => {
                                     const attrs = parseMessageAttributes(message);
-                                    if (attrs.type === 'context_image' && message.author === user.id) return; // Don't show self-sent context images
+                                    if (attrs.type === 'context_image' && message.author === user.id) return;
                                     
-                                    setMessages(prev => [...prev, {
-                                        id: message.sid,
-                                        sender: message.author === user.id ? 'user' : 'stylist',
-                                        text: message.body ?? '',
-                                        timestamp: message.dateCreated.toISOString(),
-                                    }]);
+                                    const processedMsg = await processTwilioMessage(message, user);
+                                    setMessages(prev => [...prev, processedMsg]);
                                 });
                                 
                                 conversation.on('typingStarted', (participant) => {
@@ -234,7 +241,13 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                     <p className="w-full text-center text-xs text-platinum/50 italic py-2 px-4">{msg.text}</p>
                                 ) : (
                                     <div className={`max-w-md lg:max-w-lg p-3 rounded-2xl ${msg.sender === 'user' ? 'bg-platinum/90 text-dark-blue rounded-br-none' : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'}`}>
-                                        <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                        {msg.imageUrl ? (
+                                            <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
+                                                <img src={msg.imageUrl} alt="Shared media" className="rounded-lg max-w-xs" />
+                                            </a>
+                                        ) : (
+                                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                        )}
                                     </div>
                                 )}
                             </div>

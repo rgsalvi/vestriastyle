@@ -12,6 +12,13 @@ interface SessionContext {
     images: { url: string; label: string }[];
 }
 
+interface ProcessedMessage {
+    sid: string;
+    author: string | null;
+    body: string | null;
+    imageUrl?: string;
+}
+
 const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin }) => {
     const [identity, setIdentity] = useState('');
     return (
@@ -70,12 +77,26 @@ const parseMessageAttributes = (message: Message) => {
     }
 };
 
+// Centralized processor for any Twilio message
+const processTwilioMessage = async (message: Message): Promise<ProcessedMessage> => {
+    const processed: ProcessedMessage = {
+        sid: message.sid,
+        author: message.author,
+        body: message.body,
+    };
+    if (message.type === 'media' && message.media) {
+        processed.imageUrl = await message.media.getContentTemporaryUrl();
+    }
+    return processed;
+};
+
+
 export const StylistDashboard: React.FC = () => {
     const [identity, setIdentity] = useState<string | null>(null);
     const [client, setClient] = useState<Client | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<ProcessedMessage[]>([]);
     const [sessionContext, setSessionContext] = useState<SessionContext>({ text: null, images: [] });
     const [input, setInput] = useState('');
     const messageEndRef = useRef<HTMLDivElement>(null);
@@ -128,36 +149,27 @@ export const StylistDashboard: React.FC = () => {
         }
     }, [client]);
     
-    const processMessageForContext = async (message: Message, currentContext: SessionContext): Promise<SessionContext> => {
-        const attrs = parseMessageAttributes(message);
-        let newContext = { ...currentContext };
-        
-        if (attrs.type === 'context_text' && message.author === 'system') {
-            newContext.text = message.body;
-        } else if (attrs.type === 'context_image' && message.type === 'media') {
-            // Fix: Use getContentTemporaryUrl() as getContentUrl() does not exist on the Media object.
-            const url = await message.media.getContentTemporaryUrl();
-            if (!newContext.images.some(img => img.url === url)) {
-                newContext.images.push({ url, label: attrs.label || 'Context Image' });
-            }
-        }
-        return newContext;
-    }
-
     useEffect(() => {
         if (!activeConversation) return;
         
         const setupConversation = async () => {
             let context: SessionContext = { text: null, images: [] };
-            const chatMessages: Message[] = [];
+            const chatMessages: ProcessedMessage[] = [];
             
-            const allMessages = (await activeConversation.getMessages()).items;
+            const allTwilioMessages = (await activeConversation.getMessages()).items;
 
-            for (const msg of allMessages) {
-                context = await processMessageForContext(msg, context);
+            for (const msg of allTwilioMessages) {
                 const attrs = parseMessageAttributes(msg);
-                if (attrs.type !== 'context_text' && attrs.type !== 'context_image') {
-                    chatMessages.push(msg);
+                if (attrs.type === 'context_text' && msg.author === 'system') {
+                    context.text = msg.body;
+                } else if (attrs.type === 'context_image' && msg.type === 'media') {
+                    const url = await msg.media.getContentTemporaryUrl();
+                    if (!context.images.some(img => img.url === url)) {
+                        context.images.push({ url, label: attrs.label || 'Context Image' });
+                    }
+                } else {
+                    const processedMsg = await processTwilioMessage(msg);
+                    chatMessages.push(processedMsg);
                 }
             }
             
@@ -165,12 +177,24 @@ export const StylistDashboard: React.FC = () => {
             setMessages(chatMessages);
             
             const onMessageAdded = async (message: Message) => {
-                const newContext = await processMessageForContext(message, sessionContext);
-                setSessionContext(newContext);
-                
                 const attrs = parseMessageAttributes(message);
-                if (attrs.type !== 'context_text' && attrs.type !== 'context_image') {
-                    setMessages(prev => [...prev, message]);
+                
+                let isContextMessage = false;
+                if (attrs.type === 'context_text' && message.author === 'system') {
+                    isContextMessage = true;
+                    setSessionContext(prev => ({ ...prev, text: message.body }));
+                } else if (attrs.type === 'context_image' && message.type === 'media') {
+                    isContextMessage = true;
+                    const url = await message.media.getContentTemporaryUrl();
+                    setSessionContext(prev => {
+                        if (prev.images.some(img => img.url === url)) return prev;
+                        return { ...prev, images: [...prev.images, { url, label: attrs.label || 'Context Image' }]};
+                    });
+                }
+
+                if (!isContextMessage) {
+                    const processedMsg = await processTwilioMessage(message);
+                    setMessages(prev => [...prev, processedMsg]);
                 }
             };
 
@@ -251,7 +275,13 @@ export const StylistDashboard: React.FC = () => {
                                                       ? 'bg-platinum/90 text-dark-blue rounded-br-none' 
                                                       : 'bg-dark-blue text-platinum ring-1 ring-platinum/20 rounded-bl-none'
                                                   }`}>
-                                                    <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                                                    {msg.imageUrl ? (
+                                                        <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
+                                                            <img src={msg.imageUrl} alt="Shared media" className="rounded-lg max-w-xs" />
+                                                        </a>
+                                                    ) : (
+                                                        <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
