@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Client, Conversation, Message, Participant } from '@twilio/conversations';
-// Fix: Import specific LocalAudioTrack type to resolve method errors.
 import Video, { Room, LocalAudioTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
 
-// ... (STYLISTS array and icons remain the same)
 const STYLISTS = [
     { id: 'tanvi_sankhe', name: 'Tanvi Sankhe' },
     { id: 'muskaan_datt', name: 'Muskaan Datt' },
@@ -21,19 +19,17 @@ const MicOnIcon: React.FC = () => (
 );
 const MicOffIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M10 18a7 7 0 005.47-2.502a1 1 0 00-1.353-1.476A5.002 5.002 0 015 8a1 1 0 00-2 0 7 7 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07zM9.243 3.03a3 3 0 014.514 0 1 1 0 001.528-1.303A5 5 0 006.183 6.9a1 1 0 101.93.513A3.001 3.001 0 019.243 3.03zM5.383 6.383a1 1 0 00-1.414 1.414l9.192 9.192a1 1 0 001.414-1.414L5.383 6.383z" clipRule="evenodd" />
+      <path fillRule="evenodd" d="M10 18a7 7 0 005.47-2.502a1 1 0 00-1.353-1.476A5.002 5.002 0 015 8a1 1 0 00-2 0 7 7 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07zM9.243 3.03a3 3 0 014.514 0a1 1 0 001.528-1.303A5 5 0 006.183 6.9a1 1 0 101.93.513A3.001 3.001 0 019.243 3.03zM5.383 6.383a1 1 0 00-1.414 1.414l9.192 9.192a1 1 0 001.414-1.414L5.383 6.383z" clipRule="evenodd" />
     </svg>
 );
 const EndCallIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" />
-      <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" />
-      <path fillRule="evenodd" d="M3.738 2.05A11.956 11.956 0 0110 0c4.35 0 8.23.23 11.262.65a1 1 0 01.688 1.348l-1 4a1 1 0 01-1.23.688C17.36 5.86 13.98 5 10 5s-7.36.86-9.72 1.688A1 1 0 01-1 6.05l-1-4a1 1 0 01.688-1.348A11.956 11.956 0 013.738 2.05z" clipRule="evenodd" />
+        <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" />
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" clipRule="evenodd" />
     </svg>
 );
 
 
-// Fix: Define the ProcessedMessage interface to resolve type errors
 interface ProcessedMessage {
     sid: string;
     author: string | null;
@@ -45,7 +41,6 @@ interface ProcessedMessage {
         contentType: string;
     };
 }
-// Fix: Implement the LoginPage component to return JSX and resolve the return type error.
 const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin }) => {
     const [selectedStylist, setSelectedStylist] = useState('');
 
@@ -84,7 +79,6 @@ const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin 
         </div>
     );
 };
-// Fix: Implement the processTwilioMessage helper function to properly format message data.
 const processTwilioMessage = async (message: Message): Promise<ProcessedMessage> => {
     let media;
     if (message.type === 'media' && message.media) {
@@ -107,7 +101,6 @@ const processTwilioMessage = async (message: Message): Promise<ProcessedMessage>
 };
 
 export const StylistDashboard: React.FC = () => {
-    // ... (Existing state)
     const [identity, setIdentity] = useState<string | null>(null);
     const [client, setClient] = useState<Client | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -115,38 +108,73 @@ export const StylistDashboard: React.FC = () => {
     const [messages, setMessages] = useState<ProcessedMessage[]>([]);
     const [input, setInput] = useState('');
     const [isUserTyping, setIsUserTyping] = useState(false);
-
-    // New video state
     const [videoRoom, setVideoRoom] = useState<Room | null>(null);
     const [isConnectingVideo, setIsConnectingVideo] = useState(false);
-    // Fix: Use specific LocalAudioTrack type.
     const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
-    const [remoteVideoTrack, setRemoteVideoTrack] = useState<any>(null); // RemoteVideoTrack
-    const [remoteAudioTrack, setRemoteAudioTrack] = useState<any>(null); // RemoteAudioTrack
+    const [remoteVideoTrack, setRemoteVideoTrack] = useState<any>(null);
+    const [remoteAudioTrack, setRemoteAudioTrack] = useState<any>(null);
     const [isMuted, setIsMuted] = useState(false);
     const [videoCallRequestSid, setVideoCallRequestSid] = useState<string | null>(null);
     
-    // ... (Refs)
     const messageEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
-    // ... (handleLogin and client useEffect remain the same)
-    
-    // Updated conversation useEffect
+    const handleLogin = async (stylistIdentity: string) => {
+        try {
+            const response = await fetch('/api/generate-stylist-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identity: stylistIdentity }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                const twilioClient = await Client.create(data.token);
+                setClient(twilioClient);
+                setIdentity(stylistIdentity);
+            } else {
+                console.error("Failed to login:", data.message);
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (!client || !identity) return;
+
+        const setupClient = async () => {
+            const convs = await client.getSubscribedConversations();
+            setConversations(convs.items);
+
+            client.on('conversationJoined', (conversation) => {
+                setConversations(prev => [...prev.filter(c => c.sid !== conversation.sid), conversation]);
+            });
+        };
+
+        setupClient();
+
+        return () => {
+            client.shutdown();
+        };
+    }, [client, identity]);
+
+    const selectConversation = (conversation: Conversation) => {
+        setActiveConversation(conversation);
+    };
+
     useEffect(() => {
         if (!activeConversation || !identity) return;
         
         const setupConversation = async () => {
             setIsUserTyping(false);
-            setVideoCallRequestSid(null); // Reset on new conversation
+            setVideoCallRequestSid(null);
             
             const twilioMessages = (await activeConversation.getMessages()).items;
             const processedMessages = await Promise.all(twilioMessages.map(processTwilioMessage));
             setMessages(processedMessages.sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime()));
 
-            // Check for existing video call requests
             const existingRequest = processedMessages.find(m => m.attributes.type === 'video_call_request');
             if (existingRequest) {
                 setVideoCallRequestSid(activeConversation.sid);
@@ -160,18 +188,59 @@ export const StylistDashboard: React.FC = () => {
                     setMessages(prev => [...prev, processedMsg]);
                 }
             };
-            // ... (Typing listeners)
+            
+            const onTypingStarted = (participant: Participant) => {
+                if (participant.identity !== identity) setIsUserTyping(true);
+            };
+            const onTypingEnded = (participant: Participant) => {
+                if (participant.identity !== identity) setIsUserTyping(false);
+            };
+
             activeConversation.on('messageAdded', onMessageAdded);
-            // ...
-            return () => { /* cleanup */ };
+            activeConversation.on('typingStarted', onTypingStarted);
+            activeConversation.on('typingEnded', onTypingEnded);
+            
+            return () => {
+                activeConversation.removeListener('messageAdded', onMessageAdded);
+                activeConversation.removeListener('typingStarted', onTypingStarted);
+                activeConversation.removeListener('typingEnded', onTypingEnded);
+            };
         };
         setupConversation();
     }, [activeConversation, identity]);
 
-    // ... (scroll useEffect)
-    // ... (sendMessage, handleInputChange, attach, fileChange)
+    useEffect(() => {
+        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, isUserTyping]);
 
-    // New Video functions
+    const sendMessage = () => {
+        if (input.trim() && activeConversation) {
+            activeConversation.sendMessage(input);
+            setInput('');
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value);
+        if (activeConversation) {
+            activeConversation.typing();
+        }
+    };
+    
+    const attachFile = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && activeConversation) {
+            const formData = new FormData();
+            formData.append('file', file);
+            activeConversation.sendMessage(formData);
+        }
+        e.target.value = '';
+    };
+
     const joinVideoCall = async () => {
         if (!activeConversation || !identity) return;
         setIsConnectingVideo(true);
@@ -185,9 +254,7 @@ export const StylistDashboard: React.FC = () => {
             const data = await response.json();
             if (!data.success) throw new Error("Failed to get video token.");
             
-            // CRITICAL: Request audio only for stylist
             const tracks = await createLocalTracks({ audio: true, video: false });
-            // Fix: Cast to the specific track type to access its methods.
             const audioTrack = tracks.find(t => t.kind === 'audio') as LocalAudioTrack;
             setLocalAudioTrack(audioTrack);
 
@@ -234,7 +301,7 @@ export const StylistDashboard: React.FC = () => {
         setRemoteVideoTrack(null);
         setRemoteAudioTrack(null);
         setIsMuted(false);
-        setVideoCallRequestSid(null); // Allow re-joining if needed
+        setVideoCallRequestSid(null);
     };
 
     const toggleMute = () => {
@@ -258,16 +325,33 @@ export const StylistDashboard: React.FC = () => {
         }
     }, [remoteAudioTrack]);
 
-    // ... (Login page return)
-    // ...
+    if (!identity) {
+        return <LoginPage onLogin={handleLogin} />;
+    }
     
     return (
         <div className="h-screen w-screen flex antialiased text-platinum bg-dark-blue">
-            {/* ... (Sidebar) */}
+            <div className="flex flex-col py-8 pl-6 pr-2 w-72 bg-dark-blue flex-shrink-0 border-r border-platinum/20">
+                 <div className="flex flex-row items-center justify-center h-12 w-full">
+                    <div className="font-bold text-2xl tracking-widest">VESTRIA</div>
+                 </div>
+                 <div className="flex flex-col mt-8">
+                    <div className="flex flex-row items-center justify-between text-xs">
+                        <span className="font-bold">Active Conversations</span>
+                        <span className="flex items-center justify-center bg-platinum/20 h-4 w-4 rounded-full">{conversations.length}</span>
+                    </div>
+                    <div className="flex flex-col space-y-1 mt-4 -mx-2 h-full overflow-y-auto">
+                        {conversations.map(conv => (
+                            <button key={conv.sid} onClick={() => selectConversation(conv)} className={`flex flex-row items-center hover:bg-black/20 rounded-xl p-2 ${activeConversation?.sid === conv.sid ? 'bg-black/40' : ''}`}>
+                                <div className="ml-2 text-sm font-semibold text-left">{conv.friendlyName || 'Styling Session'}</div>
+                            </button>
+                        ))}
+                    </div>
+                 </div>
+            </div>
             <div className="flex flex-col flex-auto h-full p-4">
                 {activeConversation ? (
                     <div className="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-black/20 h-full p-4">
-                        {/* Video Area */}
                         {videoRoom && (
                              <div className="relative flex-shrink-0 mb-4 bg-dark-blue rounded-xl p-2 border border-platinum/20">
                                 <div className="aspect-video bg-black rounded-lg overflow-hidden">
@@ -284,19 +368,61 @@ export const StylistDashboard: React.FC = () => {
                                 </div>
                              </div>
                         )}
-                        {/* Message Area */}
                         <div className="flex flex-col h-full overflow-y-auto mb-4">
-                            {/* ... (message rendering) */}
+                             {messages.map(message => (
+                                 <div key={message.sid} className="grid grid-cols-12 gap-y-2">
+                                     {message.author === identity ? (
+                                         <div className="col-start-6 col-end-13 p-3 rounded-lg">
+                                             <div className="flex items-center justify-start flex-row-reverse">
+                                                 <div className="relative ml-3 text-sm bg-platinum/10 py-2 px-4 shadow rounded-xl">
+                                                     {message.media ? <a href={message.media.url} target="_blank" rel="noopener noreferrer"><img src={message.media.url} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" /></a> : <div className="whitespace-pre-wrap">{message.body}</div>}
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     ) : (
+                                          <div className="col-start-1 col-end-8 p-3 rounded-lg">
+                                             <div className="flex flex-row items-start">
+                                                 <div className="relative mr-3 text-sm bg-[#1F2937] py-2 px-4 shadow rounded-xl">
+                                                     {message.media ? <a href={message.media.url} target="_blank" rel="noopener noreferrer"><img src={message.media.url} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" /></a> : <div className="whitespace-pre-wrap">{message.body}</div>}
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     )}
+                                 </div>
+                             ))}
+                             {isUserTyping && (
+                                 <div className="col-start-1 col-end-8 p-3 rounded-lg">
+                                     <div className="flex flex-row items-center">
+                                         <div className="relative mr-3 text-sm bg-[#1F2937] py-2 px-4 shadow rounded-xl">
+                                            <div className="flex items-center space-x-1">
+                                                <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-75"></span>
+                                                <span className="w-1.ajs-1.5 bg-platinum/50 rounded-full animate-pulse delay-150"></span>
+                                                <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-300"></span>
+                                            </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                             )}
+                            <div ref={messageEndRef} />
                         </div>
-                        {/* Input Area */}
                         <div className="flex flex-row items-center h-16 rounded-xl bg-dark-blue w-full px-4 ring-1 ring-platinum/20">
-                            {/* ... (attach button and input) */}
-                             {videoCallRequestSid === activeConversation.sid && !videoRoom && (
-                                <button onClick={joinVideoCall} disabled={isConnectingVideo} className="ml-2 text-xs font-semibold bg-green-600 text-white px-3 py-1 rounded-full animate-pulse">
-                                    {isConnectingVideo ? "Joining..." : "Join Video Call"}
+                            <button onClick={attachFile} className="flex items-center justify-center text-platinum/70 hover:text-white">
+                                <AttachIcon />
+                            </button>
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                            <div className="flex-grow ml-4">
+                                <input type="text" value={input} onChange={handleInputChange} onKeyPress={e => e.key === 'Enter' && sendMessage()} className="flex w-full border rounded-full focus:outline-none focus:border-platinum/50 pl-4 h-10 bg-black/20 text-platinum border-transparent" placeholder="Type your message..."/>
+                            </div>
+                            <div className="ml-4 flex items-center space-x-2">
+                                 {videoCallRequestSid === activeConversation.sid && !videoRoom && (
+                                    <button onClick={joinVideoCall} disabled={isConnectingVideo} className="text-xs font-semibold bg-green-600 text-white px-3 py-2 rounded-full animate-pulse">
+                                        {isConnectingVideo ? "Joining..." : "Join Video Call"}
+                                    </button>
+                                )}
+                                <button onClick={sendMessage} className="flex items-center justify-center bg-platinum hover:bg-platinum/90 rounded-full text-dark-blue h-10 w-10 flex-shrink-0 transition-colors">
+                                    <svg className="w-6 h-6 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                                 </button>
-                            )}
-                            {/* ... (send button) */}
+                            </div>
                         </div>
                     </div>
                 ) : (
