@@ -18,7 +18,7 @@ const SendIcon: React.FC = () => (
 );
 const AttachIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-      <path fillRule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.497a1.5 1.5 0 012.121-2.121l-1.414-1.414a.5.5 0 00-.707.707l1.414 1.414a2.5 2.5 0 01-3.536 3.536l-.496.496a4 4 0 01-5.657-5.657l7-7a4 4 0 015.657 5.657h-.001l-.496.497a2.5 2.5 0 01-3.536-3.536l1.414-1.414a.5.5 Svg 00.707-.707l-1.414-1.414a1.5 1.5 0 01-2.121 2.121l.497.497a3 3 0 004.242 0z" clipRule="evenodd" />
+      <path fillRule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.497a1.5 1.5 0 012.121-2.121l-1.414-1.414a.5.5 0 00-.707.707l1.414 1.414a2.5 2.5 0 01-3.536 3.536l-.496.496a4 4 0 01-5.657-5.657l7-7a4 4 0 015.657 5.657h-.001l-.496.497a2.5 2.5 0 01-3.536-3.536l1.414-1.414a.5.5 0 00.707-.707l-1.414-1.414a1.5 1.5 0 01-2.121 2.121l.497.497a3 3 0 004.242 0z" clipRule="evenodd" />
     </svg>
 );
 const Spinner: React.FC = () => (
@@ -29,6 +29,13 @@ const VideoIcon: React.FC = () => (
         <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 001.553.832l3-2a1 1 0 000-1.664l-3-2z" />
     </svg>
 );
+
+const InfoIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
 const MicOnIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
       <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
@@ -41,366 +48,300 @@ const MicOffIcon: React.FC = () => (
 );
 const EndCallIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-      <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" />
-      <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" />
-      <path fillRule="evenodd" d="M3.738 2.05A11.956 11.956 0 0110 0c4.35 0 8.23.23 11.262.65a1 1 0 01.688 1.348l-1 4a1 1 0 01-1.23.688C17.36 5.86 13.98 5 10 5s-7.36.86-9.72 1.688A1 1 0 01-1 6.05l-1-4a1 1 0 01.688-1.348A11.956 11.956 0 013.738 2.05z" clipRule="evenodd" />
+        <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3zM10 3a1 1 0 00-1 1v2.586l-1.293-1.293a1 1 0 10-1.414 1.414L8.586 8 6.293 10.293a1 1 0 101.414 1.414L10 9.414l2.293 2.293a1 1 0 001.414-1.414L11.414 8l2.293-2.293a1 1 0 00-1.414-1.414L10 6.586V4a1 1 0 00-1-1z" clipRule="evenodd" />
+        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" clipRule="evenodd" />
     </svg>
 );
 
 
 interface StylistChatModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  user: User;
-  analysisContext: AiResponse | null;
-  newItemContext: AnalysisItem | null;
+    isOpen: boolean;
+    onClose: () => void;
+    user: User;
+    analysisContext: AiResponse | null;
+    newItemContext: AnalysisItem | null;
 }
 
-// ... (Helper functions remain the same)
-const dataURLtoFile = (dataurl: string, filename: string): File | null => {
-    const arr = dataurl.split(',');
-    if (arr.length < 2) return null;
-    const mimeMatch = arr[0].match(/:(.*?);/);
-    if (!mimeMatch) return null;
-    const mime = mimeMatch[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while(n--){
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, {type:mime});
-}
-const parseMessageAttributes = (message: Message) => {
-    try {
-        return message.attributes ? JSON.parse(message.attributes as string) : {};
-    } catch (e) {
-        return {};
-    }
-};
 const processTwilioMessage = async (message: Message, currentUser: User): Promise<ChatMessage> => {
-    const chatMessage: ChatMessage = {
+    let mediaUrl;
+    if (message.type === 'media' && message.media) {
+        try {
+            mediaUrl = await message.media.getContentTemporaryUrl();
+        } catch(e) { console.error("Could not get media URL", e); }
+    }
+    
+    // Simple check for system messages
+    const isSystemMessage = message.author?.startsWith('system');
+    let sender: ChatMessage['sender'] = 'stylist';
+    if (isSystemMessage) {
+        sender = 'system';
+    } else if (message.author === currentUser.id) {
+        sender = 'user';
+    }
+
+    return {
         id: message.sid,
-        sender: message.author === currentUser.id ? 'user' : (message.author === 'system' ? 'system' : 'stylist'),
+        sender: sender,
         text: message.body ?? '',
         timestamp: message.dateCreated.toISOString(),
+        imageUrl: mediaUrl,
     };
-    if (message.type === 'media' && message.media) {
-        const url = await message.media.getContentTemporaryUrl();
-        if (message.media.contentType.startsWith('image/')) {
-            chatMessage.imageUrl = url;
-        } else if (message.media.contentType.startsWith('video/')) {
-            chatMessage.videoUrl = url;
-        }
-    }
-    return chatMessage;
-};
+}
+
 
 export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
-    // ... (Existing state variables)
+    const [status, setStatus] = useState<'connecting' | 'connected' | 'error' | 'idle'>('idle');
+    const [client, setClient] = useState<Client | null>(null);
+    const [conversation, setConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [connectionState, setConnectionState] = useState<'initializing' | 'connecting' | 'connected' | 'failed'>('initializing');
-    const [error, setError] = useState<string | null>(null);
-    const [stylist, setStylist] = useState<{ name: string; title: string; avatarUrl: string; bio?: string; } | null>(null);
     const [input, setInput] = useState('');
+    const [stylist, setStylist] = useState<{ name: string; title: string; avatarUrl: string; bio?: string } | null>(null);
     const [isStylistTyping, setIsStylistTyping] = useState(false);
-    const [isProfileOpen, setIsProfileOpen] = useState(false);
     
-    // New state for video
+    // Video State
     const [videoRoom, setVideoRoom] = useState<Room | null>(null);
     const [isConnectingVideo, setIsConnectingVideo] = useState(false);
     // Fix: Use specific LocalVideoTrack and LocalAudioTrack types.
     const [localVideoTrack, setLocalVideoTrack] = useState<LocalVideoTrack | null>(null);
     const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
-    const [remoteAudioTrack, setRemoteAudioTrack] = useState<any>(null); // RemoteAudioTrack
     const [isMuted, setIsMuted] = useState(false);
+    const [isCameraOff, setIsCameraOff] = useState(false);
 
-    // ... (Refs)
-    const messageEndRef = useRef<HTMLDivElement>(null);
-    const conversationRef = useRef<Conversation | null>(null);
-    const clientRef = useRef<Client | null>(null);
+    const [isBioPopoverOpen, setIsBioPopoverOpen] = useState(false);
+
+    // Refs
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
-    const remoteAudioRef = useRef<HTMLAudioElement>(null);
+    const remoteVideoRef = useRef<HTMLVideoElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
 
-    // ... (Existing useEffect for chat setup)
     useEffect(() => {
-        const setupChat = async () => {
-            if (isOpen && analysisContext && user) {
-                // ... (reset state)
-                setConnectionState('initializing');
-                setError(null); setMessages([]); setStylist(null);
-                
+        const initChat = async () => {
+            if (isOpen && user && analysisContext && status === 'idle') {
+                setStatus('connecting');
                 try {
                     const sessionData = await initiateChatSession(analysisContext, user);
-                    if (!sessionData.success || !sessionData.token) { throw new Error(sessionData.message || 'Failed to get chat token.'); }
+                    const twilioClient = await Client.create(sessionData.token);
+                    setClient(twilioClient);
+                    
+                    const conv = await twilioClient.getConversationBySid(sessionData.conversationSid);
+                    setConversation(conv);
+                    
                     setStylist(sessionData.stylist);
                     
-                    const client = new Client(sessionData.token);
-                    clientRef.current = client;
+                    const twilioMessages = (await conv.getMessages()).items;
+                    const processedMessages = await Promise.all(twilioMessages.map(msg => processTwilioMessage(msg, user)));
+                    setMessages(processedMessages.sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
 
-                    client.on('connectionStateChanged', async (state) => {
-                        // ... (switch statement for connection state)
-                        switch (state) {
-                            case 'connecting': setConnectionState('connecting'); break;
-                            case 'connected':
-                                const conversation = await client.getConversationBySid(sessionData.conversationSid);
-                                conversationRef.current = conversation;
-
-                                // ... (Existing context upload and message listeners)
-                                if (newItemContext) {
-                                  const file = dataURLtoFile(newItemContext.dataUrl, 'new-item.jpg');
-                                  if(file) {
-                                    conversation.sendMessage({contentType: file.type, media: file}, { type: 'context_image', label: "User's New Item" });
-                                  }
-                                }
-                                analysisContext.generatedOutfitImages?.forEach((base64, index) => {
-                                    const file = dataURLtoFile(`data:image/png;base64,${base64}`, `outfit-${index + 1}.png`);
-                                    if(file) {
-                                      conversation.sendMessage({contentType: file.type, media: file}, { type: 'context_image', label: `AI Outfit Suggestion ${index + 1}` });
-                                    }
-                                });
-                                
-                                const twilioMessages = await conversation.getMessages();
-                                const messagePromises = twilioMessages.items
-                                    .filter(msg => parseMessageAttributes(msg)?.type !== 'context_image' && parseMessageAttributes(msg)?.type !== 'video_call_request')
-                                    .map(msg => processTwilioMessage(msg, user));
-                                
-                                const formattedMessages = await Promise.all(messagePromises);
-                                setMessages(formattedMessages);
-
-                                conversation.on('messageAdded', async (message: Message) => {
-                                    const attrs = parseMessageAttributes(message);
-                                    if ((attrs.type === 'context_image' && message.author === user.id) || attrs.type === 'video_call_request') return;
-                                    
-                                    const processedMsg = await processTwilioMessage(message, user);
-                                    setMessages(prev => [...prev, processedMsg]);
-                                });
-                                
-                                conversation.on('typingStarted', (p) => { if (p.identity !== user.id) setIsStylistTyping(true); });
-                                conversation.on('typingEnded', (p) => { if (p.identity !== user.id) setIsStylistTyping(false); });
-                                
-                                setConnectionState('connected');
-                                break;
-                            // ... (other states)
-                        }
-                    });
-                    client.on('connectionError', (error) => { /* ... */ });
-                } catch (err) { /* ... */ }
+                    setStatus('connected');
+                } catch (error) {
+                    console.error("Chat initialization failed:", error);
+                    setStatus('error');
+                }
             }
         };
-        setupChat();
-        return () => { /* ... (cleanup) */ };
-    }, [isOpen, analysisContext, user, newItemContext]);
-    
-    // ... (Existing useEffect for scrolling)
+        initChat();
+
+        return () => {
+            if (client) {
+                client.shutdown();
+                setClient(null);
+                setConversation(null);
+                setMessages([]);
+                setStatus('idle');
+            }
+        };
+    }, [isOpen, user, analysisContext, status]);
+
     useEffect(() => {
-        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (!conversation) return;
+
+        const onMessageAdded = async (message: Message) => {
+            const processedMsg = await processTwilioMessage(message, user);
+            setMessages(prev => [...prev, processedMsg]);
+        };
+        
+        const onTypingStarted = (participant: any) => {
+            if (participant.identity !== user.id) setIsStylistTyping(true);
+        };
+
+        const onTypingEnded = (participant: any) => {
+             if (participant.identity !== user.id) setIsStylistTyping(false);
+        };
+
+        conversation.on('messageAdded', onMessageAdded);
+        conversation.on('typingStarted', onTypingStarted);
+        conversation.on('typingEnded', onTypingEnded);
+
+        return () => {
+            conversation.removeListener('messageAdded', onMessageAdded);
+            conversation.removeListener('typingStarted', onTypingStarted);
+            conversation.removeListener('typingEnded', onTypingEnded);
+        };
+    }, [conversation, user]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isStylistTyping]);
     
-    // ... (Existing message and file handling functions)
-    const handleSendMessage = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (input.trim() === '' || !conversationRef.current) return;
-        conversationRef.current.sendMessage(input);
-        setInput('');
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+                setIsBioPopoverOpen(false);
+            }
+        }
+        if (isBioPopoverOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [isBioPopoverOpen]);
+
+    const sendMessage = () => {
+        if (input.trim() && conversation) {
+            conversation.sendMessage(input);
+            setInput('');
+        }
     };
+    
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInput(e.target.value);
-      conversationRef.current?.typing();
-    }
-    const handleAttachClick = () => { fileInputRef.current?.click(); };
+        setInput(e.target.value);
+        if (conversation) {
+            conversation.typing();
+        }
+    };
+    
+    const attachFile = () => {
+        fileInputRef.current?.click();
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file && conversationRef.current) {
-            conversationRef.current.sendMessage({ contentType: file.type, media: file, });
+        if (file && conversation) {
+            const formData = new FormData();
+            formData.append('file', file);
+            conversation.sendMessage(formData);
         }
-        if(e.target) e.target.value = '';
-    };
-
-    // New video functions
-    const startVideoCall = async () => {
-        if (!conversationRef.current) return;
-        setIsConnectingVideo(true);
-        try {
-            // 1. Get video token
-            const response = await fetch('/api/generate-video-token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identity: user.id, roomName: conversationRef.current.sid }),
-            });
-            const data = await response.json();
-            if (!data.success) throw new Error("Failed to get video token.");
-
-            // 2. Create local tracks (video and audio)
-            const tracks = await createLocalTracks({ audio: true, video: { width: 640 } });
-            // Fix: Cast to the specific track types to access their methods.
-            const videoTrack = tracks.find(t => t.kind === 'video') as LocalVideoTrack;
-            const audioTrack = tracks.find(t => t.kind === 'audio') as LocalAudioTrack;
-            setLocalVideoTrack(videoTrack);
-            setLocalAudioTrack(audioTrack);
-
-            if (localVideoRef.current && videoTrack) {
-                videoTrack.attach(localVideoRef.current);
-            }
-
-            // 3. Connect to the room
-            const room = await Video.connect(data.token, { name: conversationRef.current.sid, tracks });
-            setVideoRoom(room);
-            
-            // 4. Send system message to stylist
-            conversationRef.current.sendMessage('', { type: 'video_call_request' });
-
-            // 5. Handle participant events
-            room.on('participantConnected', (participant: RemoteParticipant) => {
-                participant.on('trackSubscribed', track => {
-                    if (track.kind === 'audio') {
-                        setRemoteAudioTrack(track);
-                    }
-                });
-            });
-
-            room.on('disconnected', () => { endVideoCall(); });
-
-        } catch (error) {
-            console.error("Failed to start video call:", error);
-            setError("Could not start video call. Check camera/mic permissions.");
-        } finally {
-            setIsConnectingVideo(false);
-        }
+        e.target.value = '';
     };
     
-    const endVideoCall = () => {
-        if (videoRoom) {
-            videoRoom.disconnect();
-        }
-        if (localVideoTrack) {
-            localVideoTrack.stop();
-            localVideoTrack.detach();
-            setLocalVideoTrack(null);
-        }
-        if (localAudioTrack) {
-            localAudioTrack.stop();
-            localAudioTrack.detach();
-            setLocalAudioTrack(null);
-        }
-        setVideoRoom(null);
-        setRemoteAudioTrack(null);
-        setIsMuted(false);
-    };
-
-    const toggleMute = () => {
-        if (localAudioTrack) {
-            if (isMuted) {
-                localAudioTrack.enable();
-            } else {
-                localAudioTrack.disable();
-            }
-            setIsMuted(!isMuted);
-        }
-    };
+    // ... video functions
     
-    useEffect(() => {
-        if (remoteAudioTrack && remoteAudioRef.current) {
-            remoteAudioTrack.attach(remoteAudioRef.current);
-            return () => { remoteAudioTrack.detach(); };
-        }
-    }, [remoteAudioTrack]);
-    
-    const handleClose = () => {
-        if (videoRoom) endVideoCall();
-        onClose();
-    };
-
-
-    const isLoading = connectionState !== 'connected' && connectionState !== 'failed';
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex justify-center items-center p-4 animate-fade-in" aria-modal="true" role="dialog">
-            <div className="fixed inset-0" onClick={handleClose} aria-hidden="true"></div>
-            <div className="bg-[#1F2937] rounded-2xl shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col z-10 border border-platinum/20">
-                <header className="flex-shrink-0 p-4 flex justify-between items-center border-b border-platinum/20">
-                    {stylist ? (
-                        <div className="relative flex items-center space-x-3">
-                            <img src={stylist.avatarUrl} alt={stylist.name} className="w-10 h-10 rounded-full border-2 border-platinum/20" />
-                            <div>
-                                <p className="font-semibold text-platinum">{stylist.name}</p>
-                                <p className="text-xs text-platinum/60">{stylist.title}</p>
-                            </div>
-                            {stylist.bio && (
-                                <button onClick={() => setIsProfileOpen(prev => !prev)} className="ml-1 text-platinum/50 hover:text-white">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-                                </button>
-                            )}
-                            {isProfileOpen && stylist.bio && (
-                                <div className="absolute top-full left-0 mt-2 w-72 bg-[#121826] rounded-xl shadow-lg p-4 z-20 border border-platinum/20 animate-fade-in">
-                                    <div className="flex items-center space-x-3 mb-3">
-                                        <img src={stylist.avatarUrl} alt={stylist.name} className="w-12 h-12 rounded-full" />
-                                        <div>
-                                            <p className="font-bold text-platinum">{stylist.name}</p>
-                                            <p className="text-sm text-platinum/70">{stylist.title}</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-platinum/80 leading-relaxed">{stylist.bio}</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" role="dialog" aria-modal="true">
+            <div className="flex flex-col flex-auto h-full max-h-[90vh] w-full max-w-2xl bg-dark-blue/90 rounded-2xl shadow-2xl border border-platinum/20">
+                {stylist && (
+                    <div className="relative flex-shrink-0 flex sm:items-center justify-between py-3 border-b-2 border-platinum/20 px-4">
+                        <div className="flex items-center space-x-4">
+                            <img src={stylist.avatarUrl} alt={stylist.name} className="w-10 sm:w-12 h-10 sm:h-12 rounded-full" />
+                            <div className="flex flex-col leading-tight">
+                                <div className="text-lg mt-1 flex items-center">
+                                    <span className="text-platinum mr-1 font-semibold">{stylist.name}</span>
+                                    <button onClick={() => setIsBioPopoverOpen(prev => !prev)} className="text-platinum/60 hover:text-white p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-platinum">
+                                        <InfoIcon />
+                                    </button>
                                 </div>
-                            )}
+                                <span className="text-sm text-platinum/60">{stylist.title}</span>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="h-10"></div> // Placeholder
-                    )}
-                    <button onClick={handleClose} className="text-platinum/60 hover:text-white transition-colors" aria-label="Close chat">
-                        <CloseIcon />
-                    </button>
-                </header>
+                        <div className="flex items-center space-x-2">
+                             <button className="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 text-platinum/80 bg-black/20 hover:bg-black/40">
+                                <VideoIcon />
+                             </button>
+                             <button onClick={onClose} className="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 text-platinum/80 bg-black/20 hover:bg-black/40">
+                                <CloseIcon />
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {isBioPopoverOpen && stylist && (
+                    <div ref={popoverRef} className="absolute top-20 left-4 z-20 w-80 bg-[#1F2937] rounded-xl shadow-lg p-4 border border-platinum/20 animate-fade-in text-left">
+                         <button onClick={() => setIsBioPopoverOpen(false)} className="absolute top-2 right-2 text-platinum/60 hover:text-white p-1">
+                            <CloseIcon />
+                        </button>
+                        <div className="flex flex-col items-center">
+                            <img src={stylist.avatarUrl} alt={stylist.name} className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30"/>
+                            <h4 className="text-center font-bold text-lg text-platinum">{stylist.name}</h4>
+                            <p className="text-center text-sm text-platinum/60 mb-4">{stylist.title}</p>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-dark-blue">
+                           <p className="text-sm text-platinum/80 whitespace-pre-wrap">{stylist.bio}</p>
+                        </div>
+                    </div>
+                )}
 
-                <main className="flex-1 overflow-y-auto p-4 space-y-4 relative">
-                    {/* ... (chat messages) */}
-                    <div ref={messageEndRef} />
-                    
-                    {/* Video UI */}
-                    {videoRoom && (
-                        <div className="absolute top-2 right-2 w-48 rounded-lg overflow-hidden border-2 border-platinum/30 shadow-lg">
-                            <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                <div className="flex flex-col h-full overflow-x-hidden overflow-y-auto p-4 space-y-4">
+                    {status === 'connecting' && <div className="m-auto flex flex-col items-center"><Spinner /><p className="mt-2 text-platinum/70">Connecting to stylist...</p></div>}
+                    {status === 'error' && <div className="m-auto text-center"><p className="text-red-400 font-semibold">Connection Error</p><p className="text-platinum/70">Could not connect to the chat service. Please try again later.</p></div>}
+                    {status === 'connected' && messages.map(message => (
+                        <div key={message.id} className={`col-start-1 col-end-11 p-3 rounded-lg ${message.sender === 'system' ? 'col-span-12' : ''}`}>
+                             {message.sender === 'system' ? (
+                                <div className="text-center text-xs text-platinum/50 italic my-2">
+                                    <p>{message.text}</p>
+                                    {message.imageUrl && <img src={message.imageUrl} alt="Initial context" className="mt-2 rounded-lg max-w-xs mx-auto shadow-md" />}
+                                </div>
+                             ) : (
+                                <div className={`flex flex-row items-start ${message.sender === 'user' ? 'justify-end flex-row-reverse' : ''}`}>
+                                     {message.sender === 'stylist' && stylist && (
+                                         <img src={stylist.avatarUrl} alt={stylist.name} className="w-8 h-8 rounded-full mr-3 flex-shrink-0" />
+                                     )}
+                                     <div className={`relative text-sm py-2 px-4 shadow rounded-xl ${message.sender === 'user' ? 'bg-platinum/10 text-platinum' : 'bg-[#1F2937] text-platinum'}`}>
+                                         {message.imageUrl ? (
+                                             <a href={message.imageUrl} target="_blank" rel="noopener noreferrer">
+                                                 <img src={message.imageUrl} alt="Attachment" className="max-w-xs max-h-48 rounded-lg cursor-pointer" />
+                                             </a>
+                                         ) : (
+                                             <p className="whitespace-pre-wrap">{message.text}</p>
+                                         )}
+                                    </div>
+                                </div>
+                             )}
+                        </div>
+                    ))}
+                    {isStylistTyping && (
+                         <div className="flex flex-row items-center">
+                             {stylist && <img src={stylist.avatarUrl} alt="Stylist typing" className="w-8 h-8 rounded-full mr-3" />}
+                             <div className="relative text-sm bg-[#1F2937] py-2 px-4 shadow rounded-xl">
+                                <div className="flex items-center space-x-1">
+                                    <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-75"></span>
+                                    <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-150"></span>
+                                    <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-300"></span>
+                                </div>
+                            </div>
                         </div>
                     )}
-                    <audio ref={remoteAudioRef} autoPlay />
-                </main>
+                    <div ref={messagesEndRef} />
+                </div>
                 
-                <footer className="flex-shrink-0 p-4 border-t border-platinum/20 space-y-3">
-                    {videoRoom && (
-                        <div className="flex justify-center items-center space-x-4 p-2 bg-black/20 rounded-full">
-                            <button onClick={toggleMute} className={`p-2 rounded-full transition-colors ${isMuted ? 'bg-red-500 text-white' : 'bg-platinum/20 text-platinum'}`}>
-                                {isMuted ? <MicOffIcon /> : <MicOnIcon />}
-                            </button>
-                            <button onClick={endVideoCall} className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors">
-                                <EndCallIcon />
-                            </button>
-                        </div>
-                    )}
-                    <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,video/*"/>
-                        <button type="button" onClick={handleAttachClick} disabled={isLoading || error !== null} className="p-2 text-platinum/60 hover:text-white transition-colors disabled:text-platinum/30" aria-label="Attach file">
+                {status === 'connected' && (
+                    <div className="flex-shrink-0 flex flex-row items-center h-16 rounded-b-xl bg-dark-blue w-full px-4 ring-1 ring-inset ring-platinum/20">
+                        <button onClick={attachFile} className="flex items-center justify-center text-platinum/70 hover:text-white">
                             <AttachIcon />
                         </button>
-                        {!videoRoom && (
-                            <button type="button" onClick={startVideoCall} disabled={isLoading || error !== null || isConnectingVideo} className="p-2 text-platinum/60 hover:text-white transition-colors disabled:text-platinum/30" aria-label="Start video call">
-                                {isConnectingVideo ? <div className="w-5 h-5 animate-spin rounded-full border-t-2 border-platinum"></div> : <VideoIcon />}
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                        <div className="flex-grow ml-4">
+                            <div className="relative w-full">
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={handleInputChange}
+                                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                    className="flex w-full border rounded-full focus:outline-none focus:border-platinum/50 pl-4 h-10 bg-black/20 text-platinum border-transparent"
+                                    placeholder="Type your message..."
+                                />
+                            </div>
+                        </div>
+                        <div className="ml-4">
+                            <button onClick={sendMessage} className="flex items-center justify-center bg-platinum hover:bg-platinum/90 rounded-full text-dark-blue h-10 w-10 flex-shrink-0 transition-colors">
+                                <SendIcon />
                             </button>
-                        )}
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={handleInputChange}
-                            placeholder={isStylistTyping ? 'Stylist is typing...' : 'Type your message...'}
-                            disabled={isLoading || error !== null}
-                            className="flex-1 block w-full shadow-sm sm:text-sm bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-5 py-3"
-                        />
-                        <button type="submit" disabled={!input.trim()} className="bg-platinum text-dark-blue p-3 rounded-full hover:scale-110 disabled:bg-platinum/50 disabled:cursor-not-allowed disabled:scale-100 transition-all">
-                            <SendIcon />
-                        </button>
-                    </form>
-                </footer>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

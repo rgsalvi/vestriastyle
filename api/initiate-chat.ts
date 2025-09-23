@@ -23,22 +23,22 @@ const availableStylists = [
         id: 'tanvi_sankhe', 
         name: 'Tanvi Sankhe', 
         title: 'Lead Stylist', 
-        avatarUrl: 'https://picsum.photos/seed/tanvi/100/100',
-        bio: 'With over 10 years in the fashion industry, Tanvi specializes in creating timeless, elegant wardrobes that blend classic silhouettes with modern trends. She believes in the power of a well-curated closet to inspire confidence every day.'
+        avatarUrl: '/tanvi.jpg',
+        bio: 'I am a BMS graduate and later pursued a diploma in Fashion Designing from INIFD. Throughout my career, I’ve had the opportunity to freelance for various ads, a web series, jewelry shoots, campaigns, and catalogs. Worked with celebrities. I’ve also styled streetwear brands, jewelry brands, ethnic wear brands and I have done editorial shoots too while also working with influencers to create unique content. Additionally, I’ve worked as an E-commerce catalogue and campaign stylist. My personal style is simple, clothes that feel super comfortable. Personally, I love having colours in my wardrobe, but I always lean towards timeless classics over trends.I believe that once you discover your own unique style, you’ll feel confident and good in anything you wear.'
     },
     { 
         id: 'muskaan_datt', 
         name: 'Muskaan Datt', 
         title: 'Senior Stylist', 
-        avatarUrl: 'https://picsum.photos/seed/muskaan/100/100',
-        bio: 'Muskaan has a keen eye for streetwear and contemporary fashion. She loves helping clients express their unique personality through bold colors, exciting textures, and the latest must-have pieces.'
+        avatarUrl: '/muskaan.jpg',
+        bio: 'I studied Fashion Communication & Styling at ISDI School of Design & Innovation Parsons, building a strong foundation in fashion storytelling, styling, and creative direction. Over the past few years, I’ve styled everything from celebrity looks and brand campaigns to editorials, catalogues, and even short films—combining creative vision with practical execution. From trend forecasting and shoot coordination to content curation, I bring versatility and attention to detail. My experience spans across streetwear, jewellery, wedding styling, evening wear, and much more. My personal style is about making “less is more” feel powerful. I love pieces that are effortless yet polished. Blending laid-back ease with timeless classics, my style is all about creating looks that look great, confident, and easy to live in because great style should feel as good as it looks.'
     },
     { 
         id: 'riddhi_jogani', 
         name: 'Riddhi Jogani', 
         title: 'Stylist', 
-        avatarUrl: 'https://picsum.photos/seed/riddhi/100/100',
-        bio: 'Riddhi is passionate about sustainable and minimalist fashion. Her approach focuses on building versatile, high-quality capsule wardrobes that are both stylish and eco-conscious.'
+        avatarUrl: '/riddhi.jpg',
+        bio: 'I hold a BA in Psychology and a Diploma in Fashion Designing from the International Institute of Fashion Design. As a Fashion Stylist, I planned and executed catalogue and campaign shoots, My experience also includes a year as a Fashion Styling Intern and Assistant Stylist, where I collaborated with artists for reality shows and live events. My personal style is versatile and relaxed, which is a key part of my professional approach—I believe in creating looks that are effortlessly chic and authentic to the individual.'
     },
 ];
 
@@ -77,39 +77,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const textContext = `New style session for ${user.name}.\n\nVerdict: ${analysisContext.verdict}\n\nCompatibility: ${analysisContext.compatibility}\n\nAdvice: ${analysisContext.advice}`;
         
         await conversationService.conversations(conversation.sid).messages.create({
-            author: 'system',
-            body: textContext,
-            attributes: JSON.stringify({ type: 'context_text' })
-        });
-        
-        // --- End of Context Sending ---
-
-        const chatGrant = new ChatGrant({
-            serviceSid: twilioConversationServiceSid,
-        });
-        const token = new AccessToken(twilioAccountSid, twilioApiKey, twilioApiSecret, {
-            identity: user.id,
-            ttl: 3600 // 1 hour
-        });
-        token.addGrant(chatGrant);
-        
-        // Return the details of the assigned stylist to the user's UI
-        return res.status(200).json({
-            success: true,
-            message: 'Chat session initiated successfully.',
-            token: token.toJwt(),
-            conversationSid: conversation.sid,
-            stylist: {
-                name: assignedStylist.name,
-                title: assignedStylist.title,
-                avatarUrl: assignedStylist.avatarUrl,
-                bio: assignedStylist.bio
-            },
-        });
-
-    } catch (error) {
-        console.error("Error initiating Twilio chat session:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return res.status(500).json({ success: false, message: 'Failed to initiate chat session.', error: errorMessage });
-    }
-}
+            author: 'system
