@@ -69,15 +69,22 @@ const ContextDisplay: React.FC<{ context: SessionContext }> = ({ context }) => (
     </div>
 );
 
-const parseMessageAttributes = (message: Message) => {
+// A more robust message attribute parser
+const parseMessageAttributes = (message: Message): Record<string, any> => {
     try {
-        return message.attributes ? JSON.parse(message.attributes as string) : {};
+        if (typeof message.attributes === 'object' && message.attributes !== null) {
+            return message.attributes as Record<string, any>;
+        }
+        if (typeof message.attributes === 'string') {
+            return JSON.parse(message.attributes);
+        }
+        return {};
     } catch (e) {
+        console.error("Failed to parse message attributes:", message.attributes, e);
         return {};
     }
 };
 
-// Centralized processor for any Twilio message
 const processTwilioMessage = async (message: Message): Promise<ProcessedMessage> => {
     const processed: ProcessedMessage = {
         sid: message.sid,
@@ -160,16 +167,29 @@ export const StylistDashboard: React.FC = () => {
 
             for (const msg of allTwilioMessages) {
                 const attrs = parseMessageAttributes(msg);
+                
                 if (attrs.type === 'context_text' && msg.author === 'system') {
                     context.text = msg.body;
-                } else if (attrs.type === 'context_image' && msg.type === 'media') {
-                    const url = await msg.media.getContentTemporaryUrl();
-                    if (!context.images.some(img => img.url === url)) {
-                        context.images.push({ url, label: attrs.label || 'Context Image' });
+                    continue;
+                }
+                
+                if (attrs.type === 'context_image' && msg.type === 'media' && msg.media) {
+                    try {
+                        const url = await msg.media.getContentTemporaryUrl();
+                        if (!context.images.some(img => img.url === url)) {
+                            context.images.push({ url, label: attrs.label || 'Context Image' });
+                        }
+                    } catch(e) {
+                        console.error("Could not get media URL for context image", e);
                     }
-                } else {
+                    continue; 
+                }
+
+                try {
                     const processedMsg = await processTwilioMessage(msg);
                     chatMessages.push(processedMsg);
+                } catch (e) {
+                    console.error("Could not process a regular chat message", e);
                 }
             }
             
@@ -179,22 +199,24 @@ export const StylistDashboard: React.FC = () => {
             const onMessageAdded = async (message: Message) => {
                 const attrs = parseMessageAttributes(message);
                 
-                let isContextMessage = false;
-                if (attrs.type === 'context_text' && message.author === 'system') {
-                    isContextMessage = true;
-                    setSessionContext(prev => ({ ...prev, text: message.body }));
-                } else if (attrs.type === 'context_image' && message.type === 'media') {
-                    isContextMessage = true;
-                    const url = await message.media.getContentTemporaryUrl();
-                    setSessionContext(prev => {
-                        if (prev.images.some(img => img.url === url)) return prev;
-                        return { ...prev, images: [...prev.images, { url, label: attrs.label || 'Context Image' }]};
-                    });
+                if (attrs.type === 'context_image' && message.type === 'media' && message.media) {
+                    try {
+                        const url = await message.media.getContentTemporaryUrl();
+                        setSessionContext(prev => {
+                            if (prev.images.some(img => img.url === url)) return prev;
+                            return { ...prev, images: [...prev.images, { url, label: attrs.label || 'Context Image' }]};
+                        });
+                    } catch (e) {
+                         console.error("Could not get media URL for new context image", e);
+                    }
+                    return;
                 }
 
-                if (!isContextMessage) {
+                try {
                     const processedMsg = await processTwilioMessage(message);
                     setMessages(prev => [...prev, processedMsg]);
+                } catch (e) {
+                    console.error("Could not process new chat message", e);
                 }
             };
 
