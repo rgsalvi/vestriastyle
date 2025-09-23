@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Client, Conversation, Paginator, Message } from '@twilio/conversations';
 
-const STYLIST_IDENTITIES = ['stylist_ava', 'stylist_leo', 'stylist_mia'];
+const STYLISTS = [
+    { id: 'tanvi_sankhe', name: 'Tanvi Sankhe' },
+    { id: 'muskaan_datt', name: 'Muskaan Datt' },
+    { id: 'riddhi_jogani', name: 'Riddhi Jogani' },
+];
 
 const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin }) => {
     const [identity, setIdentity] = useState('');
@@ -9,14 +13,14 @@ const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin 
         <div className="min-h-screen flex items-center justify-center p-4">
             <div className="w-full max-w-sm text-center bg-dark-blue/80 p-8 rounded-2xl shadow-lg border border-platinum/20">
                 <h1 className="text-2xl font-bold text-platinum">Stylist Login</h1>
-                <p className="mt-2 text-platinum/60">Select your stylist identity to begin.</p>
+                <p className="mt-2 text-platinum/60">Select your name to begin.</p>
                 <select 
                     value={identity} 
                     onChange={e => setIdentity(e.target.value)}
                     className="mt-6 block w-full pl-3 pr-10 py-2 text-base bg-dark-blue border-platinum/30 focus:outline-none focus:ring-platinum focus:border-platinum sm:text-sm rounded-lg transition-colors"
                 >
-                    <option value="">Select Identity...</option>
-                    {STYLIST_IDENTITIES.map(id => <option key={id} value={id}>{id}</option>)}
+                    <option value="">Select Your Name...</option>
+                    {STYLISTS.map(stylist => <option key={stylist.id} value={stylist.id}>{stylist.name}</option>)}
                 </select>
                 <button
                     onClick={() => onLogin(identity)}

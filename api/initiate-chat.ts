@@ -1,4 +1,5 @@
 
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import twilio from 'twilio';
 
@@ -20,12 +21,12 @@ const ChatGrant = AccessToken.ChatGrant;
 
 // For the MVP, we'll hardcode the stylist identities.
 // In a real app, this would come from a database of online stylists.
-const STYLIST_IDENTITIES = ['stylist_ava', 'stylist_leo', 'stylist_mia'];
+const STYLIST_IDENTITIES = ['tanvi_sankhe', 'muskaan_datt', 'riddhi_jogani'];
 
 const availableStylists = [
-    { name: 'Ava Sinclair', title: 'Lead Stylist', avatarUrl: 'https://picsum.photos/seed/ava/100/100' },
-    { name: 'Leo Rivera', title: 'Senior Stylist', avatarUrl: 'https://picsum.photos/seed/leo/100/100' },
-    { name: 'Mia Chen', title: 'Stylist', avatarUrl: 'https://picsum.photos/seed/mia/100/100' },
+    { name: 'Tanvi Sankhe', title: 'Lead Stylist', avatarUrl: 'https://picsum.photos/seed/tanvi/100/100' },
+    { name: 'Muskaan Datt', title: 'Senior Stylist', avatarUrl: 'https://picsum.photos/seed/muskaan/100/100' },
+    { name: 'Riddhi Jogani', title: 'Stylist', avatarUrl: 'https://picsum.photos/seed/riddhi/100/100' },
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

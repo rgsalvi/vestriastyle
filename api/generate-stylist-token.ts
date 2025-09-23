@@ -1,4 +1,5 @@
 
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import twilio from 'twilio';
 
@@ -18,7 +19,7 @@ const ChatGrant = AccessToken.ChatGrant;
 
 // In a real app, you would verify the stylist is authenticated.
 // For the MVP, we'll allow any valid stylist ID.
-const VALID_STYLISTS = ['stylist_ava', 'stylist_leo', 'stylist_mia'];
+const VALID_STYLISTS = ['tanvi_sankhe', 'muskaan_datt', 'riddhi_jogani'];
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
