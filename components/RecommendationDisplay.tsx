@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { AiResponse, Outfit, AnalysisItem, User } from '../types';
 import { editOutfitImage } from '../services/geminiService';
-import { PremiumUpsellModal } from './PremiumUpsellModal';
 
 interface RecommendationDisplayProps {
   recommendation: AiResponse | null;
@@ -100,7 +99,6 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
     const [editText, setEditText] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isUpsellModalOpen, setIsUpsellModalOpen] = useState(false);
 
     const goToPrevious = () => {
         setActiveIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
@@ -139,11 +137,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
     };
     
     const handleChatClick = () => {
-        if (user) {
-            onOpenChat();
-        } else {
-            setIsUpsellModalOpen(true);
-        }
+        onOpenChat();
     };
     
     const currentOutfit = outfits[activeIndex];
@@ -211,7 +205,6 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
              </div>
           )}
       </div>
-      {isUpsellModalOpen && <PremiumUpsellModal onClose={() => setIsUpsellModalOpen(false)} />}
       </>
     );
 };

@@ -161,6 +161,7 @@ const App: React.FC = () => {
   const [unsavedItemsFromAnalysis, setUnsavedItemsFromAnalysis] = useState<AnalysisItem[]>([]);
   
   const [user, setUser] = useState<User | null>(null);
+  const [guestUser, setGuestUser] = useState<User | null>(null);
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -368,6 +369,16 @@ const App: React.FC = () => {
   };
   
   const handleOpenChat = (context: AiResponse) => {
+    if (!user) {
+        const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const newGuestUser: User = {
+            id: guestId,
+            name: 'Guest User',
+            email: `${guestId}@vestria.style`,
+            picture: `https://picsum.photos/seed/${guestId}/100/100`,
+        };
+        setGuestUser(newGuestUser);
+    }
     setChatContext(context);
     setIsChatOpen(true);
   };
@@ -450,6 +461,8 @@ const App: React.FC = () => {
     }
   };
 
+  const activeUserForChat = user || guestUser;
+
   return (
     <div className="min-h-screen bg-dark-blue flex flex-col">
       <div className="flex-grow">
@@ -467,11 +480,14 @@ const App: React.FC = () => {
         onNavigateToTerms={() => setCurrentPage('terms')}
         onNavigateToRefund={() => setCurrentPage('refund')}
       />
-      {user && (
+      {activeUserForChat && (
         <StylistChatModal
             isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
-            user={user}
+            onClose={() => {
+                setIsChatOpen(false);
+                setGuestUser(null);
+            }}
+            user={activeUserForChat}
             analysisContext={chatContext}
         />
       )}
