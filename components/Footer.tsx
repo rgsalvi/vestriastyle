@@ -105,7 +105,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
                     <div className="mt-8 flex justify-center space-x-6">
                         <a href="https://www.instagram.com/vestria.style" target="_blank" rel="noopener noreferrer" className="text-platinum/60 hover:text-white transition-colors" aria-label="Instagram"><InstagramIcon /></a>
                         <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="TikTok"><TikTokIcon /></a>
-                        <a href="#" className="text-platinum/60 hover:text-white transition-colors" aria-label="Pinterest"><PinterestIcon /></a>
+                        <a href="https://www.pinterest.com/vestriastyle" target="_blank" rel="noopener noreferrer" className="text-platinum/60 hover:text-white transition-colors" aria-label="Pinterest"><PinterestIcon /></a>
                     </div>
                 </div>
 
