@@ -14,7 +14,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
   }
 
-  const docRef = adminDb.doc(`users/${uid}/profile`);
+  // Store profile fields directly on the user doc
+  const docRef = adminDb.doc(`users/${uid}`);
 
   if (req.method === 'GET') {
     try {

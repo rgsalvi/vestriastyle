@@ -20,8 +20,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Delete profile docs (new and legacy path)
-    await adminDb.doc(`users/${uid}/profile`).delete().catch(() => {});
+  // Delete user doc (new profile location) and legacy profile doc
+  await adminDb.doc(`users/${uid}`).delete().catch(() => {});
     await adminDb.doc(`users/${uid}/meta/profile`).delete().catch(() => {});
     // Delete wardrobe docs
     const wardSnap = await adminDb.collection(`users/${uid}/wardrobe`).get();

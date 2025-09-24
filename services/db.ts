@@ -7,7 +7,8 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 export const userDocRef = (uid: string) => doc(db, 'users', uid);
-export const profileDocRef = (uid: string) => doc(db, 'users', uid, 'profile');
+// Store profile fields directly on the user doc (users/{uid})
+export const profileDocRef = (uid: string) => doc(db, 'users', uid);
 export const wardrobeColRef = (uid: string) => collection(db, 'users', uid, 'wardrobe');
 
 export async function loadUserProfile(uid: string): Promise<StyleProfile | null> {
@@ -17,6 +18,7 @@ export async function loadUserProfile(uid: string): Promise<StyleProfile | null>
       const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${idToken}` } });
       const data = await res.json();
       if (res.ok && data?.success) return data.profile as StyleProfile | null;
+      console.warn('Server profile GET failed:', data);
     }
   } catch {}
   // Fallback to client SDK
@@ -33,6 +35,7 @@ export async function saveUserProfile(uid: string, profile: Partial<StyleProfile
     if (idToken) {
       const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ profile }) });
       if (res.ok) return;
+      try { const data = await res.json(); console.warn('Server profile PUT failed:', data); } catch {}
     }
   } catch {}
   await setDoc(profileDocRef(uid), { ...profile, updatedAt: serverTimestamp() }, { merge: true });

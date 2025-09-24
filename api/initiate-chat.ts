@@ -113,9 +113,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         // Read premium flag from Firestore profile: users/{uid}/meta/profile
         let isPremium = false;
-        const profileSnap = await adminDb.doc(`users/${uid}/profile`).get();
-        if (profileSnap.exists) {
-            isPremium = !!profileSnap.data()?.isPremium;
+        const userDoc = await adminDb.doc(`users/${uid}`).get();
+        if (userDoc.exists) {
+            isPremium = !!userDoc.data()?.isPremium;
         } else {
             const legacySnap = await adminDb.doc(`users/${uid}/meta/profile`).get();
             isPremium = legacySnap.exists ? !!legacySnap.data()?.isPremium : false;
@@ -124,7 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const promoEnabled = (process.env.LAUNCH_PROMO_AUTO_PREMIUM || '').toLowerCase() === 'true';
         if (!isPremium && promoEnabled && emailVerified) {
             try {
-                await adminDb.doc(`users/${uid}/profile`).set({ isPremium: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+                await adminDb.doc(`users/${uid}`).set({ isPremium: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
                 isPremium = true;
             } catch {}
         }
