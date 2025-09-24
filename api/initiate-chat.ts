@@ -14,7 +14,13 @@ if (!twilioAccountSid || !twilioApiKey || !twilioApiSecret || !twilioConversatio
 }
 
 // Initialize Twilio client
-const client = twilio(twilioApiKey, twilioApiSecret, { accountSid: twilioAccountSid });
+// After the guard above, these are safe to assert as defined for TypeScript
+const ACCOUNT_SID: string = twilioAccountSid!;
+const API_KEY: string = twilioApiKey!;
+const API_SECRET: string = twilioApiSecret!;
+const CONV_SERVICE_SID: string = twilioConversationServiceSid!;
+
+const client = twilio(API_KEY, API_SECRET, { accountSid: ACCOUNT_SID });
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
 
@@ -58,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Randomly assign one stylist for a 1-on-1 chat
         const assignedStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
         
-        const conversationService = client.conversations.v1.services(twilioConversationServiceSid);
+    const conversationService = client.conversations.v1.services(CONV_SERVICE_SID);
 
         const conversation = await conversationService.conversations.create({
             friendlyName: `Style Session for ${user.name}`
@@ -83,17 +89,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
         // Now, create a token for the user to join the conversation
-        const chatGrant = new ChatGrant({
-            serviceSid: twilioConversationServiceSid,
-        });
+        const chatGrant = new ChatGrant({ serviceSid: CONV_SERVICE_SID });
 
-        const token = new AccessToken(twilioAccountSid, twilioApiKey, twilioApiSecret, {
+        const token = new AccessToken(ACCOUNT_SID, API_KEY, API_SECRET, {
             identity: user.id,
             ttl: 3600 // Token valid for 1 hour
         });
         token.addGrant(chatGrant);
 
-        // Prepare initial images to be sent by the client upon connection
+        // Prepare initial images to be sent by the client upon connection.
+        // The client also falls back to its local props (newItemContext/analysisContext.generatedOutfitImages)
+        // if either of these are missing, so both sides always get full visual context.
         let initialImages = null;
         if (newItemContext && analysisContext.generatedOutfitImages) {
             initialImages = {

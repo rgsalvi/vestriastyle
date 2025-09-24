@@ -6,7 +6,7 @@ import type { User, AiResponse, ChatMessage, AnalysisItem } from '../types';
 import { initiateChatSession, ChatSessionData } from '../services/geminiService';
 import { Client, Conversation, Message, Participant as TwilioParticipant } from '@twilio/conversations';
 // Fix: Import specific LocalVideoTrack and LocalAudioTrack types to resolve method errors.
-import Video, { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, createLocalTracks, LocalTrack, RemoteTrack, RemoteTrackPublication, RemoteVideoTrack, RemoteAudioTrack } from 'twilio-video';
+import Video, { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, createLocalTracks, LocalTrack, RemoteTrack, RemoteTrackPublication, RemoteAudioTrack } from 'twilio-video';
 
 // ... (Icon components remain the same)
 const CloseIcon: React.FC = () => (
@@ -111,7 +111,6 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
     const [isMuted, setIsMuted] = useState(false);
     const [isCameraOff, setIsCameraOff] = useState(false);
-    const [remoteVideoTrack, setRemoteVideoTrack] = useState<RemoteVideoTrack | null>(null);
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<RemoteAudioTrack | null>(null);
     const [videoError, setVideoError] = useState<string | null>(null);
 
@@ -135,22 +134,27 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const localVideoRef = useRef<HTMLVideoElement>(null);
-    const remoteVideoRef = useRef<HTMLVideoElement>(null);
+    // No inline video elements; audio plays via hidden element
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
+    const canceledRef = useRef<boolean>(false);
+    const sentInitialRef = useRef<boolean>(false);
 
     useEffect(() => {
         const initChat = async () => {
             if (isOpen && user && analysisContext && status === 'idle') {
                 setStatus('connecting');
                 try {
+                    canceledRef.current = false;
                     const data = await initiateChatSession(analysisContext, newItemContext, user);
+                    if (canceledRef.current) return;
                     setSessionData(data);
                     const twilioClient = await Client.create(data.token);
+                    if (canceledRef.current) { try { twilioClient.shutdown(); } catch {} return; }
                     setClient(twilioClient);
                     
                     const conv = await twilioClient.getConversationBySid(data.conversationSid);
+                    if (canceledRef.current) { try { twilioClient.shutdown(); } catch {} return; }
                     setConversation(conv);
                     
                     setStylist(data.stylist);
@@ -169,6 +173,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         initChat();
 
         return () => {
+            canceledRef.current = true;
             if (client) {
                 client.shutdown();
                 setClient(null);
@@ -183,18 +188,22 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     }, [isOpen, user, analysisContext, newItemContext, status]);
 
     useEffect(() => {
-        if (conversation && sessionData?.initialImages) {
-            const sendInitialImages = async () => {
-                const initial = sessionData.initialImages;
-                if (!initial) return;
-                const { newItem, outfits } = initial;
+        const maybeSendInitialImages = async () => {
+            if (!conversation || sentInitialRef.current) return;
+            const initial = sessionData?.initialImages;
 
+            // Prefer server-provided initial images; fall back to props if missing
+            const newItem = initial?.newItem ?? (newItemContext ? { base64: newItemContext.base64, mimeType: newItemContext.mimeType } : undefined);
+            const outfits = initial?.outfits ?? analysisContext?.generatedOutfitImages ?? [];
+
+            if (!newItem && (!outfits || outfits.length === 0)) return;
+
+            try {
                 if (newItem) {
                     await conversation.sendMessage('New Item for Analysis:');
                     const newItemDataUrl = `data:${newItem.mimeType};base64,${newItem.base64}`;
                     await conversation.sendMessage(newItemDataUrl);
                 }
-
                 if (outfits && outfits.length > 0) {
                     await conversation.sendMessage('AI-Generated Outfit Ideas:');
                     for (let i = 0; i < outfits.length; i++) {
@@ -203,13 +212,14 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                         await conversation.sendMessage(outfitDataUrl);
                     }
                 }
-                
+                sentInitialRef.current = true;
                 setSessionData((prev: ChatSessionData | null) => prev ? { ...prev, initialImages: undefined } : null);
-            };
-
-            sendInitialImages();
-        }
-    }, [conversation, sessionData]);
+            } catch (e) {
+                console.error('Failed to send initial images:', e);
+            }
+        };
+        maybeSendInitialImages();
+    }, [conversation, sessionData, analysisContext, newItemContext]);
 
     useEffect(() => {
         if (!conversation) return;
@@ -310,7 +320,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             const data = await res.json();
             if (!res.ok || !data.success || !data.token) throw new Error(data.message || 'Failed to get video token');
 
-            // Create local tracks (audio + video)
+            // Create local tracks (audio + video). We do not render inline video in the UI.
             const tracks: LocalTrack[] = await createLocalTracks({ audio: true, video: true });
             const vTrack = tracks.find((t: LocalTrack) => t.kind === 'video') as LocalVideoTrack | undefined;
             const aTrack = tracks.find((t: LocalTrack) => t.kind === 'audio') as LocalAudioTrack | undefined;
@@ -323,23 +333,20 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             const room = await Video.connect(data.token, { name: sessionData.conversationSid, tracks });
             setVideoRoom(room);
 
-            // Attach existing participants
+            // Attach existing participants (audio only; no inline video rendering)
             room.participants.forEach((participant: RemoteParticipant) => {
                 participant.tracks.forEach((publication: RemoteTrackPublication) => {
                     if (publication.track) {
-                        if (publication.track.kind === 'video') setRemoteVideoTrack(publication.track as RemoteVideoTrack);
                         if (publication.track.kind === 'audio') setRemoteAudioTrack(publication.track as RemoteAudioTrack);
                     }
                 });
                 participant.on('trackSubscribed', (track: RemoteTrack) => {
-                    if (track.kind === 'video') setRemoteVideoTrack(track as RemoteVideoTrack);
                     if (track.kind === 'audio') setRemoteAudioTrack(track as RemoteAudioTrack);
                 });
             });
 
             room.on('participantConnected', (participant: RemoteParticipant) => {
                 participant.on('trackSubscribed', (track: RemoteTrack) => {
-                    if (track.kind === 'video') setRemoteVideoTrack(track as RemoteVideoTrack);
                     if (track.kind === 'audio') setRemoteAudioTrack(track as RemoteAudioTrack);
                 });
             });
@@ -363,6 +370,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         try {
             if (localVideoTrack) {
                 localVideoTrack.stop();
+                // Detach from any elements if attached elsewhere
                 localVideoTrack.detach();
             }
         } catch {}
@@ -374,7 +382,6 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         } catch {}
         setLocalVideoTrack(null);
         setLocalAudioTrack(null);
-        setRemoteVideoTrack(null);
         setRemoteAudioTrack(null);
         setVideoRoom(null);
         setIsMuted(false);
@@ -392,39 +399,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         }
     };
 
-    const toggleCamera = () => {
-        if (!localVideoTrack) return;
-        if (localVideoTrack.isEnabled) {
-            localVideoTrack.disable();
-            setIsCameraOff(true);
-        } else {
-            localVideoTrack.enable();
-            setIsCameraOff(false);
-        }
-    };
-
-    // Attach/detach media elements
-    useEffect(() => {
-        if (localVideoTrack && localVideoRef.current) {
-            try {
-                localVideoTrack.attach(localVideoRef.current);
-                return () => {
-                    try { localVideoTrack.detach(localVideoRef.current!); } catch {}
-                };
-            } catch {}
-        }
-    }, [localVideoTrack]);
-
-    useEffect(() => {
-        if (remoteVideoTrack && remoteVideoRef.current) {
-            try {
-                remoteVideoTrack.attach(remoteVideoRef.current);
-                return () => {
-                    try { remoteVideoTrack.detach && remoteVideoTrack.detach(remoteVideoRef.current); } catch {}
-                };
-            } catch {}
-        }
-    }, [remoteVideoTrack]);
+    // No inline video elements to attach; only audio will be attached below
 
     useEffect(() => {
         if (remoteAudioTrack && remoteAudioRef.current) {
@@ -436,68 +411,82 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             } catch {}
         }
     }, [remoteAudioTrack]);
+
+    const handleClose = () => {
+        try { endVideoCall(); } catch {}
+        try { client?.shutdown(); } catch {}
+        setClient(null);
+        setConversation(null);
+        setMessages([]);
+        setStatus('idle');
+        setSessionData(null);
+        canceledRef.current = true;
+        onClose();
+    };
     
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" role="dialog" aria-modal="true">
             <div className="flex flex-col flex-auto h-full max-h-[90vh] w-full max-w-2xl bg-dark-blue/90 rounded-2xl shadow-2xl border border-platinum/20">
-                {stylist && (
-                    <div className="relative flex-shrink-0 flex sm:items-center justify-between py-3 border-b-2 border-platinum/20 px-4">
-                        <div className="flex items-center space-x-4">
-                            {getStylistAvatar(stylist) ? (
+                <div className="relative flex-shrink-0 flex sm:items-center justify-between py-3 border-b-2 border-platinum/20 px-4">
+                    <div className="flex items-center space-x-4">
+                        {stylist ? (
+                            getStylistAvatar(stylist) ? (
                                 <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-10 sm:w-12 h-10 sm:h-12 rounded-full" />
                             ) : (
                                 <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-platinum/20 flex items-center justify-center text-platinum/80 font-semibold">
-                                    {stylist.name?.charAt(0) || 'S'}
+                                    {stylist?.name?.charAt(0) || 'S'}
                                 </div>
-                            )}
-                            <div className="flex flex-col leading-tight">
-                                <div className="text-lg mt-1 flex items-center">
-                                    <span className="text-platinum mr-1 font-semibold">{stylist.name}</span>
-                                    <button onClick={() => setIsBioPopoverOpen((prev: boolean) => !prev)} className="text-platinum/60 hover:text-white p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-platinum">
+                            )
+                        ) : (
+                            <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-platinum/20 animate-pulse" />
+                        )}
+                        <div className="flex flex-col leading-tight">
+                            <div className="text-lg mt-1 flex items-center">
+                                <span className="text-platinum mr-1 font-semibold">{stylist ? stylist.name : 'Connecting to stylist…'}</span>
+                                {stylist && (
+                                    <button onClick={() => setIsBioPopoverOpen((prev: boolean) => !prev)} className="text-platinum/60 hover:text-white p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-platinum" aria-label="Stylist bio">
                                         <InfoIcon />
                                     </button>
-                                </div>
-                                <span className="text-sm text-platinum/60">{stylist.title}</span>
+                                )}
                             </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                             <button
-                                onClick={() => (videoRoom ? endVideoCall() : startVideoCall())}
-                                disabled={isConnectingVideo}
-                                className={`inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 ${videoRoom ? 'bg-red-600 text-white hover:bg-red-700' : 'text-platinum/80 bg-black/20 hover:bg-black/40'} disabled:opacity-50`}
-                                aria-label={videoRoom ? 'End call' : 'Start video call'}
-                             >
-                                {isConnectingVideo ? <Spinner/> : <VideoIcon />}
-                             </button>
-                             <button onClick={onClose} className="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 text-platinum/80 bg-black/20 hover:bg-black/40">
-                                <CloseIcon />
-                            </button>
+                            <span className="text-sm text-platinum/60">{stylist ? stylist.title : 'Please wait'}</span>
                         </div>
                     </div>
-                )}
-                {/* Video Call Panel */}
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => (videoRoom ? endVideoCall() : startVideoCall())}
+                            disabled={isConnectingVideo || !stylist || status !== 'connected'}
+                            className={`inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 ${videoRoom ? 'bg-red-600 text-white hover:bg-red-700' : 'text-platinum/80 bg-black/20 hover:bg-black/40'} disabled:opacity-50`}
+                            aria-label={videoRoom ? 'End call' : 'Start video call'}
+                        >
+                            {isConnectingVideo ? <Spinner/> : <VideoIcon />}
+                        </button>
+                        <button onClick={handleClose} className="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 text-platinum/80 bg-black/20 hover:bg-black/40" aria-label="Close chat">
+                            <CloseIcon />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Compact call controls (no inline video) */}
                 {videoRoom && (
-                    <div className="px-4 pt-4">
+                    <div className="px-4 pt-3">
                         {videoError && (
                             <div className="mb-2 text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded-lg px-3 py-2">
                                 {videoError}
                             </div>
                         )}
-                        <div className="relative bg-dark-blue rounded-xl p-2 border border-platinum/20">
-                            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                                <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                        <div className="flex items-center justify-between bg-black/30 border border-platinum/20 rounded-lg px-3 py-2">
+                            <div className="text-platinum/80 text-sm">Live call connected</div>
+                            <div className="flex items-center gap-2">
                                 <audio ref={remoteAudioRef} autoPlay />
-                                {/* Local preview (picture-in-picture) */}
-                                <div className="absolute bottom-3 right-3 w-36 h-24 bg-black/60 rounded-md overflow-hidden ring-1 ring-platinum/40">
-                                    <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-                                </div>
-                            </div>
-                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-3 bg-black/50 backdrop-blur-sm p-2 rounded-full">
-                                <button onClick={toggleMute} className={`px-3 py-2 rounded-full text-sm ${isMuted ? 'bg-red-600 text-white' : 'bg-platinum/20 text-platinum'}`}>{isMuted ? 'Unmute' : 'Mute'}</button>
-                                <button onClick={toggleCamera} className={`px-3 py-2 rounded-full text-sm ${isCameraOff ? 'bg-yellow-600 text-white' : 'bg-platinum/20 text-platinum'}`}>{isCameraOff ? 'Camera On' : 'Camera Off'}</button>
-                                <button onClick={endVideoCall} className="px-3 py-2 rounded-full text-sm bg-red-600 text-white">End</button>
+                                <button onClick={toggleMute} className={`px-3 py-1.5 rounded-full text-sm ${isMuted ? 'bg-red-600 text-white' : 'bg-platinum/20 text-platinum'}`} aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}>
+                                    {isMuted ? <MicOffIcon /> : <MicOnIcon />}
+                                </button>
+                                <button onClick={endVideoCall} className="px-3 py-1.5 rounded-full text-sm bg-red-600 text-white" aria-label="End call">
+                                    <EndCallIcon />
+                                </button>
                             </div>
                         </div>
                     </div>

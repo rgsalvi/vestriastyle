@@ -105,8 +105,8 @@ export interface ChatSessionData {
         bio?: string;
     };
     initialImages?: {
-        newItem: { base64: string; mimeType: string };
-        outfits: string[];
+    newItem?: { base64: string; mimeType: string };
+    outfits?: string[];
     };
 }
 
