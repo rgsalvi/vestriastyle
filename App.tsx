@@ -15,7 +15,7 @@ import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
 import { getStyleAdvice } from './services/geminiService';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
-import { jwtDecode } from 'jwt-decode';
+import { observeAuth, signOut as fbSignOut } from './services/firebase';
 
 interface HeaderProps {
   user: User | null;
@@ -142,12 +142,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
 
 type Page = 'main' | 'privacy' | 'terms' | 'refund';
 
-// Fix: Augment the Window interface to declare the 'google' property for Google Sign-In, preventing redeclaration errors.
-declare global {
-  interface Window {
-    google: any;
-  }
-}
+// No global Google object required with Firebase Email/Password
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('main');
@@ -174,53 +169,45 @@ const App: React.FC = () => {
 
   // Auth and User Data Logic
   useEffect(() => {
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-      const userProfile = localStorage.getItem(`${STYLE_PROFILE_KEY}-${userData.id}`);
-      if (userProfile) {
-        const profileData = JSON.parse(userProfile);
-        setStyleProfile(profileData);
-        setBodyType(profileData.bodyType || 'None');
+    const unsub = observeAuth((fbUser) => {
+      if (fbUser) {
+        const mapped: User = {
+          id: fbUser.uid,
+          name: fbUser.displayName || fbUser.email || 'User',
+          email: fbUser.email || '',
+          picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(fbUser.displayName || fbUser.email || 'User')}`,
+        };
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped));
+        setUser(mapped);
+        const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
+        if (!profileRaw) {
+          // Only show onboarding after email verification
+          setShowOnboarding(!!fbUser.emailVerified);
+        } else {
+          const profileData = JSON.parse(profileRaw);
+          setStyleProfile(profileData);
+          setBodyType(profileData.bodyType || 'None');
+          setShowOnboarding(false);
+        }
       } else {
-        setShowOnboarding(true);
+        setUser(null);
+        setStyleProfile(null);
+        setShowOnboarding(false);
       }
-    }
-    setIsAuthLoading(false);
+      setIsAuthLoading(false);
+    });
+    return () => unsub();
   }, []);
   
-  const handleGoogleSignIn = (res: any) => {
-    const decoded: { name: string; email: string; sub: string; picture: string } = jwtDecode(res.credential);
-    const userData: User = {
-        id: decoded.sub,
-        name: decoded.name,
-        email: decoded.email,
-        picture: decoded.picture,
-    };
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
-    setUser(userData);
-    setShowLogin(false);
-
-    const userProfile = localStorage.getItem(`${STYLE_PROFILE_KEY}-${userData.id}`);
-    if (!userProfile) {
-        setShowOnboarding(true);
-    } else {
-        setStyleProfile(JSON.parse(userProfile));
-    }
-  };
+  // Firebase auth is observed; LoginPage will handle sign-in/up and verification
   
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await fbSignOut();
     setUser(null);
     setStyleProfile(null);
     setManagedWardrobe([]);
     setBodyType('None');
     localStorage.removeItem(USER_STORAGE_KEY);
-    // Note: We keep style profiles and wardrobe in local storage in case the user logs back in
-    if (window.google) {
-        // Fix: Use window.google to access the globally declared google object.
-        window.google.accounts.id.disableAutoSelect();
-    }
   };
 
   const handleOnboardingComplete = (profile: StyleProfile) => {
@@ -390,10 +377,10 @@ const App: React.FC = () => {
     if (isAuthLoading) {
         return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-platinum"></div></div>;
     }
-    if (showLogin) {
-        return <LoginPage onGoogleSignIn={handleGoogleSignIn} onBack={() => setShowLogin(false)} />;
-    }
-    if (user && showOnboarding) {
+  if (showLogin) {
+    return <LoginPage onBack={() => setShowLogin(false)} />;
+  }
+  if (user && showOnboarding) {
         return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
     }
 
