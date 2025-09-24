@@ -259,6 +259,7 @@ const App: React.FC = () => {
   const [chatContext, setChatContext] = useState<AiResponse | null>(null);
   const [chatNewItem, setChatNewItem] = useState<AnalysisItem | null>(null);
   // Profile page controlled via currentPage === 'profile'
+  const [profileSavedBanner, setProfileSavedBanner] = useState<string | null>(null);
 
   // Auth and User Data Logic
   useEffect(() => {
@@ -508,6 +509,8 @@ const App: React.FC = () => {
               }
               updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
               setCurrentPage('main');
+              setProfileSavedBanner('Profile updated');
+              setTimeout(() => setProfileSavedBanner(null), 3000);
             }}
           />
         ) : null;
@@ -583,6 +586,15 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-dark-blue flex flex-col">
       <div className="flex-grow">
+        {profileSavedBanner && (
+          <div className="sticky top-0 z-30">
+            <div className="mx-auto max-w-3xl mt-3 px-4">
+              <div role="status" className="px-3 py-2 rounded-xl text-sm border border-platinum/30 bg-platinum/5 text-platinum shadow">
+                {profileSavedBanner}
+              </div>
+            </div>
+          </div>
+        )}
         <Header 
           user={user} 
           onSignOut={handleSignOut} 
