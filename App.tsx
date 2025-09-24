@@ -279,6 +279,9 @@ const App: React.FC = () => {
           // Try cloud profile first
           const cloudProfile = await loadUserProfile(mapped.id);
           if (cloudProfile) {
+            if (fbUser.emailVerified && !cloudProfile.isPremium) {
+              try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
+            }
             setStyleProfile(cloudProfile);
             setBodyType(cloudProfile.bodyType || 'None');
             setShowOnboarding(false);
@@ -288,6 +291,9 @@ const App: React.FC = () => {
             const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
             if (profileRaw) {
               const localProf = JSON.parse(profileRaw);
+              if (fbUser.emailVerified && !localProf.isPremium) {
+                localProf.isPremium = true;
+              }
               setStyleProfile(localProf);
               setBodyType(localProf.bodyType || 'None');
               setShowOnboarding(false);
@@ -345,7 +351,7 @@ const App: React.FC = () => {
               photoURL = await uploadAvatar(user.id, profile.avatarDataUrl);
             }
           } catch (e) { console.warn('Avatar upload failed, using data URL fallback', e); }
-          const cloudProfile = { ...profile };
+          const cloudProfile = { ...profile, isPremium: true };
           try { await saveUserProfile(user.id, cloudProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
           localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile));
           setStyleProfile(cloudProfile);
@@ -552,10 +558,11 @@ const App: React.FC = () => {
                 setUser(mergedUser);
                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser));
                 if (updatedProfile) {
-                  try { await saveUserProfile(mergedUser.id, updatedProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
-                  setStyleProfile(updatedProfile);
-                  setBodyType(updatedProfile.bodyType || 'None');
-                  localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(updatedProfile));
+                  const premiumProfile = { ...updatedProfile, isPremium: true };
+                  try { await saveUserProfile(mergedUser.id, premiumProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
+                  setStyleProfile(premiumProfile);
+                  setBodyType(premiumProfile.bodyType || 'None');
+                  localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(premiumProfile));
                 }
                 updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
                 setCurrentPage('main');

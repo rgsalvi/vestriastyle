@@ -15,7 +15,7 @@ export async function loadUserProfile(uid: string): Promise<StyleProfile | null>
   return snap.exists() ? (snap.data() as StyleProfile) : null;
 }
 
-export async function saveUserProfile(uid: string, profile: StyleProfile): Promise<void> {
+export async function saveUserProfile(uid: string, profile: Partial<StyleProfile>): Promise<void> {
   await setDoc(profileDocRef(uid), { ...profile, updatedAt: serverTimestamp() }, { merge: true });
 }
 

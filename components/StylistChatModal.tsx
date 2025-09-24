@@ -188,6 +188,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             let cancelled = false;
             try {
                 canceledRef.current = false;
+                // During launch bonus, all verified users are treated as premium; value is checked client-side and sent here.
                 const data = await initiateChatSession(analysisContext, newItemContext, user, true);
                 if (cancelled || canceledRef.current) return;
                 setSessionData(data);
