@@ -125,6 +125,7 @@ export const StylistDashboard: React.FC = () => {
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<ProcessedMessage[]>([]);
     const [input, setInput] = useState('');
+    const composerRef = useRef<HTMLTextAreaElement>(null);
     const [isUserTyping, setIsUserTyping] = useState(false);
     const [videoRoom, setVideoRoom] = useState<Room | null>(null);
     const [isConnectingVideo, setIsConnectingVideo] = useState(false);
@@ -133,6 +134,9 @@ export const StylistDashboard: React.FC = () => {
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<any>(null);
     const [isMuted, setIsMuted] = useState(false);
     const [videoCallRequestSid, setVideoCallRequestSid] = useState<string | null>(null);
+    const [bannerMessage, setBannerMessage] = useState<string | null>(null);
+    const [bannerType, setBannerType] = useState<'info' | 'error' | 'success'>('info');
+    const convHandlersRef = useRef<Map<string, (m: Message) => void>>(new Map());
     
     const messageEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -166,22 +170,72 @@ export const StylistDashboard: React.FC = () => {
 
         const setupClient = async () => {
             const convs = await client.getSubscribedConversations();
-            setConversations(convs.items);
+            const items = convs.items;
+            // Sort by last message date (desc)
+            const sorted = [...items].sort((a, b) => {
+                const aTime = (a as any).lastMessage?.dateCreated ? new Date((a as any).lastMessage.dateCreated).getTime() : 0;
+                const bTime = (b as any).lastMessage?.dateCreated ? new Date((b as any).lastMessage.dateCreated).getTime() : 0;
+                return bTime - aTime;
+            });
+            setConversations(sorted);
+
+            // attach message listeners to keep list fresh
+            sorted.forEach(conv => {
+                const handler = (/* message */) => {
+                    setConversations(prev => {
+                        const next = [...prev];
+                        return next.sort((a, b) => {
+                            const aTime = (a as any).lastMessage?.dateCreated ? new Date((a as any).lastMessage.dateCreated).getTime() : 0;
+                            const bTime = (b as any).lastMessage?.dateCreated ? new Date((b as any).lastMessage.dateCreated).getTime() : 0;
+                            return bTime - aTime;
+                        });
+                    });
+                };
+                conv.on('messageAdded', handler as any);
+                convHandlersRef.current.set(conv.sid, handler as any);
+            });
 
             client.on('conversationJoined', (conversation) => {
-                setConversations(prev => [...prev.filter(c => c.sid !== conversation.sid), conversation]);
+                setConversations(prev => {
+                    const next = [...prev.filter(c => c.sid !== conversation.sid), conversation];
+                    return next.sort((a, b) => {
+                        const aTime = (a as any).lastMessage?.dateCreated ? new Date((a as any).lastMessage.dateCreated).getTime() : 0;
+                        const bTime = (b as any).lastMessage?.dateCreated ? new Date((b as any).lastMessage.dateCreated).getTime() : 0;
+                        return bTime - aTime;
+                    });
+                });
+                const handler = () => {
+                    setConversations(prev => {
+                        const next = [...prev];
+                        return next.sort((a, b) => {
+                            const aTime = (a as any).lastMessage?.dateCreated ? new Date((a as any).lastMessage.dateCreated).getTime() : 0;
+                            const bTime = (b as any).lastMessage?.dateCreated ? new Date((b as any).lastMessage.dateCreated).getTime() : 0;
+                            return bTime - aTime;
+                        });
+                    });
+                };
+                conversation.on('messageAdded', handler as any);
+                convHandlersRef.current.set(conversation.sid, handler as any);
             });
         };
 
         setupClient();
 
         return () => {
+            // cleanup conv handlers
+            convHandlersRef.current.forEach((handler, sid) => {
+                const conv = conversations.find(c => c.sid === sid);
+                if (conv) conv.removeListener('messageAdded', handler as any);
+            });
+            convHandlersRef.current.clear();
             client.shutdown();
         };
     }, [client, identity]);
 
     const selectConversation = (conversation: Conversation) => {
         setActiveConversation(conversation);
+        // mark as read
+        (conversation as any).setAllMessagesRead?.().catch(() => {});
     };
 
     useEffect(() => {
@@ -219,11 +273,19 @@ export const StylistDashboard: React.FC = () => {
             activeConversation.on('messageAdded', onMessageAdded);
             activeConversation.on('typingStarted', onTypingStarted);
             activeConversation.on('typingEnded', onTypingEnded);
+
+            // mark as read when opening and when new messages arrive
+            (activeConversation as any).setAllMessagesRead?.().catch(() => {});
+            const readHandler = () => {
+                (activeConversation as any).setAllMessagesRead?.().catch(() => {});
+            };
+            activeConversation.on('messageAdded', readHandler as any);
             
             return () => {
                 activeConversation.removeListener('messageAdded', onMessageAdded);
                 activeConversation.removeListener('typingStarted', onTypingStarted);
                 activeConversation.removeListener('typingEnded', onTypingEnded);
+                activeConversation.removeListener('messageAdded', readHandler as any);
             };
         };
         setupConversation();
@@ -240,10 +302,15 @@ export const StylistDashboard: React.FC = () => {
         }
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setInput(e.target.value);
         if (activeConversation) {
             activeConversation.typing();
+        }
+        // auto-resize
+        if (composerRef.current) {
+            composerRef.current.style.height = 'auto';
+            composerRef.current.style.height = Math.min(composerRef.current.scrollHeight, 160) + 'px';
         }
     };
     
@@ -280,6 +347,8 @@ export const StylistDashboard: React.FC = () => {
 
             const room = await Video.connect(data.token, { name: activeConversation.sid, tracks });
             setVideoRoom(room);
+            setBannerType('success');
+            setBannerMessage('Connected to video call');
 
             room.participants.forEach(participant => {
                 participant.tracks.forEach((publication: any) => {
@@ -305,6 +374,8 @@ export const StylistDashboard: React.FC = () => {
 
         } catch (error) {
             console.error("Failed to join video call:", error);
+            setBannerType('error');
+            setBannerMessage('Failed to join video call');
         } finally {
             setIsConnectingVideo(false);
         }
@@ -324,6 +395,8 @@ export const StylistDashboard: React.FC = () => {
         setRemoteAudioTrack(null);
         setIsMuted(false);
         setVideoCallRequestSid(null);
+        setBannerType('info');
+        setBannerMessage('Call ended');
     };
 
     const toggleMute = () => {
@@ -347,6 +420,13 @@ export const StylistDashboard: React.FC = () => {
         }
     }, [remoteAudioTrack]);
 
+    // auto-dismiss non-persistent banners
+    useEffect(() => {
+        if (!bannerMessage) return;
+        const t = setTimeout(() => setBannerMessage(null), 4000);
+        return () => clearTimeout(t);
+    }, [bannerMessage]);
+
     if (!identity) {
         return <LoginPage onLogin={handleLogin} />;
     }
@@ -366,17 +446,45 @@ export const StylistDashboard: React.FC = () => {
                         <span className="flex items-center justify-center bg-platinum/20 h-4 w-4 rounded-full">{conversations.length}</span>
                     </div>
                     <div className="flex flex-col space-y-1 mt-4 -mx-2 h-full overflow-y-auto">
-                        {conversations.map(conv => (
-                            <button key={conv.sid} onClick={() => selectConversation(conv)} className={`flex flex-row items-center hover:bg-black/20 rounded-xl p-2 ${activeConversation?.sid === conv.sid ? 'bg-black/40' : ''}`}>
-                                <div className="ml-2 text-sm font-semibold text-left">{conv.friendlyName || 'Styling Session'}</div>
-                            </button>
-                        ))}
+                        {conversations.map(conv => {
+                            const unread = (conv as any).unreadMessagesCount ?? 0;
+                            const last = (conv as any).lastMessage;
+                            const snippet: string | undefined = last?.body || (last?.type === 'media' ? 'Media attachment' : undefined);
+                            const timeStr = last?.dateCreated ? new Date(last.dateCreated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                            return (
+                                <button key={conv.sid} onClick={() => selectConversation(conv)} className={`flex items-center justify-between hover:bg-black/20 rounded-xl p-2 ${activeConversation?.sid === conv.sid ? 'bg-black/40' : ''}`}>
+                                    <div className="flex flex-col ml-2 text-left">
+                                        <div className="text-sm font-semibold">{conv.friendlyName || 'Styling Session'}</div>
+                                        {snippet && <div className="text-xs text-platinum/50 truncate max-w-[180px]">{snippet}</div>}
+                                    </div>
+                                    <div className="flex flex-col items-end mr-2">
+                                        {timeStr && <span className="text-[10px] text-platinum/40">{timeStr}</span>}
+                                        {unread > 0 && <span className="mt-1 inline-flex items-center justify-center bg-platinum text-dark-blue rounded-full text-[10px] font-bold h-4 min-w-4 px-1">{unread}</span>}
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                  </div>
             </div>
             <div className="flex flex-col flex-auto h-full p-4">
                 {activeConversation ? (
                     <div className="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-black/20 h-full p-4">
+                        {(videoCallRequestSid === activeConversation.sid && !videoRoom) && (
+                            <div className="sticky top-0 z-10 mb-3" role="status" aria-live="polite">
+                                <div className="flex items-center justify-between bg-green-900/40 text-green-200 border border-green-600/30 rounded-lg px-3 py-2">
+                                    <div className="text-sm font-medium">User requested a video call</div>
+                                    <button onClick={joinVideoCall} disabled={isConnectingVideo} className="text-xs font-semibold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-full" aria-label="Join video call from banner">
+                                        {isConnectingVideo ? 'Joining…' : 'Join Now'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {bannerMessage && (
+                            <div className={`sticky top-0 z-10 ${videoCallRequestSid === activeConversation.sid && !videoRoom ? '' : 'mb-3'}`}>
+                                <div className={`px-3 py-2 rounded-lg text-sm border ${bannerType === 'error' ? 'bg-red-900/30 text-red-200 border-red-500/30' : bannerType === 'success' ? 'bg-emerald-900/30 text-emerald-200 border-emerald-500/30' : 'bg-black/30 text-platinum/70 border-platinum/20'}`}>{bannerMessage}</div>
+                            </div>
+                        )}
                         {videoRoom && (
                              <div className="relative flex-shrink-0 mb-4 bg-dark-blue rounded-xl p-2 border border-platinum/20">
                                 <div className="aspect-video bg-black rounded-lg overflow-hidden">
@@ -394,8 +502,19 @@ export const StylistDashboard: React.FC = () => {
                              </div>
                         )}
                         <div className="flex flex-col h-full overflow-y-auto mb-4">
-                             {messages.map(message => (
+                             {messages.map((message, idx) => {
+                                 const prev = messages[idx - 1];
+                                 const isNewDay = !prev || (prev && prev.dateCreated.toDateString() !== message.dateCreated.toDateString());
+                                 const timeLabel = message.dateCreated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                 return (
                                  <div key={message.sid} className="grid grid-cols-12 gap-y-2">
+                                     {isNewDay && (
+                                         <div className="col-start-1 col-end-13 flex justify-center my-2">
+                                             <span className="text-xs px-2 py-1 rounded-full bg-black/30 text-platinum/60">
+                                                 {message.dateCreated.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                             </span>
+                                         </div>
+                                     )}
                                      {message.author === identity ? (
                                          <div className="col-start-6 col-end-13 p-3 rounded-lg">
                                              <div className="flex items-center justify-start flex-row-reverse">
@@ -407,6 +526,7 @@ export const StylistDashboard: React.FC = () => {
                                                      ) : (
                                                         <div className="whitespace-pre-wrap">{message.body}</div>
                                                      )}
+                                                     <div className="mt-1 text-[10px] text-platinum/40 text-right">{timeLabel}</div>
                                                  </div>
                                              </div>
                                          </div>
@@ -421,12 +541,14 @@ export const StylistDashboard: React.FC = () => {
                                                      ) : (
                                                         <div className="whitespace-pre-wrap">{message.body}</div>
                                                      )}
+                                                     <div className="mt-1 text-[10px] text-platinum/40">{timeLabel}</div>
                                                  </div>
                                              </div>
                                          </div>
                                      )}
                                  </div>
-                             ))}
+                                 );
+                             })}
                              {isUserTyping && (
                                  <div className="col-start-1 col-end-8 p-3 rounded-lg">
                                      <div className="flex flex-row items-center">
@@ -442,23 +564,25 @@ export const StylistDashboard: React.FC = () => {
                              )}
                             <div ref={messageEndRef} />
                         </div>
-                        <div className="flex flex-row items-center h-16 rounded-xl bg-dark-blue w-full px-4 ring-1 ring-platinum/20">
+                        <div className="flex flex-row items-end min-h-16 rounded-xl bg-dark-blue w-full px-4 py-3 ring-1 ring-platinum/20">
                             <button onClick={attachFile} aria-label="Attach file" className="flex items-center justify-center text-platinum/70 hover:text-white">
                                 <AttachIcon />
                             </button>
                             <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                             <div className="flex-grow ml-4">
-                                <input
-                                    type="text"
+                                <textarea
+                                    ref={composerRef}
                                     value={input}
                                     onChange={handleInputChange}
                                     onKeyDown={e => {
                                         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
                                     }}
-                                    className="flex w-full border rounded-full focus:outline-none focus:border-platinum/50 pl-4 h-10 bg-black/20 text-platinum border-transparent"
+                                    rows={1}
+                                    className="block w-full resize-none border rounded-2xl focus:outline-none focus:border-platinum/50 px-4 py-2 max-h-40 bg-black/20 text-platinum border-transparent"
                                     placeholder="Type your message..."
                                     aria-label="Message input"
                                 />
+                                <div className="mt-1 text-[10px] text-platinum/40 select-none">Press Enter to send • Shift+Enter for newline</div>
                             </div>
                             <div className="ml-4 flex items-center space-x-2">
                                      {videoCallRequestSid === activeConversation.sid && !videoRoom && (
