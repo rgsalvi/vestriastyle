@@ -7,7 +7,7 @@ interface OnboardingWizardProps {
   onComplete: (profile: StyleProfile) => void;
 }
 
-const steps = ['Style Vibe', 'Color Palette', 'Favorite Colors', 'Favorite Brands', 'Body Type'];
+const steps = ['Profile Photo', 'Style Vibe', 'Color Palette', 'Favorite Colors', 'Favorite Brands', 'Body Type'];
 
 const styleArchetypes = [
     { name: 'Minimalist', description: 'Clean lines, neutral colors, and simple silhouettes.' },
@@ -43,7 +43,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
         favoriteColors: '',
         favoriteBrands: '',
         bodyType: 'None',
+        avatarDataUrl: user.picture || undefined,
     });
+    const [avatarPreview, setAvatarPreview] = useState<string>(user.picture || '');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
@@ -67,15 +70,41 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
     };
 
     const isNextDisabled = () => {
-        if (currentStep === 0 && (profile.styleArchetypes?.length || 0) === 0) return true;
-        if (currentStep === 1 && (profile.colorPalettes?.length || 0) === 0) return true;
-        if (currentStep === 4 && profile.bodyType === 'None') return true;
+        if (currentStep === 1 && (profile.styleArchetypes?.length || 0) === 0) return true;
+        if (currentStep === 2 && (profile.colorPalettes?.length || 0) === 0) return true;
+        if (currentStep === 5 && profile.bodyType === 'None') return true;
         return false;
     };
     
     const renderStepContent = () => {
         switch (currentStep) {
             case 0:
+                return (
+                    <div>
+                        <h2 className="text-2xl font-bold text-platinum">Add a profile photo (optional)</h2>
+                        <p className="mt-2 text-platinum/60">This helps your stylist recognize you. You can change it later.</p>
+                        <div className="mt-6 flex items-center gap-6">
+                            <img src={avatarPreview || user.picture} alt={user.name} className="h-28 w-28 rounded-full border-2 border-platinum/30 object-cover" />
+                            <div>
+                                <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold hover:opacity-90">Upload Photo</button>
+                                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) {
+                                        const reader = new FileReader();
+                                        reader.onload = () => {
+                                            const dataUrl = reader.result as string;
+                                            setAvatarPreview(dataUrl);
+                                            setProfile(p => ({ ...p, avatarDataUrl: dataUrl }));
+                                        };
+                                        reader.readAsDataURL(f);
+                                    }
+                                }} />
+                                <p className="mt-2 text-xs text-platinum/60">PNG/JPG, up to ~2MB</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 1:
                 return (
                     <div>
                         <h2 className="text-2xl font-bold text-platinum">What's your style vibe?</h2>
@@ -93,7 +122,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         </div>
                     </div>
                 );
-            case 1:
+            case 2:
                 return (
                      <div>
                         <h2 className="text-2xl font-bold text-platinum">Which colors are you drawn to?</h2>
@@ -113,7 +142,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         </div>
                     </div>
                 );
-            case 2:
+            case 3:
                 return (
                      <div>
                         <h2 className="text-2xl font-bold text-platinum">Any favorite colors? (Optional)</h2>
@@ -129,7 +158,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         </div>
                     </div>
                 );
-            case 3:
+            case 4:
                  return (
                      <div>
                         <h2 className="text-2xl font-bold text-platinum">Any favorite brands? (Optional)</h2>
@@ -145,7 +174,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         </div>
                     </div>
                 );
-            case 4:
+            case 5:
                 return (
                     <BodyTypeSelector 
                         selectedBodyType={profile.bodyType || 'None'} 

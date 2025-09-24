@@ -23,6 +23,7 @@ interface HeaderProps {
   onSignIn: () => void;
   showWardrobeButton: boolean;
   onWardrobeClick: () => void;
+  onEditProfile: () => void;
 }
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
@@ -83,8 +84,81 @@ const Logo: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+const EditProfileModal: React.FC<{
+  user: User;
+  onClose: () => void;
+  onSave: (updated: Partial<User>) => void;
+}> = ({ user, onClose, onSave }) => {
+  const [name, setName] = React.useState(user.name);
+  const [avatar, setAvatar] = React.useState<string>(user.picture);
+  const [preview, setPreview] = React.useState<string>(user.picture);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobeButton, onWardrobeClick }) => (
+  const handleFile = async (file: File) => {
+    const toDataUrl = (f: File) => new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(f);
+    });
+    const dataUrl = await toDataUrl(file);
+    setAvatar(dataUrl);
+    setPreview(dataUrl);
+  };
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-lg bg-dark-blue/90 backdrop-blur-lg rounded-2xl border border-platinum/20 shadow-lg p-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold text-platinum">Edit Profile</h3>
+          <button onClick={onClose} className="text-platinum/70 hover:text-white">✕</button>
+        </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-[140px,1fr] gap-4">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative">
+              <img src={preview} alt={user.name} className="h-28 w-28 rounded-full border-2 border-platinum/30 object-cover" />
+              <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-platinum text-dark-blue text-xs font-semibold px-2 py-1 rounded-full shadow hover:opacity-90">Change</button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+            </div>
+            <p className="text-xs text-platinum/60">PNG/JPG, up to ~2MB</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-platinum/70 mb-1">Name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" />
+            </div>
+            <div>
+              <label className="block text-sm text-platinum/70 mb-1">Email</label>
+              <input value={user.email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
+              <p className="mt-1 text-xs text-platinum/50">Email changes are not supported. Please contact support to modify your email address.</p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80 hover:bg-black/20">Cancel</button>
+          <button onClick={() => onSave({ name: name.trim() || user.name, picture: avatar })} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold hover:opacity-90">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  return (
   <header className="relative p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
     <Logo className="h-24 w-auto" />
 
@@ -104,16 +178,32 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
           </button>
       )}
       {user ? (
-        <div className="relative group">
-          <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30" />
-          <div className="absolute top-full right-0 mt-2 w-48 bg-[#1F2937] rounded-xl shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto border border-platinum/20">
-            <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
-            <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
-            <div className="h-px bg-platinum/20 my-1"></div>
-            <button onClick={onSignOut} className="w-full text-left text-sm text-red-400 px-3 py-1 hover:bg-platinum/10 rounded-md">
-              Sign Out
-            </button>
-          </div>
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            onMouseEnter={() => setMenuOpen(true)}
+            className="relative"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30" />
+          </button>
+          {menuOpen && (
+            <div
+              className="absolute top-full right-0 mt-2 w-56 bg-[#1F2937] rounded-xl shadow-lg p-2 border border-platinum/20"
+              role="menu"
+              onMouseEnter={() => setMenuOpen(true)}
+              onMouseLeave={() => setMenuOpen(false)}
+            >
+              <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
+              <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
+              <div className="h-px bg-platinum/20 my-1"></div>
+              <button onClick={onEditProfile} className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">Edit Profile</button>
+              <button onClick={onSignOut} className="w-full text-left text-sm text-red-400 px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <button
@@ -125,7 +215,8 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
       )}
     </div>
   </header>
-);
+  );
+};
 
 const WARDROBE_STORAGE_KEY = 'ai-wardrobe-items';
 const USER_STORAGE_KEY = 'ai-wardrobe-user';
@@ -166,6 +257,7 @@ const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<AiResponse | null>(null);
   const [chatNewItem, setChatNewItem] = useState<AnalysisItem | null>(null);
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
   // Auth and User Data Logic
   useEffect(() => {
@@ -215,6 +307,11 @@ const App: React.FC = () => {
         localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(profile));
         setStyleProfile(profile);
         setBodyType(profile.bodyType || 'None');
+        if (profile.avatarDataUrl) {
+          const updatedUser = { ...user, picture: profile.avatarDataUrl } as User;
+          setUser(updatedUser);
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+        }
         setShowOnboarding(false);
     }
   };
@@ -468,7 +565,8 @@ const App: React.FC = () => {
           onSignOut={handleSignOut} 
           onSignIn={() => setShowLogin(true)}
           showWardrobeButton={currentPage === 'main'}
-          onWardrobeClick={handleWardrobeClick} 
+          onWardrobeClick={handleWardrobeClick}
+          onEditProfile={() => setShowEditProfile(true)}
         />
         {renderPage()}
       </div>
@@ -487,6 +585,19 @@ const App: React.FC = () => {
             user={activeUserForChat}
             analysisContext={chatContext}
             newItemContext={chatNewItem}
+        />
+      )}
+      {user && showEditProfile && (
+        <EditProfileModal 
+          user={user}
+          onClose={() => setShowEditProfile(false)}
+          onSave={(updated) => {
+            // Update local user fields (name and picture) and persist
+            const merged = { ...user, ...updated } as User;
+            setUser(merged);
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(merged));
+            setShowEditProfile(false);
+          }}
         />
       )}
     </div>

@@ -55,6 +55,7 @@ export interface StyleProfile {
   favoriteColors?: string;
   favoriteBrands: string;
   bodyType: BodyType;
+  avatarDataUrl?: string;
 }
 
 export interface ChatMessage {
