@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
-import { deleteCurrentUser } from '../services/firebase';
+import { auth, deleteCurrentUser } from '../services/firebase';
 import { deleteAllUserData } from '../services/db';
 
 interface ProfilePageProps {
@@ -203,11 +203,23 @@ const DeleteAccountBlock: React.FC = () => {
     setDeleting(true);
     setDeleteError(null);
     try {
-      const raw = localStorage.getItem('ai-wardrobe-user');
-      const current = raw ? JSON.parse(raw) : null;
-      const uid = current?.id as string | undefined;
-      if (uid) {
-        try { await deleteAllUserData(uid); } catch (e) { console.warn('Failed to delete Firestore/Storage data', e); }
+      // Attempt server-side deletion first (more reliable)
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        if (idToken) {
+          const res = await fetch('/api/delete-account', { method: 'POST', headers: { Authorization: `Bearer ${idToken}` } });
+          if (!res.ok) throw new Error('Server delete failed');
+        } else {
+          // fallback to client-side delete of data
+          const raw = localStorage.getItem('ai-wardrobe-user');
+          const current = raw ? JSON.parse(raw) : null;
+          const uid = current?.id as string | undefined;
+          if (uid) {
+            try { await deleteAllUserData(uid); } catch (e) { console.warn('Failed to delete Firestore/Storage data', e); }
+          }
+        }
+      } catch (e) {
+        console.warn('Server-side delete failed', e);
       }
       try {
         await deleteCurrentUser();
