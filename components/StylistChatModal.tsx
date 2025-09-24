@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { User, AiResponse, ChatMessage, AnalysisItem } from '../types';
 import { initiateChatSession, ChatSessionData } from '../services/geminiService';
-import { Client, Conversation, Message } from '@twilio/conversations';
+import { Client, Conversation, Message, Participant as TwilioParticipant } from '@twilio/conversations';
 // Fix: Import specific LocalVideoTrack and LocalAudioTrack types to resolve method errors.
-import Video, { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
+import Video, { Room, LocalVideoTrack, LocalAudioTrack, RemoteParticipant, createLocalTracks, LocalTrack, RemoteTrack, RemoteTrackPublication, RemoteVideoTrack, RemoteAudioTrack } from 'twilio-video';
 
 // ... (Icon components remain the same)
 const CloseIcon: React.FC = () => (
@@ -108,6 +108,9 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
     const [isMuted, setIsMuted] = useState(false);
     const [isCameraOff, setIsCameraOff] = useState(false);
+    const [remoteVideoTrack, setRemoteVideoTrack] = useState<RemoteVideoTrack | null>(null);
+    const [remoteAudioTrack, setRemoteAudioTrack] = useState<RemoteAudioTrack | null>(null);
+    const [videoError, setVideoError] = useState<string | null>(null);
 
     const [isBioPopoverOpen, setIsBioPopoverOpen] = useState(false);
 
@@ -116,6 +119,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const fileInputRef = useRef<HTMLInputElement>(null);
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
+    const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -134,8 +138,8 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     setStylist(data.stylist);
                     
                     const twilioMessages = (await conv.getMessages()).items;
-                    const processedMessages = await Promise.all(twilioMessages.map(msg => processTwilioMessage(msg, user)));
-                    setMessages(processedMessages.sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+                    const processedMessages = await Promise.all(twilioMessages.map((msg: Message) => processTwilioMessage(msg, user)));
+                    setMessages(processedMessages.sort((a: ChatMessage, b: ChatMessage) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
 
                     setStatus('connected');
                 } catch (error) {
@@ -154,6 +158,8 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 setMessages([]);
                 setStatus('idle');
                 setSessionData(null);
+                // Ensure we end any ongoing video call on teardown
+                endVideoCall();
             }
         };
     }, [isOpen, user, analysisContext, newItemContext, status]);
@@ -161,7 +167,9 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     useEffect(() => {
         if (conversation && sessionData?.initialImages) {
             const sendInitialImages = async () => {
-                const { newItem, outfits } = sessionData.initialImages;
+                const initial = sessionData.initialImages;
+                if (!initial) return;
+                const { newItem, outfits } = initial;
 
                 if (newItem) {
                     await conversation.sendMessage('New Item for Analysis:');
@@ -178,7 +186,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     }
                 }
                 
-                setSessionData(prev => prev ? { ...prev, initialImages: undefined } : null);
+                setSessionData((prev: ChatSessionData | null) => prev ? { ...prev, initialImages: undefined } : null);
             };
 
             sendInitialImages();
@@ -190,14 +198,14 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
         const onMessageAdded = async (message: Message) => {
             const processedMsg = await processTwilioMessage(message, user);
-            setMessages(prev => [...prev, processedMsg]);
+            setMessages((prev: ChatMessage[]) => [...prev, processedMsg]);
         };
         
-        const onTypingStarted = (participant: any) => {
+        const onTypingStarted = (participant: TwilioParticipant) => {
             if (participant.identity !== user.id) setIsStylistTyping(true);
         };
 
-        const onTypingEnded = (participant: any) => {
+        const onTypingEnded = (participant: TwilioParticipant) => {
              if (participant.identity !== user.id) setIsStylistTyping(false);
         };
 
@@ -258,7 +266,158 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         e.target.value = '';
     };
     
-    // ... video functions
+    // --- Video call functions ---
+    const notifyStylistVideoRequest = async () => {
+        try {
+            if (conversation) {
+                await conversation.sendMessage('User is requesting a live video call', { type: 'video_call_request' });
+            }
+        } catch (e) {
+            console.error('Failed to notify stylist about video request:', e);
+        }
+    };
+
+    const startVideoCall = async () => {
+        if (!sessionData?.conversationSid) return;
+        if (isConnectingVideo || videoRoom) return;
+        setIsConnectingVideo(true);
+        setVideoError(null);
+        try {
+            // Get Video token
+            const res = await fetch('/api/generate-video-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identity: user.id, roomName: sessionData.conversationSid }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success || !data.token) throw new Error(data.message || 'Failed to get video token');
+
+            // Create local tracks (audio + video)
+            const tracks: LocalTrack[] = await createLocalTracks({ audio: true, video: true });
+            const vTrack = tracks.find((t: LocalTrack) => t.kind === 'video') as LocalVideoTrack | undefined;
+            const aTrack = tracks.find((t: LocalTrack) => t.kind === 'audio') as LocalAudioTrack | undefined;
+            if (vTrack) setLocalVideoTrack(vTrack);
+            if (aTrack) setLocalAudioTrack(aTrack);
+            setIsMuted(false);
+            setIsCameraOff(false);
+
+            // Connect to the room using conversation SID as room name
+            const room = await Video.connect(data.token, { name: sessionData.conversationSid, tracks });
+            setVideoRoom(room);
+
+            // Attach existing participants
+            room.participants.forEach((participant: RemoteParticipant) => {
+                participant.tracks.forEach((publication: RemoteTrackPublication) => {
+                    if (publication.track) {
+                        if (publication.track.kind === 'video') setRemoteVideoTrack(publication.track as RemoteVideoTrack);
+                        if (publication.track.kind === 'audio') setRemoteAudioTrack(publication.track as RemoteAudioTrack);
+                    }
+                });
+                participant.on('trackSubscribed', (track: RemoteTrack) => {
+                    if (track.kind === 'video') setRemoteVideoTrack(track as RemoteVideoTrack);
+                    if (track.kind === 'audio') setRemoteAudioTrack(track as RemoteAudioTrack);
+                });
+            });
+
+            room.on('participantConnected', (participant: RemoteParticipant) => {
+                participant.on('trackSubscribed', (track: RemoteTrack) => {
+                    if (track.kind === 'video') setRemoteVideoTrack(track as RemoteVideoTrack);
+                    if (track.kind === 'audio') setRemoteAudioTrack(track as RemoteAudioTrack);
+                });
+            });
+
+            room.on('disconnected', () => { endVideoCall(); });
+
+            // Let the stylist know to join
+            await notifyStylistVideoRequest();
+        } catch (error) {
+            console.error('Failed to start video call:', error);
+            setVideoError(error instanceof Error ? error.message : 'Could not start the video call.');
+        } finally {
+            setIsConnectingVideo(false);
+        }
+    };
+
+    const endVideoCall = () => {
+        try {
+            if (videoRoom) videoRoom.disconnect();
+        } catch {}
+        try {
+            if (localVideoTrack) {
+                localVideoTrack.stop();
+                localVideoTrack.detach();
+            }
+        } catch {}
+        try {
+            if (localAudioTrack) {
+                localAudioTrack.stop();
+                localAudioTrack.detach && localAudioTrack.detach();
+            }
+        } catch {}
+        setLocalVideoTrack(null);
+        setLocalAudioTrack(null);
+        setRemoteVideoTrack(null);
+        setRemoteAudioTrack(null);
+        setVideoRoom(null);
+        setIsMuted(false);
+        setIsCameraOff(false);
+    };
+
+    const toggleMute = () => {
+        if (!localAudioTrack) return;
+        if (localAudioTrack.isEnabled) {
+            localAudioTrack.disable();
+            setIsMuted(true);
+        } else {
+            localAudioTrack.enable();
+            setIsMuted(false);
+        }
+    };
+
+    const toggleCamera = () => {
+        if (!localVideoTrack) return;
+        if (localVideoTrack.isEnabled) {
+            localVideoTrack.disable();
+            setIsCameraOff(true);
+        } else {
+            localVideoTrack.enable();
+            setIsCameraOff(false);
+        }
+    };
+
+    // Attach/detach media elements
+    useEffect(() => {
+        if (localVideoTrack && localVideoRef.current) {
+            try {
+                localVideoTrack.attach(localVideoRef.current);
+                return () => {
+                    try { localVideoTrack.detach(localVideoRef.current!); } catch {}
+                };
+            } catch {}
+        }
+    }, [localVideoTrack]);
+
+    useEffect(() => {
+        if (remoteVideoTrack && remoteVideoRef.current) {
+            try {
+                remoteVideoTrack.attach(remoteVideoRef.current);
+                return () => {
+                    try { remoteVideoTrack.detach && remoteVideoTrack.detach(remoteVideoRef.current); } catch {}
+                };
+            } catch {}
+        }
+    }, [remoteVideoTrack]);
+
+    useEffect(() => {
+        if (remoteAudioTrack && remoteAudioRef.current) {
+            try {
+                remoteAudioTrack.attach(remoteAudioRef.current);
+                return () => {
+                    try { remoteAudioTrack.detach && remoteAudioTrack.detach(remoteAudioRef.current); } catch {}
+                };
+            } catch {}
+        }
+    }, [remoteAudioTrack]);
     
     if (!isOpen) return null;
 
@@ -272,7 +431,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             <div className="flex flex-col leading-tight">
                                 <div className="text-lg mt-1 flex items-center">
                                     <span className="text-platinum mr-1 font-semibold">{stylist.name}</span>
-                                    <button onClick={() => setIsBioPopoverOpen(prev => !prev)} className="text-platinum/60 hover:text-white p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-platinum">
+                                    <button onClick={() => setIsBioPopoverOpen((prev: boolean) => !prev)} className="text-platinum/60 hover:text-white p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-platinum">
                                         <InfoIcon />
                                     </button>
                                 </div>
@@ -280,12 +439,42 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                             <button className="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 text-platinum/80 bg-black/20 hover:bg-black/40">
-                                <VideoIcon />
+                             <button
+                                onClick={() => (videoRoom ? endVideoCall() : startVideoCall())}
+                                disabled={isConnectingVideo}
+                                className={`inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 ${videoRoom ? 'bg-red-600 text-white hover:bg-red-700' : 'text-platinum/80 bg-black/20 hover:bg-black/40'} disabled:opacity-50`}
+                                aria-label={videoRoom ? 'End call' : 'Start video call'}
+                             >
+                                {isConnectingVideo ? <Spinner/> : <VideoIcon />}
                              </button>
                              <button onClick={onClose} className="inline-flex items-center justify-center rounded-full h-8 w-8 transition duration-200 text-platinum/80 bg-black/20 hover:bg-black/40">
                                 <CloseIcon />
                             </button>
+                        </div>
+                    </div>
+                )}
+                {/* Video Call Panel */}
+                {videoRoom && (
+                    <div className="px-4 pt-4">
+                        {videoError && (
+                            <div className="mb-2 text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded-lg px-3 py-2">
+                                {videoError}
+                            </div>
+                        )}
+                        <div className="relative bg-dark-blue rounded-xl p-2 border border-platinum/20">
+                            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                                <audio ref={remoteAudioRef} autoPlay />
+                                {/* Local preview (picture-in-picture) */}
+                                <div className="absolute bottom-3 right-3 w-36 h-24 bg-black/60 rounded-md overflow-hidden ring-1 ring-platinum/40">
+                                    <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                                </div>
+                            </div>
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-3 bg-black/50 backdrop-blur-sm p-2 rounded-full">
+                                <button onClick={toggleMute} className={`px-3 py-2 rounded-full text-sm ${isMuted ? 'bg-red-600 text-white' : 'bg-platinum/20 text-platinum'}`}>{isMuted ? 'Unmute' : 'Mute'}</button>
+                                <button onClick={toggleCamera} className={`px-3 py-2 rounded-full text-sm ${isCameraOff ? 'bg-yellow-600 text-white' : 'bg-platinum/20 text-platinum'}`}>{isCameraOff ? 'Camera On' : 'Camera Off'}</button>
+                                <button onClick={endVideoCall} className="px-3 py-2 rounded-full text-sm bg-red-600 text-white">End</button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -308,7 +497,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 <div className="flex flex-col h-full overflow-x-hidden overflow-y-auto p-4 space-y-4">
                     {status === 'connecting' && <div className="m-auto flex flex-col items-center"><Spinner /><p className="mt-2 text-platinum/70">Connecting to stylist...</p></div>}
                     {status === 'error' && <div className="m-auto text-center"><p className="text-red-400 font-semibold">Connection Error</p><p className="text-platinum/70">Could not connect to the chat service. Please try again later.</p></div>}
-                    {status === 'connected' && messages.map(message => (
+                    {status === 'connected' && messages.map((message: ChatMessage) => (
                         <div key={message.id} className={`col-start-1 col-end-11 p-3 rounded-lg ${message.sender === 'system' ? 'col-span-12' : ''}`}>
                              {message.sender === 'system' ? (
                                 <div className="text-center text-xs text-platinum/50 italic my-2">
@@ -362,7 +551,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                     type="text"
                                     value={input}
                                     onChange={handleInputChange}
-                                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                    onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && sendMessage()}
                                     className="flex w-full border rounded-full focus:outline-none focus:border-platinum/50 pl-4 h-10 bg-black/20 text-platinum border-transparent"
                                     placeholder="Type your message..."
                                 />
