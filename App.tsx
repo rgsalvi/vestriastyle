@@ -283,40 +283,57 @@ const App: React.FC = () => {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped));
         setUser(mapped);
         (async () => {
-          // Try cloud profile first
-          const cloudProfile = await loadUserProfile(mapped.id);
-          if (cloudProfile) {
-            if (fbUser.emailVerified && !cloudProfile.isPremium) {
-              try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
-            }
-            // Ensure avatarDataUrl falls back to Firebase Auth photoURL if not present
-            if (!cloudProfile.avatarDataUrl && mapped.picture) {
-              cloudProfile.avatarDataUrl = mapped.picture;
-            }
-            setStyleProfile(cloudProfile);
-            setBodyType(cloudProfile.bodyType || 'None');
-            setShowOnboarding(false);
-            localStorage.setItem(`${STYLE_PROFILE_KEY}-${mapped.id}`, JSON.stringify(cloudProfile));
-          } else {
-            // Fallback to local and decide onboarding
-            const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
-            if (profileRaw) {
-              const localProf = JSON.parse(profileRaw);
-              if (fbUser.emailVerified && !localProf.isPremium) {
-                localProf.isPremium = true;
+          try {
+            // Try cloud profile first
+            const cloudProfile = await loadUserProfile(mapped.id);
+            if (cloudProfile) {
+              if (fbUser.emailVerified && !cloudProfile.isPremium) {
+                try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
               }
-              // If local profile missing avatar, use auth picture
-              if (!localProf.avatarDataUrl && mapped.picture) {
-                localProf.avatarDataUrl = mapped.picture;
+              // Ensure avatarDataUrl falls back to Firebase Auth photoURL if not present
+              if (!cloudProfile.avatarDataUrl && mapped.picture) {
+                cloudProfile.avatarDataUrl = mapped.picture;
               }
-              setStyleProfile(localProf);
-              setBodyType(localProf.bodyType || 'None');
+              setStyleProfile(cloudProfile);
+              setBodyType(cloudProfile.bodyType || 'None');
               setShowOnboarding(false);
-              // lazy migrate to cloud
-              try { await saveUserProfile(mapped.id, localProf); } catch (e) { console.warn('Failed to migrate local profile to cloud', e); }
+              try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mapped.id}`, JSON.stringify(cloudProfile)); } catch {}
             } else {
-              setShowOnboarding(!!fbUser.emailVerified);
+              // Fallback to local and decide onboarding
+              const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
+              if (profileRaw) {
+                const localProf = JSON.parse(profileRaw);
+                if (fbUser.emailVerified && !localProf.isPremium) {
+                  localProf.isPremium = true;
+                }
+                // If local profile missing avatar, use auth picture
+                if (!localProf.avatarDataUrl && mapped.picture) {
+                  localProf.avatarDataUrl = mapped.picture;
+                }
+                setStyleProfile(localProf);
+                setBodyType(localProf.bodyType || 'None');
+                setShowOnboarding(false);
+                // lazy migrate to cloud
+                try { await saveUserProfile(mapped.id, localProf); } catch (e) { console.warn('Failed to migrate local profile to cloud', e); }
+              } else {
+                setShowOnboarding(!!fbUser.emailVerified);
+              }
             }
+          } catch (e) {
+            console.warn('Failed to load profile from cloud, falling back to local', e);
+            try {
+              const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
+              if (profileRaw) {
+                const localProf = JSON.parse(profileRaw);
+                if (fbUser.emailVerified && !localProf.isPremium) localProf.isPremium = true;
+                if (!localProf.avatarDataUrl && mapped.picture) localProf.avatarDataUrl = mapped.picture;
+                setStyleProfile(localProf);
+                setBodyType(localProf.bodyType || 'None');
+                setShowOnboarding(false);
+              } else {
+                setShowOnboarding(!!fbUser.emailVerified);
+              }
+            } catch {}
           }
           // Wardrobe cloud load (non-blocking). If none, keep local.
           try {
@@ -620,29 +637,27 @@ const App: React.FC = () => {
             user={user}
             initialProfile={styleProfile}
             onBack={() => setCurrentPage('main')}
-            onSave={(updatedUser, updatedProfile) => {
-              (async () => {
-                let photoURL = updatedUser.picture;
-                try {
-                  if (updatedUser.picture && updatedUser.picture.startsWith('data:')) {
-                    photoURL = await uploadAvatar(user.id, updatedUser.picture);
-                  }
-                } catch (e) { console.warn('Avatar upload failed', e); }
-                const mergedUser = { ...user, ...updatedUser, picture: photoURL || updatedUser.picture || user.picture } as User;
-                setUser(mergedUser);
-                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser));
-                if (updatedProfile) {
-                  const premiumProfile = { ...updatedProfile, isPremium: true, avatarDataUrl: photoURL || updatedProfile.avatarDataUrl || user.picture };
-                  try { await saveUserProfile(mergedUser.id, premiumProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
-                  setStyleProfile(premiumProfile);
-                  setBodyType(premiumProfile.bodyType || 'None');
-                  localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(premiumProfile));
+            onSave={async (updatedUser, updatedProfile) => {
+              let photoURL = updatedUser.picture;
+              try {
+                if (updatedUser.picture && updatedUser.picture.startsWith('data:')) {
+                  photoURL = await uploadAvatar(user.id, updatedUser.picture);
                 }
-                updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
-                setCurrentPage('main');
-                setProfileSavedBanner('Profile updated');
-                setTimeout(() => setProfileSavedBanner(null), 3000);
-              })();
+              } catch (e) { console.warn('Avatar upload failed', e); }
+              const mergedUser = { ...user, ...updatedUser, picture: photoURL || updatedUser.picture || user.picture } as User;
+              setUser(mergedUser);
+              try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser)); } catch {}
+              if (updatedProfile) {
+                const premiumProfile = { ...updatedProfile, isPremium: true, avatarDataUrl: photoURL || updatedProfile.avatarDataUrl || user.picture };
+                try { await saveUserProfile(mergedUser.id, premiumProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
+                setStyleProfile(premiumProfile);
+                setBodyType(premiumProfile.bodyType || 'None');
+                try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(premiumProfile)); } catch {}
+              }
+              updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
+              setCurrentPage('main');
+              setProfileSavedBanner('Profile updated');
+              setTimeout(() => setProfileSavedBanner(null), 3000);
             }}
           />
         ) : null;

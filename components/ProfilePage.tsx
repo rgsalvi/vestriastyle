@@ -9,7 +9,7 @@ interface ProfilePageProps {
   user: User;
   initialProfile: StyleProfile | null;
   onBack: () => void;
-  onSave: (updatedUser: Partial<User>, updatedProfile: StyleProfile) => void;
+  onSave: (updatedUser: Partial<User>, updatedProfile: StyleProfile) => Promise<void>;
 }
 
 const styleArchetypes = [
@@ -32,6 +32,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
     avatarDataUrl: user.picture,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Keep form state in sync if the caller loads a profile after mount or user changes
   useEffect(() => {
@@ -135,9 +137,34 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
           </div>
         </div>
 
+        {saveError && (
+          <div role="alert" className="mt-6 flex items-start gap-3 p-3 rounded-xl border border-red-400/30 bg-red-900/20 text-red-300">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M10.29 3.86a2 2 0 013.42 0l8.2 14.2A2 2 0 0120.2 21H3.8a2 2 0 01-1.71-2.94l8.2-14.2zM13 16a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v4a1 1 0 102 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div className="text-sm leading-relaxed">{saveError}</div>
+          </div>
+        )}
+
         <div className="mt-8 flex justify-end gap-3">
           <button onClick={onBack} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80 hover:bg-black/20">Cancel</button>
-          <button onClick={() => onSave({ name: name.trim() || user.name, picture: avatar }, profile)} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold hover:opacity-90">Save Changes</button>
+          <button
+            onClick={async () => {
+              setSaveError(null);
+              setSaving(true);
+              try {
+                await onSave({ name: name.trim() || user.name, picture: avatar }, profile);
+              } catch (e) {
+                setSaveError(e instanceof Error ? e.message : 'Failed to save changes.');
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving}
+            className={`px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold ${saving ? 'opacity-60 cursor-not-allowed' : 'hover:opacity-90'}`}
+          >
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
         </div>
 
         <div className="mt-10 border-t border-platinum/20 pt-6">
@@ -157,10 +184,14 @@ const DeleteAccountBlock: React.FC = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [confirmText, setConfirmText] = useState('');
   const [ack, setAck] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const reset = () => { setConfirming(false); setStep(1); setConfirmText(''); setAck(false); };
 
   const doDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
     try {
       const raw = localStorage.getItem('ai-wardrobe-user');
       const current = raw ? JSON.parse(raw) : null;
@@ -168,10 +199,21 @@ const DeleteAccountBlock: React.FC = () => {
       if (uid) {
         try { await deleteAllUserData(uid); } catch (e) { console.warn('Failed to delete Firestore/Storage data', e); }
       }
+      try {
+        await deleteCurrentUser();
+      } catch (e: any) {
+        const msg = (e && e.code) ? String(e.code) : (e instanceof Error ? e.message : 'Failed to delete account.');
+        if (msg.includes('requires-recent-login')) {
+          setDeleteError('For your security, please sign in again and then retry account deletion.');
+        } else {
+          setDeleteError('Could not delete your account. Please try again in a moment.');
+        }
+        return;
+      }
+      try { localStorage.clear(); } catch {}
+      try { window.location.href = '/'; } catch {}
     } finally {
-      await deleteCurrentUser();
-      localStorage.clear();
-      location.href = '/';
+      setDeleting(false);
     }
   };
 
@@ -206,12 +248,20 @@ const DeleteAccountBlock: React.FC = () => {
       )}
       {step === 3 && (
         <div>
+          {deleteError && (
+            <div role="alert" className="mb-3 flex items-start gap-3 p-3 rounded-xl border border-red-400/30 bg-red-900/20 text-red-300">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path fillRule="evenodd" d="M10.29 3.86a2 2 0 013.42 0l8.2 14.2A2 2 0 0120.2 21H3.8a2 2 0 01-1.71-2.94l8.2-14.2zM13 16a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v4a1 1 0 102 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div className="text-sm leading-relaxed">{deleteError}</div>
+            </div>
+          )}
           <label className="inline-flex items-center gap-2 text-sm text-red-200">
             <input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} className="rounded" />
             I acknowledge that this action is permanent and non-reversible.
           </label>
           <div className="mt-3 flex gap-2">
-            <button disabled={!ack} onClick={doDelete} className={`px-3 py-2 rounded-full text-sm font-semibold ${ack ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-900/40 text-red-200 cursor-not-allowed'}`}>Permanently delete my account</button>
+            <button disabled={!ack || deleting} onClick={doDelete} className={`px-3 py-2 rounded-full text-sm font-semibold ${ack && !deleting ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-900/40 text-red-200 cursor-not-allowed'}`}>{deleting ? 'Deleting…' : 'Permanently delete my account'}</button>
             <button onClick={reset} className="px-3 py-2 rounded-full border border-platinum/30 text-platinum/80 hover:bg-black/20 text-sm">Cancel</button>
           </div>
         </div>

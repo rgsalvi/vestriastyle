@@ -5,7 +5,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCdw-72plQ9WDlSBn3c_dQopah6-FLNqAg",
   authDomain: "ai-wardrobe-curator.firebaseapp.com",
   projectId: "ai-wardrobe-curator",
-  storageBucket: "ai-wardrobe-curator.firebasestorage.app",
+  storageBucket: "ai-wardrobe-curator.appspot.com",
   messagingSenderId: "79620949788",
   appId: "1:79620949788:web:b00eaa99abdbd4569b1cd9",
   measurementId: "G-N7K4N9K8V2"
