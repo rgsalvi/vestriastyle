@@ -1,7 +1,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// Optional: import admin for token verification and Firestore checks
-// import { adminDb } from './_firebaseAdmin';
+// Import admin for token verification and Firestore checks
+import { adminAuth, adminDb } from './_firebaseAdmin';
 import twilio from 'twilio';
 
 // Securely access Twilio credentials from environment variables
@@ -94,18 +94,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ success: false, message: 'Missing analysis context or user info.' });
         }
 
-        // Enforce premium entitlement (defense-in-depth)
-        // Expect shape: user: { id: string, ... }, optionally user.isPremium or profile lookup
-        const isPremium = !!(user.isPremium);
+        // Enforce premium entitlement using Firebase Admin token verification and Firestore
+        // Require Authorization: Bearer <Firebase ID token>
+        const authHeader = req.headers.authorization || req.headers.Authorization as string | undefined;
+        const idToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+        if (!idToken) {
+            return res.status(401).json({ success: false, message: 'Missing Authorization token.' });
+        }
+        let uid: string;
+        try {
+            const decoded = await adminAuth.verifyIdToken(idToken);
+            uid = decoded.uid;
+        } catch (e) {
+            return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
+        }
+        // Read premium flag from Firestore profile: users/{uid}/meta/profile
+        const profileSnap = await adminDb.doc(`users/${uid}/meta/profile`).get();
+        const isPremium = profileSnap.exists ? !!profileSnap.data()?.isPremium : false;
         if (!isPremium) {
-            // Future enhancement: verify Firebase ID token and fetch profile from Firestore to confirm
-            // const token = req.headers.authorization?.replace('Bearer ', '');
-            // if (token) {
-            //   const decoded = await adminAuth.verifyIdToken(token);
-            //   const doc = await adminDb.doc(`users/${decoded.uid}/meta/profile`).get();
-            //   const premium = doc.exists && !!doc.data()?.isPremium;
-            //   if (!premium) return res.status(403).json({ success: false, message: 'Premium required.' });
-            // }
             return res.status(403).json({ success: false, message: 'Premium required.' });
         }
 

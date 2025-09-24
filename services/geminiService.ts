@@ -116,9 +116,18 @@ export interface ChatSessionData {
 
 export const initiateChatSession = async (analysisContext: AiResponse, newItemContext: AnalysisItem | null, user: User, isPremium: boolean): Promise<ChatSessionData> => {
     try {
+        let idToken: string | undefined = undefined;
+        try {
+          const { getAuth } = await import('firebase/auth');
+          const auth = getAuth();
+          idToken = await auth.currentUser?.getIdToken();
+        } catch {}
         const response = await fetch('/api/initiate-chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+            },
       body: JSON.stringify({ analysisContext, newItemContext, user: { ...user, isPremium } }),
         });
 
