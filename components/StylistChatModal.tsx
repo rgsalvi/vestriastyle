@@ -520,7 +520,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" role="dialog" aria-modal="true">
-            <div className={`flex flex-col flex-auto h-full max-h-[90vh] w-full max-w-2xl bg-dark-blue/90 rounded-2xl shadow-2xl border border-platinum/20 ${isBioPopoverOpen ? 'overflow-hidden' : ''}`}>
+            <div className={`relative flex flex-col flex-auto h-full max-h-[90vh] w-full max-w-2xl bg-dark-blue/90 rounded-2xl shadow-2xl border border-platinum/20 ${isBioPopoverOpen ? 'overflow-hidden' : ''}`}>
                 <div className="relative flex-shrink-0 flex sm:items-center justify-between py-3 border-b-2 border-platinum/20 px-4">
                     <div className="flex items-center space-x-4">
                         {stylist ? (
@@ -566,28 +566,40 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     </div>
                 </div>
 
-                {/* Compact call controls (no inline video) */}
+                {/* Full video overlay during active call */}
                 {videoRoom && (
-                    <div className="px-4 pt-3">
-                        {videoError && (
-                            <div className="mb-2 text-sm text-red-300 bg-red-900/30 border border-red-400/30 rounded-lg px-3 py-2">
-                                {videoError}
+                    <div className="absolute inset-0 z-30 flex flex-col">
+                        {/* Video area */}
+                        <div className="relative flex-1">
+                            <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                            {/* Top gradient + label */}
+                            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/40 to-transparent" />
+                            <div className="pointer-events-none absolute left-3 top-3 text-xs font-medium text-white/90 bg-black/40 rounded-full px-2 py-1">
+                                You
                             </div>
-                        )}
-                        <div className="flex items-center justify-between bg-black/30 border border-platinum/20 rounded-lg px-3 py-2">
-                            <div className="flex items-center gap-3">
-                                <div className="relative w-32 h-20 bg-black/40 rounded-md overflow-hidden ring-1 ring-platinum/20">
-                                    <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-[10px] px-1 py-0.5 text-platinum/80">You</div>
+                            {/* Error toast inside overlay if any */}
+                            {videoError && (
+                                <div className="absolute left-1/2 -translate-x-1/2 top-4 text-sm text-red-100 bg-red-900/70 border border-red-400/50 rounded-lg px-3 py-2">
+                                    {videoError}
                                 </div>
-                                <div className="text-platinum/80 text-sm">Live call connected</div>
-                            </div>
-                            <div className="flex items-center gap-2">
+                            )}
+                        </div>
+                        {/* Bottom controls bar */}
+                        <div className="bg-black/50 backdrop-blur-md border-t border-platinum/20 p-4">
+                            <div className="flex items-center justify-center gap-4">
                                 <audio ref={remoteAudioRef} autoPlay />
-                                <button onClick={toggleMute} className={`px-3 py-1.5 rounded-full text-sm ${isMuted ? 'bg-red-600 text-white' : 'bg-platinum/20 text-platinum'}`} aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}>
+                                <button
+                                    onClick={toggleMute}
+                                    className={`h-12 w-12 rounded-full flex items-center justify-center ${isMuted ? 'bg-red-600 text-white' : 'bg-white/15 text-white hover:bg-white/25'} transition`}
+                                    aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
+                                >
                                     {isMuted ? <MicOffIcon /> : <MicOnIcon />}
                                 </button>
-                                <button onClick={endVideoCall} className="px-3 py-1.5 rounded-full text-sm bg-red-600 text-white" aria-label="End call">
+                                <button
+                                    onClick={endVideoCall}
+                                    className="h-12 w-12 rounded-full flex items-center justify-center bg-red-600 text-white hover:bg-red-700 transition"
+                                    aria-label="End call"
+                                >
                                     <EndCallIcon />
                                 </button>
                             </div>
