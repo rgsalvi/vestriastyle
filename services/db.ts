@@ -1,6 +1,6 @@
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, deleteDoc, serverTimestamp, query, orderBy, writeBatch } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
-import { app } from './firebase';
+import { app, auth } from './firebase';
 import type { StyleProfile, PersistentWardrobeItem } from '../types';
 
 export const db = getFirestore(app);
@@ -11,11 +11,27 @@ export const profileDocRef = (uid: string) => doc(db, 'users', uid, 'meta', 'pro
 export const wardrobeColRef = (uid: string) => collection(db, 'users', uid, 'wardrobe');
 
 export async function loadUserProfile(uid: string): Promise<StyleProfile | null> {
+  try {
+    const idToken = await auth.currentUser?.getIdToken();
+    if (idToken) {
+      const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${idToken}` } });
+      const data = await res.json();
+      if (res.ok && data?.success) return data.profile as StyleProfile | null;
+    }
+  } catch {}
+  // Fallback to client SDK
   const snap = await getDoc(profileDocRef(uid));
   return snap.exists() ? (snap.data() as StyleProfile) : null;
 }
 
 export async function saveUserProfile(uid: string, profile: Partial<StyleProfile>): Promise<void> {
+  try {
+    const idToken = await auth.currentUser?.getIdToken();
+    if (idToken) {
+      const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ profile }) });
+      if (res.ok) return;
+    }
+  } catch {}
   await setDoc(profileDocRef(uid), { ...profile, updatedAt: serverTimestamp() }, { merge: true });
 }
 
