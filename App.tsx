@@ -13,6 +13,7 @@ import { RefundPolicy } from './components/RefundPolicy';
 import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
+import ProfilePage from './components/ProfilePage';
 import { getStyleAdvice } from './services/geminiService';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut } from './services/firebase';
@@ -231,7 +232,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
   });
 };
 
-type Page = 'main' | 'privacy' | 'terms' | 'refund';
+type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile';
 
 // No global Google object required with Firebase Email/Password
 
@@ -257,7 +258,7 @@ const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<AiResponse | null>(null);
   const [chatNewItem, setChatNewItem] = useState<AnalysisItem | null>(null);
-  const [showEditProfile, setShowEditProfile] = useState(false);
+  // Profile page controlled via currentPage === 'profile'
 
   // Auth and User Data Logic
   useEffect(() => {
@@ -488,6 +489,25 @@ const App: React.FC = () => {
     }
 
     switch (currentPage) {
+      case 'profile':
+        return user ? (
+          <ProfilePage
+            user={user}
+            initialProfile={styleProfile}
+            onBack={() => setCurrentPage('main')}
+            onSave={(updatedUser, updatedProfile) => {
+              const mergedUser = { ...user, ...updatedUser } as User;
+              setUser(mergedUser);
+              localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser));
+              if (updatedProfile) {
+                setStyleProfile(updatedProfile);
+                setBodyType(updatedProfile.bodyType || 'None');
+                localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(updatedProfile));
+              }
+              setCurrentPage('main');
+            }}
+          />
+        ) : null;
       case 'privacy':
         return <PrivacyPolicy onBack={() => setCurrentPage('main')} />;
       case 'terms':
@@ -566,7 +586,7 @@ const App: React.FC = () => {
           onSignIn={() => setShowLogin(true)}
           showWardrobeButton={currentPage === 'main'}
           onWardrobeClick={handleWardrobeClick}
-          onEditProfile={() => setShowEditProfile(true)}
+          onEditProfile={() => setCurrentPage('profile')}
         />
         {renderPage()}
       </div>
@@ -585,19 +605,6 @@ const App: React.FC = () => {
             user={activeUserForChat}
             analysisContext={chatContext}
             newItemContext={chatNewItem}
-        />
-      )}
-      {user && showEditProfile && (
-        <EditProfileModal 
-          user={user}
-          onClose={() => setShowEditProfile(false)}
-          onSave={(updated) => {
-            // Update local user fields (name and picture) and persist
-            const merged = { ...user, ...updated } as User;
-            setUser(merged);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(merged));
-            setShowEditProfile(false);
-          }}
         />
       )}
     </div>
