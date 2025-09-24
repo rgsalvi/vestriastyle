@@ -488,7 +488,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" role="dialog" aria-modal="true">
-            <div className="flex flex-col flex-auto h-full max-h-[90vh] w-full max-w-2xl bg-dark-blue/90 rounded-2xl shadow-2xl border border-platinum/20">
+            <div className={`flex flex-col flex-auto h-full max-h-[90vh] w-full max-w-2xl bg-dark-blue/90 rounded-2xl shadow-2xl border border-platinum/20 ${isBioPopoverOpen ? 'overflow-hidden' : ''}`}>
                 <div className="relative flex-shrink-0 flex sm:items-center justify-between py-3 border-b-2 border-platinum/20 px-4">
                     <div className="flex items-center space-x-4">
                         {stylist ? (
@@ -557,7 +557,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     </div>
                 )}
                 {isBioPopoverOpen && stylist && (
-                    <div className="absolute inset-0 z-40 flex items-center justify-center p-4 sm:p-6">
+                    <div className="absolute inset-0 z-40 flex items-center justify-center p-4 sm:p-6 overscroll-contain">
                         {/* Backdrop */}
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBioPopoverOpen(false)} aria-hidden="true" />
                         {/* Dialog */}
@@ -568,7 +568,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             aria-labelledby="stylist-bio-title"
                             className={`relative w-full max-w-2xl mx-4 transform transition-all duration-300 ease-out ${bioAnimateIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                         >
-                            <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col">
+                            <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col min-h-0">
                                 {/* Close */}
                                 <button
                                     ref={closeBioBtnRef}
@@ -578,7 +578,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 >
                                     <CloseIcon />
                                 </button>
-                                <div className="text-center flex flex-col h-full">
+                                <div className="text-center flex flex-col h-full min-h-0">
                                     {/* Sticky header: name/title */}
                                     <div className="sticky top-0 z-10 px-4 sm:px-12 pt-4 sm:pt-8 pb-2 sm:pb-4 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
                                         <div className="mx-auto max-w-3xl flex items-center gap-3 sm:gap-4 text-left">
@@ -599,7 +599,19 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                         <div className="mx-auto mt-3 sm:mt-4 h-px w-20 sm:w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
                                     </div>
                                     {/* Scrollable body */}
-                                    <div className="mx-auto max-w-3xl text-left flex-1 overflow-y-auto px-6 sm:px-12 py-6 pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent">
+                                    <div className="mx-auto max-w-3xl text-left flex-1 overflow-y-auto overscroll-contain touch-pan-y px-6 sm:px-12 py-6 pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent min-h-0">
+                                        {/* Larger avatar for laptops/desktops */}
+                                        <div className="hidden md:flex items-center justify-center mb-6">
+                                            <div className="w-32 h-32 rounded-full ring-2 ring-platinum/40 shadow-lg overflow-hidden">
+                                                {getStylistAvatar(stylist) ? (
+                                                    <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-platinum/20 flex items-center justify-center text-3xl text-platinum/80 font-semibold">
+                                                        {stylist.name?.charAt(0) || 'S'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                         {/* Bio */}
                                         {/* Bio */}
                                         {stylist.bio && (
