@@ -266,6 +266,15 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         };
     }, [isBioPopoverOpen]);
 
+    // Close bio overlay with Escape key for better UX
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setIsBioPopoverOpen(false);
+        };
+        if (isBioPopoverOpen) document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [isBioPopoverOpen]);
+
     const sendMessage = () => {
         if (input.trim() && conversation) {
             conversation.sendMessage(input);
@@ -492,23 +501,50 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     </div>
                 )}
                 {isBioPopoverOpen && stylist && (
-                    <div ref={popoverRef} className="absolute top-20 left-4 z-20 w-80 bg-[#1F2937] rounded-xl shadow-lg p-4 border border-platinum/20 animate-fade-in text-left">
-                         <button onClick={() => setIsBioPopoverOpen(false)} className="absolute top-2 right-2 text-platinum/60 hover:text-white p-1">
-                            <CloseIcon />
-                        </button>
-                        <div className="flex flex-col items-center">
-                            {getStylistAvatar(stylist) ? (
-                                <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30"/>
-                            ) : (
-                                <div className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30 bg-platinum/20 flex items-center justify-center text-lg text-platinum/80 font-semibold">
-                                    {stylist.name?.charAt(0) || 'S'}
+                    <div className="absolute inset-0 z-40 flex items-center justify-center">
+                        {/* Backdrop */}
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBioPopoverOpen(false)} aria-hidden="true" />
+                        {/* Dialog */}
+                        <div
+                            ref={popoverRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="stylist-bio-title"
+                            className="relative w-full max-w-2xl mx-4"
+                        >
+                            <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl">
+                                {/* Close */}
+                                <button
+                                    onClick={() => setIsBioPopoverOpen(false)}
+                                    className="absolute top-4 right-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/30 text-platinum/80 hover:bg-black/50 hover:text-white transition"
+                                    aria-label="Close stylist bio"
+                                >
+                                    <CloseIcon />
+                                </button>
+                                <div className="px-8 py-10 sm:px-12 sm:py-12 text-center">
+                                    {/* Avatar */}
+                                    <div className="mx-auto mb-6 w-36 h-36 sm:w-40 sm:h-40 rounded-full ring-2 ring-platinum/40 shadow-lg overflow-hidden">
+                                        {getStylistAvatar(stylist) ? (
+                                            <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-platinum/20 flex items-center justify-center text-3xl text-platinum/80 font-semibold">
+                                                {stylist.name?.charAt(0) || 'S'}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {/* Name & Title */}
+                                    <h3 id="stylist-bio-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-platinum">{stylist.name}</h3>
+                                    <div className="mt-1 text-sm sm:text-base tracking-wide uppercase text-platinum/60">{stylist.title}</div>
+                                    {/* Divider */}
+                                    <div className="mx-auto my-6 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
+                                    {/* Bio */}
+                                    <div className="mx-auto max-w-3xl text-left">
+                                        <p className="leading-relaxed text-platinum/80 whitespace-pre-wrap">
+                                            {stylist.bio}
+                                        </p>
+                                    </div>
                                 </div>
-                            )}
-                            <h4 className="text-center font-bold text-lg text-platinum">{stylist.name}</h4>
-                            <p className="text-center text-sm text-platinum/60 mb-4">{stylist.title}</p>
-                        </div>
-                        <div className="max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-dark-blue">
-                           <p className="text-sm text-platinum/80 whitespace-pre-wrap">{stylist.bio}</p>
+                            </div>
                         </div>
                     </div>
                 )}
