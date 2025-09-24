@@ -103,6 +103,9 @@ export interface ChatSessionData {
         title: string;
         avatarUrl: string;
         bio?: string;
+    signatureAesthetic?: string;
+    highlights?: string[];
+    socials?: { [key: string]: string };
     };
     initialImages?: {
     newItem?: { base64: string; mimeType: string };
