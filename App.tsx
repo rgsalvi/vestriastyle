@@ -282,6 +282,10 @@ const App: React.FC = () => {
             if (fbUser.emailVerified && !cloudProfile.isPremium) {
               try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
             }
+            // Ensure avatarDataUrl falls back to Firebase Auth photoURL if not present
+            if (!cloudProfile.avatarDataUrl && mapped.picture) {
+              cloudProfile.avatarDataUrl = mapped.picture;
+            }
             setStyleProfile(cloudProfile);
             setBodyType(cloudProfile.bodyType || 'None');
             setShowOnboarding(false);
@@ -293,6 +297,10 @@ const App: React.FC = () => {
               const localProf = JSON.parse(profileRaw);
               if (fbUser.emailVerified && !localProf.isPremium) {
                 localProf.isPremium = true;
+              }
+              // If local profile missing avatar, use auth picture
+              if (!localProf.avatarDataUrl && mapped.picture) {
+                localProf.avatarDataUrl = mapped.picture;
               }
               setStyleProfile(localProf);
               setBodyType(localProf.bodyType || 'None');
@@ -351,7 +359,7 @@ const App: React.FC = () => {
               photoURL = await uploadAvatar(user.id, profile.avatarDataUrl);
             }
           } catch (e) { console.warn('Avatar upload failed, using data URL fallback', e); }
-          const cloudProfile = { ...profile, isPremium: true };
+          const cloudProfile = { ...profile, isPremium: true, avatarDataUrl: photoURL || profile.avatarDataUrl };
           try { await saveUserProfile(user.id, cloudProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
           localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile));
           setStyleProfile(cloudProfile);
@@ -558,7 +566,7 @@ const App: React.FC = () => {
                 setUser(mergedUser);
                 localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser));
                 if (updatedProfile) {
-                  const premiumProfile = { ...updatedProfile, isPremium: true };
+                  const premiumProfile = { ...updatedProfile, isPremium: true, avatarDataUrl: photoURL || updatedProfile.avatarDataUrl || user.picture };
                   try { await saveUserProfile(mergedUser.id, premiumProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
                   setStyleProfile(premiumProfile);
                   setBodyType(premiumProfile.bodyType || 'None');

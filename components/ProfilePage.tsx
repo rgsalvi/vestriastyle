@@ -22,7 +22,7 @@ const colorPalettes = [
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, onBack, onSave }) => {
   const [name, setName] = useState(user.name);
-  const [avatar, setAvatar] = useState<string>(user.picture);
+  const [avatar, setAvatar] = useState<string>(initialProfile?.avatarDataUrl || user.picture);
   const [profile, setProfile] = useState<StyleProfile>(() => initialProfile || {
     styleArchetypes: [],
     colorPalettes: [],
@@ -32,6 +32,22 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
     avatarDataUrl: user.picture,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep form state in sync if the caller loads a profile after mount or user changes
+  useEffect(() => {
+    if (initialProfile) {
+      setProfile(prev => ({
+        ...prev,
+        ...initialProfile,
+        avatarDataUrl: initialProfile.avatarDataUrl || prev.avatarDataUrl || user.picture,
+      }));
+      setAvatar(initialProfile.avatarDataUrl || user.picture);
+    } else {
+      // If no initial profile yet, ensure name/avatar reflect user
+      setAvatar(user.picture);
+    }
+    setName(user.name);
+  }, [initialProfile, user.name, user.picture]);
 
   const toggleInArray = (list: string[], value: string, limit?: number) => {
     let next = list.includes(value) ? list.filter(v => v !== value) : [...list, value];
