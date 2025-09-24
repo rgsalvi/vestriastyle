@@ -35,6 +35,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Safety: if saving takes too long, reset and show an error to avoid a stuck button
+  useEffect(() => {
+    if (!saving) return;
+    const t = setTimeout(() => {
+      setSaving(false);
+      setSaveError(prev => prev || 'Saving is taking longer than expected. Please try again.');
+    }, 20000);
+    return () => clearTimeout(t);
+  }, [saving]);
+
   // Keep form state in sync if the caller loads a profile after mount or user changes
   useEffect(() => {
     if (initialProfile) {

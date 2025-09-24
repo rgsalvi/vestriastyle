@@ -270,6 +270,14 @@ const App: React.FC = () => {
   // Profile page controlled via currentPage === 'profile'
   const [profileSavedBanner, setProfileSavedBanner] = useState<string | null>(null);
 
+  // Utility: prevent indefinite hangs by timing out slow promises
+  const withTimeout = useCallback(async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+    return await new Promise<T>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(`${label} timed out`)), ms);
+      p.then((v) => { clearTimeout(t); resolve(v); }).catch((e) => { clearTimeout(t); reject(e); });
+    });
+  }, []);
+
   // Auth and User Data Logic
   useEffect(() => {
     const unsub = observeAuth((fbUser) => {
@@ -641,7 +649,7 @@ const App: React.FC = () => {
               let photoURL = updatedUser.picture;
               try {
                 if (updatedUser.picture && updatedUser.picture.startsWith('data:')) {
-                  photoURL = await uploadAvatar(user.id, updatedUser.picture);
+                  photoURL = await withTimeout(uploadAvatar(user.id, updatedUser.picture), 15000, 'Avatar upload');
                 }
               } catch (e) { console.warn('Avatar upload failed', e); }
               const mergedUser = { ...user, ...updatedUser, picture: photoURL || updatedUser.picture || user.picture } as User;
@@ -649,7 +657,7 @@ const App: React.FC = () => {
               try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser)); } catch {}
               if (updatedProfile) {
                 const premiumProfile = { ...updatedProfile, isPremium: true, avatarDataUrl: photoURL || updatedProfile.avatarDataUrl || user.picture };
-                try { await saveUserProfile(mergedUser.id, premiumProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
+                try { await withTimeout(saveUserProfile(mergedUser.id, premiumProfile), 10000, 'Profile save'); } catch (e) { console.warn('Failed to save profile to cloud', e); }
                 setStyleProfile(premiumProfile);
                 setBodyType(premiumProfile.bodyType || 'None');
                 try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(premiumProfile)); } catch {}
