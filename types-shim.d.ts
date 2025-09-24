@@ -32,7 +32,7 @@ declare module 'twilio-video' {
     tracks: Map<string, RemoteTrackPublication>;
     on(event: 'trackSubscribed', listener: (track: RemoteTrack) => void): this;
   }
-  export function createLocalTracks(opts?: { audio?: boolean; video?: boolean }): Promise<LocalTrack[]>;
+  export function createLocalTracks(opts?: { audio?: boolean | any; video?: boolean | any }): Promise<LocalTrack[]>;
   export default class VideoCls {
     static connect(token: string, options: { name: string; tracks: LocalTrack[] }): Promise<Room>;
   }
@@ -54,6 +54,7 @@ declare module '@twilio/conversations' {
     type?: 'text' | 'media';
     media?: { getContentTemporaryUrl(): Promise<string>; contentType?: string };
     attributes?: any;
+    index?: number;
   }
   export interface Conversation {
     sid: string;
@@ -63,6 +64,10 @@ declare module '@twilio/conversations' {
     on(event: 'messageAdded' | 'typingStarted' | 'typingEnded', listener: (...args: any[]) => void): void;
     removeListener(event: 'messageAdded' | 'typingStarted' | 'typingEnded', listener: (...args: any[]) => void): void;
     typing(): void;
+    unreadMessagesCount?: number;
+    lastMessage?: { index?: number; body?: string; type?: 'text'|'media'; dateCreated?: string | number | Date } | null;
+    participants?: Array<{ identity?: string; lastReadMessageIndex?: number }>;
+    setAllMessagesRead?(): Promise<void>;
   }
   export interface Participant { identity?: string }
 }

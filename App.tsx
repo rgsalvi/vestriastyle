@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { lazy, Suspense } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { RecommendationDisplay } from './components/RecommendationDisplay';
 import { BodyTypeSelector } from './components/BodyTypeSelector';

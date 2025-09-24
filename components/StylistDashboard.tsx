@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Client, Conversation, Message, Participant } from '@twilio/conversations';
-import Video, { Room, LocalAudioTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
+import Video, { Room, LocalAudioTrack, LocalVideoTrack, RemoteParticipant, createLocalTracks } from 'twilio-video';
 
 const STYLISTS = [
     { id: 'tanvi_sankhe', name: 'Tanvi Sankhe' },
@@ -36,6 +36,7 @@ interface ProcessedMessage {
     body: string | null;
     dateCreated: Date;
     attributes: any;
+    index?: number;
     media?: {
         url: string;
         contentType: string;
@@ -112,6 +113,7 @@ const processTwilioMessage = async (message: Message): Promise<ProcessedMessage>
         body: message.body ?? null,
         dateCreated: message.dateCreated,
         attributes: (message as any).attributes || {},
+        index: (message as any).index,
         media: media ? { url: media.url, contentType: media.contentType || 'application/octet-stream' } : undefined,
     };
 };
@@ -130,6 +132,7 @@ export const StylistDashboard: React.FC = () => {
     const [videoRoom, setVideoRoom] = useState<Room | null>(null);
     const [isConnectingVideo, setIsConnectingVideo] = useState(false);
     const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
+    const [localVideoTrack, setLocalVideoTrack] = useState<LocalVideoTrack | null>(null);
     const [remoteVideoTrack, setRemoteVideoTrack] = useState<any>(null);
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<any>(null);
     const [isMuted, setIsMuted] = useState(false);
@@ -137,11 +140,16 @@ export const StylistDashboard: React.FC = () => {
     const [bannerMessage, setBannerMessage] = useState<string | null>(null);
     const [bannerType, setBannerType] = useState<'info' | 'error' | 'success'>('info');
     const convHandlersRef = useRef<Map<string, (m: Message) => void>>(new Map());
+    const [mics, setMics] = useState<MediaDeviceInfo[]>([]);
+    const [cams, setCams] = useState<MediaDeviceInfo[]>([]);
+    const [selectedMicId, setSelectedMicId] = useState<string | undefined>(undefined);
+    const [selectedCamId, setSelectedCamId] = useState<string | undefined>(undefined);
     
     const messageEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
+    const localVideoRef = useRef<HTMLVideoElement>(null);
 
     const handleLogin = async (stylistIdentity: string) => {
         try {
@@ -341,7 +349,10 @@ export const StylistDashboard: React.FC = () => {
             const data = await response.json();
             if (!data.success) throw new Error("Failed to get video token.");
             
-            const tracks = await createLocalTracks({ audio: true, video: false });
+            const tracks = await createLocalTracks({
+                audio: selectedMicId ? { deviceId: { exact: selectedMicId } } : true,
+                video: false
+            });
             const audioTrack = tracks.find(t => t.kind === 'audio') as LocalAudioTrack;
             setLocalAudioTrack(audioTrack);
 
@@ -390,6 +401,16 @@ export const StylistDashboard: React.FC = () => {
             }
             setLocalAudioTrack(null);
         }
+        if (localVideoTrack) {
+            try {
+                (videoRoom as any)?.localParticipant?.unpublishTrack?.(localVideoTrack);
+            } catch {}
+            localVideoTrack.stop();
+            if (localVideoRef.current && (localVideoTrack as any).detach) {
+                (localVideoTrack as any).detach(localVideoRef.current);
+            }
+            setLocalVideoTrack(null);
+        }
         setVideoRoom(null);
         setRemoteVideoTrack(null);
         setRemoteAudioTrack(null);
@@ -419,6 +440,70 @@ export const StylistDashboard: React.FC = () => {
             return () => { if (remoteAudioTrack.detach) remoteAudioTrack.detach(); };
         }
     }, [remoteAudioTrack]);
+
+    // Local preview attach
+    useEffect(() => {
+        if (localVideoTrack && localVideoRef.current) {
+            localVideoTrack.attach(localVideoRef.current);
+            return () => { if ((localVideoTrack as any).detach) (localVideoTrack as any).detach(localVideoRef.current!); };
+        }
+    }, [localVideoTrack]);
+
+    // Enumerate devices
+    useEffect(() => {
+        const loadDevices = async () => {
+            try {
+                if (!navigator.mediaDevices?.enumerateDevices) return;
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const micList = devices.filter(d => d.kind === 'audioinput');
+                const camList = devices.filter(d => d.kind === 'videoinput');
+                setMics(micList as MediaDeviceInfo[]);
+                setCams(camList as MediaDeviceInfo[]);
+                if (!selectedMicId && micList[0]) setSelectedMicId(micList[0].deviceId);
+                if (!selectedCamId && camList[0]) setSelectedCamId(camList[0].deviceId);
+            } catch {}
+        };
+        loadDevices();
+        const handler = () => loadDevices();
+        navigator.mediaDevices?.addEventListener?.('devicechange', handler);
+        return () => navigator.mediaDevices?.removeEventListener?.('devicechange', handler);
+    }, [selectedMicId, selectedCamId]);
+
+    const switchMic = async (deviceId: string) => {
+        setSelectedMicId(deviceId);
+        if (!videoRoom) return;
+        try {
+            const [newAudio] = await createLocalTracks({ audio: { deviceId: { exact: deviceId } } });
+            if (localAudioTrack) {
+                try { (videoRoom as any).localParticipant.unpublishTrack(localAudioTrack); } catch {}
+                localAudioTrack.stop();
+            }
+            await (videoRoom as any).localParticipant.publishTrack(newAudio);
+            setLocalAudioTrack(newAudio as LocalAudioTrack);
+        } catch (e) {
+            console.error('Failed to switch microphone', e);
+        }
+    };
+
+    const toggleCamera = async () => {
+        if (!videoRoom) return;
+        if (localVideoTrack) {
+            try { (videoRoom as any).localParticipant.unpublishTrack(localVideoTrack); } catch {}
+            localVideoTrack.stop();
+            setLocalVideoTrack(null);
+            return;
+        }
+        try {
+            const tracks = await createLocalTracks({ video: selectedCamId ? { deviceId: { exact: selectedCamId } } : true });
+            const videoTrack = tracks.find(t => t.kind === 'video') as LocalVideoTrack;
+            if (videoTrack) {
+                await (videoRoom as any).localParticipant.publishTrack(videoTrack);
+                setLocalVideoTrack(videoTrack);
+            }
+        } catch (e) {
+            console.error('Failed to start camera', e);
+        }
+    };
 
     // auto-dismiss non-persistent banners
     useEffect(() => {
@@ -487,17 +572,38 @@ export const StylistDashboard: React.FC = () => {
                         )}
                         {videoRoom && (
                              <div className="relative flex-shrink-0 mb-4 bg-dark-blue rounded-xl p-2 border border-platinum/20">
-                                <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                                     <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                                     <audio ref={remoteAudioRef} autoPlay />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <div className="aspect-video bg-black rounded-lg overflow-hidden md:col-span-2 relative">
+                                        <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                                        <audio ref={remoteAudioRef} autoPlay />
+                                        {!remoteVideoTrack && (
+                                            <div className="absolute inset-0 flex items-center justify-center text-platinum/40 text-sm">Waiting for remote video…</div>
+                                        )}
+                                    </div>
+                                    <div className="aspect-video bg-black/60 rounded-lg overflow-hidden p-1">
+                                        <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-80" />
+                                    </div>
                                 </div>
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center space-x-3 bg-black/50 backdrop-blur-sm p-2 rounded-full">
-                                    <button onClick={toggleMute} className={`p-2 rounded-full transition-colors ${isMuted ? 'bg-red-500 text-white' : 'bg-platinum/20 text-platinum'}`}>
-                                        {isMuted ? <MicOffIcon /> : <MicOnIcon />}
-                                    </button>
-                                    <button onClick={endVideoCall} className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors">
-                                        <EndCallIcon />
-                                    </button>
+                                <div className="mt-2 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-xs text-platinum/60">Mic</label>
+                                        <select value={selectedMicId} onChange={e => switchMic(e.target.value)} className="bg-black/40 border border-platinum/20 text-xs rounded px-2 py-1">
+                                            {mics.map(d => (<option key={d.deviceId} value={d.deviceId}>{d.label || 'Microphone'}</option>))}
+                                        </select>
+                                        <label className="text-xs text-platinum/60 ml-2">Camera</label>
+                                        <select value={selectedCamId} onChange={e => setSelectedCamId(e.target.value)} className="bg-black/40 border border-platinum/20 text-xs rounded px-2 py-1">
+                                            {cams.map(d => (<option key={d.deviceId} value={d.deviceId}>{d.label || 'Camera'}</option>))}
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center space-x-2 bg-black/50 backdrop-blur-sm p-2 rounded-full">
+                                        <button onClick={toggleCamera} className="px-3 py-1 text-xs rounded-full bg-platinum/20 text-platinum hover:bg-platinum/30">{localVideoTrack ? 'Turn Camera Off' : 'Turn Camera On'}</button>
+                                        <button onClick={toggleMute} className={`p-2 rounded-full transition-colors ${isMuted ? 'bg-red-500 text-white' : 'bg-platinum/20 text-platinum'}`}>
+                                            {isMuted ? <MicOffIcon /> : <MicOnIcon />}
+                                        </button>
+                                        <button onClick={endVideoCall} className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors">
+                                            <EndCallIcon />
+                                        </button>
+                                    </div>
                                 </div>
                              </div>
                         )}
@@ -506,6 +612,17 @@ export const StylistDashboard: React.FC = () => {
                                  const prev = messages[idx - 1];
                                  const isNewDay = !prev || (prev && prev.dateCreated.toDateString() !== message.dateCreated.toDateString());
                                  const timeLabel = message.dateCreated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                 const isGroupTop = !prev || prev.author !== message.author;
+                                 const participants = (activeConversation as any)?.participants || [];
+                                 const lastReadIndex = Math.max(
+                                     ...participants
+                                         .filter((p: any) => p.identity !== identity && typeof p.lastReadMessageIndex === 'number')
+                                         .map((p: any) => p.lastReadMessageIndex as number),
+                                     -1
+                                 );
+                                 const statusLabel = (message.author === identity && (message as any).index !== undefined)
+                                     ? ((message as any).index <= lastReadIndex ? 'Read' : 'Sent')
+                                     : undefined;
                                  return (
                                  <div key={message.sid} className="grid grid-cols-12 gap-y-2">
                                      {isNewDay && (
@@ -526,7 +643,10 @@ export const StylistDashboard: React.FC = () => {
                                                      ) : (
                                                         <div className="whitespace-pre-wrap">{message.body}</div>
                                                      )}
-                                                     <div className="mt-1 text-[10px] text-platinum/40 text-right">{timeLabel}</div>
+                                                     <div className="mt-1 text-[10px] text-platinum/40 text-right">
+                                                         {timeLabel}
+                                                         {statusLabel && <span className="ml-2 opacity-70">• {statusLabel}</span>}
+                                                     </div>
                                                  </div>
                                              </div>
                                          </div>
