@@ -15,7 +15,7 @@ const BackArrowIcon: React.FC = () => (
 
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms, onNavigateToPrivacy }) => {
-    const [mode, setMode] = useState<'signin' | 'signup'>('signup');
+    const [mode, setMode] = useState<'signin' | 'signup'>('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');

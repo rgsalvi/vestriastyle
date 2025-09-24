@@ -257,6 +257,13 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   
+  // Pending-action flow: capture user's intended action when login is required and resume post-sign-in
+  type PendingAction =
+    | { type: 'open-chat'; context: AiResponse; newItem: AnalysisItem | null }
+    | { type: 'add-wardrobe-items'; items: WardrobeItem[] }
+    | { type: 'save-unsaved-items' };
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<AiResponse | null>(null);
   const [chatNewItem, setChatNewItem] = useState<AnalysisItem | null>(null);
@@ -338,6 +345,62 @@ const App: React.FC = () => {
     });
     return () => unsub();
   }, []);
+  
+  // When the user signs in successfully, close the login view and try to resume any pending action
+  useEffect(() => {
+    if (user) {
+      if (showLogin) setShowLogin(false);
+    }
+  }, [user, showLogin]);
+
+  const resumePendingAction = useCallback(async () => {
+    if (!user || !pendingAction) return;
+    if (showOnboarding) return; // wait until onboarding is completed to resume
+    const action = pendingAction;
+    switch (action.type) {
+      case 'add-wardrobe-items': {
+        await handleAddItemsToWardrobe(action.items);
+        setPendingAction(null);
+        break;
+      }
+      case 'save-unsaved-items': {
+        // call the same helper to save items from analysis
+        handleSaveUnsavedItems();
+        setPendingAction(null);
+        break;
+      }
+      case 'open-chat': {
+        // respect premium gating on resume
+        if (!styleProfile) {
+          // wait for profile to load before deciding
+          return;
+        }
+        if (!styleProfile.isPremium) {
+          setShowPremiumUpsell(true);
+        } else {
+          setChatContext(action.context);
+          setChatNewItem(action.newItem);
+          setIsChatOpen(true);
+        }
+        setPendingAction(null);
+        break;
+      }
+      default:
+        break;
+    }
+  }, [user, pendingAction, showOnboarding, styleProfile]);
+
+  useEffect(() => {
+    if (user && pendingAction && !showOnboarding) {
+      if (pendingAction.type === 'open-chat' && !styleProfile) {
+        // wait for styleProfile to be available to decide on premium
+        return;
+      }
+      // defer to next tick to allow any profile state to settle
+      const t = setTimeout(() => { resumePendingAction(); }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [user, pendingAction, showOnboarding, resumePendingAction, styleProfile]);
   
   // Firebase auth is observed; LoginPage will handle sign-in/up and verification
   
@@ -421,6 +484,7 @@ const App: React.FC = () => {
 
   const handleAddItemsToWardrobe = async (items: WardrobeItem[]) => {
     if (!user) {
+        setPendingAction({ type: 'add-wardrobe-items', items });
         setShowLogin(true);
         return;
     }
@@ -461,6 +525,7 @@ const App: React.FC = () => {
 
   const handleSaveUnsavedItems = () => {
     if (!user) {
+        setPendingAction({ type: 'save-unsaved-items' });
         setShowLogin(true);
         return;
     }
@@ -517,6 +582,7 @@ const App: React.FC = () => {
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
   const handleOpenChat = (context: AiResponse, newItemForChat: AnalysisItem | null) => {
     if (!user) {
+      setPendingAction({ type: 'open-chat', context, newItem: newItemForChat });
       setShowLogin(true);
       return;
     }
