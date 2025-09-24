@@ -573,29 +573,31 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 <button
                                     ref={closeBioBtnRef}
                                     onClick={closeBio}
-                                    className="absolute top-4 right-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/30 text-platinum/80 hover:bg-black/50 hover:text-white transition"
+                                    className="absolute top-4 right-4 z-20 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/30 text-platinum/80 hover:bg-black/50 hover:text-white transition"
                                     aria-label="Close stylist bio"
                                 >
                                     <CloseIcon />
                                 </button>
-                                <div className="px-6 py-8 sm:px-12 sm:py-12 text-center flex flex-col h-full">
-                                    {/* Avatar */}
-                                    <div className="mx-auto mb-6 w-28 h-28 sm:w-40 sm:h-40 rounded-full ring-2 ring-platinum/40 shadow-lg overflow-hidden">
-                                        {getStylistAvatar(stylist) ? (
-                                            <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-platinum/20 flex items-center justify-center text-3xl text-platinum/80 font-semibold">
-                                                {stylist.name?.charAt(0) || 'S'}
-                                            </div>
-                                        )}
+                                <div className="text-center flex flex-col h-full">
+                                    {/* Sticky header: name/title */}
+                                    <div className="sticky top-0 z-10 px-6 sm:px-12 pt-8 pb-4 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
+                                        <h3 id="stylist-bio-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-platinum">{stylist.name}</h3>
+                                        <div className="mt-1 text-sm sm:text-base tracking-wide uppercase text-platinum/60">{stylist.title}</div>
+                                        <div className="mx-auto mt-4 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
                                     </div>
-                                    {/* Name & Title */}
-                                    <h3 id="stylist-bio-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-platinum">{stylist.name}</h3>
-                                    <div className="mt-1 text-sm sm:text-base tracking-wide uppercase text-platinum/60">{stylist.title}</div>
-                                    {/* Divider */}
-                                    <div className="mx-auto my-6 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
-                                    {/* Scrollable content container to avoid page scroll on long bios */}
-                                    <div className="mx-auto max-w-3xl text-left flex-1 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent">
+                                    {/* Scrollable body */}
+                                    <div className="mx-auto max-w-3xl text-left flex-1 overflow-y-auto px-6 sm:px-12 py-6 pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent">
+                                        {/* Avatar (non-sticky to save header height) */}
+                                        <div className="mx-auto mb-6 w-28 h-28 sm:w-40 sm:h-40 rounded-full ring-2 ring-platinum/40 shadow-lg overflow-hidden">
+                                            {getStylistAvatar(stylist) ? (
+                                                <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full bg-platinum/20 flex items-center justify-center text-3xl text-platinum/80 font-semibold">
+                                                    {stylist.name?.charAt(0) || 'S'}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {/* Bio */}
                                         {/* Bio */}
                                         {stylist.bio && (
                                             <section className="mb-6">
