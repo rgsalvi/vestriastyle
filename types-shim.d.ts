@@ -42,6 +42,8 @@ declare module '@twilio/conversations' {
   export class Client {
     static create(token: string): Promise<Client>;
     getConversationBySid(sid: string): Promise<Conversation>;
+    getSubscribedConversations(): Promise<{ items: Conversation[] }>;
+    on(event: 'conversationJoined', listener: (conversation: Conversation) => void): void;
     shutdown(): void;
   }
   export interface Message {
@@ -50,12 +52,14 @@ declare module '@twilio/conversations' {
     body?: string;
     dateCreated: Date;
     type?: 'text' | 'media';
-    media?: { getContentTemporaryUrl(): Promise<string> };
+    media?: { getContentTemporaryUrl(): Promise<string>; contentType?: string };
+    attributes?: any;
   }
   export interface Conversation {
     sid: string;
     getMessages(): Promise<{ items: Message[] }>;
     sendMessage(body: string | FormData, attributes?: Record<string, any>): Promise<void>;
+    friendlyName?: string;
     on(event: 'messageAdded' | 'typingStarted' | 'typingEnded', listener: (...args: any[]) => void): void;
     removeListener(event: 'messageAdded' | 'typingStarted' | 'typingEnded', listener: (...args: any[]) => void): void;
     typing(): void;

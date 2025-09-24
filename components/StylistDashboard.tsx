@@ -41,13 +41,23 @@ interface ProcessedMessage {
         contentType: string;
     };
 }
-const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin }) => {
+const LoginPage: React.FC<{ onLogin: (identity: string) => Promise<void> }> = ({ onLogin }) => {
     const [selectedStylist, setSelectedStylist] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (selectedStylist) {
-            onLogin(selectedStylist);
+        if (!selectedStylist) return;
+        setError(null);
+        setLoading(true);
+        try {
+            await onLogin(selectedStylist);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Login failed. Please try again.';
+            setError(msg);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -60,19 +70,25 @@ const LoginPage: React.FC<{ onLogin: (identity: string) => void }> = ({ onLogin 
                     <select
                         value={selectedStylist}
                         onChange={(e) => setSelectedStylist(e.target.value)}
-                        className="block w-full text-lg bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3"
+                        className="block w-full text-lg bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3 disabled:opacity-60"
+                        disabled={loading}
                     >
                         <option value="">Select your name</option>
                         {STYLISTS.map(stylist => (
                             <option key={stylist.id} value={stylist.id}>{stylist.name}</option>
                         ))}
                     </select>
+                    {error && (
+                        <div className="text-sm text-red-300 bg-red-900/30 border border-red-500/30 rounded-md px-3 py-2">
+                            {error}
+                        </div>
+                    )}
                     <button
                         type="submit"
-                        disabled={!selectedStylist}
+                        disabled={!selectedStylist || loading}
                         className="w-full bg-platinum text-dark-blue font-bold py-3 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 disabled:bg-platinum/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
                     >
-                        Login
+                        {loading ? 'Logging in…' : 'Login'}
                     </button>
                 </form>
             </div>
@@ -92,11 +108,11 @@ const processTwilioMessage = async (message: Message): Promise<ProcessedMessage>
 
     return {
         sid: message.sid,
-        author: message.author,
-        body: message.body,
+        author: message.author ?? null,
+        body: message.body ?? null,
         dateCreated: message.dateCreated,
-        attributes: message.attributes || {},
-        media,
+        attributes: (message as any).attributes || {},
+        media: media ? { url: media.url, contentType: media.contentType || 'application/octet-stream' } : undefined,
     };
 };
 
@@ -137,9 +153,11 @@ export const StylistDashboard: React.FC = () => {
                 setIdentity(stylistIdentity);
             } else {
                 console.error("Failed to login:", data.message);
+                throw new Error(data.message || 'Failed to login');
             }
         } catch (error) {
             console.error("Login error:", error);
+            throw error;
         }
     };
 
@@ -264,13 +282,13 @@ export const StylistDashboard: React.FC = () => {
             setVideoRoom(room);
 
             room.participants.forEach(participant => {
-                participant.tracks.forEach(publication => {
+                participant.tracks.forEach((publication: any) => {
                     if (publication.track) {
                         if (publication.track.kind === 'video') setRemoteVideoTrack(publication.track);
                         if (publication.track.kind === 'audio') setRemoteAudioTrack(publication.track);
                     }
                 });
-                participant.on('trackSubscribed', track => {
+                participant.on('trackSubscribed', (track: any) => {
                     if (track.kind === 'video') setRemoteVideoTrack(track);
                     if (track.kind === 'audio') setRemoteAudioTrack(track);
                 });
@@ -296,7 +314,9 @@ export const StylistDashboard: React.FC = () => {
         if (videoRoom) videoRoom.disconnect();
         if (localAudioTrack) {
             localAudioTrack.stop();
-            localAudioTrack.detach();
+            if (remoteAudioRef.current && (localAudioTrack as any).detach) {
+                (localAudioTrack as any).detach(remoteAudioRef.current);
+            }
             setLocalAudioTrack(null);
         }
         setVideoRoom(null);
@@ -333,10 +353,13 @@ export const StylistDashboard: React.FC = () => {
     
     return (
         <div className="h-screen w-screen flex antialiased text-platinum bg-dark-blue">
-            <div className="flex flex-col py-8 pl-6 pr-2 w-72 bg-dark-blue flex-shrink-0 border-r border-platinum/20">
+                <div className="flex flex-col py-8 pl-6 pr-2 w-72 bg-dark-blue flex-shrink-0 border-r border-platinum/20">
                  <div className="flex flex-row items-center justify-center h-12 w-full">
                     <div className="font-bold text-2xl tracking-widest">VESTRIA</div>
                  </div>
+                      {identity && (
+                          <div className="mt-4 text-center text-sm text-platinum/70">Logged in as <span className="font-semibold">{identity}</span></div>
+                      )}
                  <div className="flex flex-col mt-8">
                     <div className="flex flex-row items-center justify-between text-xs">
                         <span className="font-bold">Active Conversations</span>
@@ -410,7 +433,7 @@ export const StylistDashboard: React.FC = () => {
                                          <div className="relative mr-3 text-sm bg-[#1F2937] py-2 px-4 shadow rounded-xl">
                                             <div className="flex items-center space-x-1">
                                                 <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-75"></span>
-                                                <span className="w-1.ajs-1.5 bg-platinum/50 rounded-full animate-pulse delay-150"></span>
+                                                <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-150"></span>
                                                 <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-300"></span>
                                             </div>
                                          </div>
