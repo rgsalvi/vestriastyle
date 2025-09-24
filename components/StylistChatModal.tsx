@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import TanviImg from '../tanvi.jpg';
+import MuskaanImg from '../muskaan.jpg';
+import RiddhiImg from '../riddhi.jpg';
 import type { User, AiResponse, ChatMessage, AnalysisItem } from '../types';
 import { initiateChatSession, ChatSessionData } from '../services/geminiService';
 import { Client, Conversation, Message, Participant as TwilioParticipant } from '@twilio/conversations';
@@ -96,7 +99,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
-    const [stylist, setStylist] = useState<{ name: string; title: string; avatarUrl: string; bio?: string } | null>(null);
+    const [stylist, setStylist] = useState<{ id: string; name: string; title: string; avatarUrl: string; bio?: string } | null>(null);
     const [isStylistTyping, setIsStylistTyping] = useState(false);
     const [sessionData, setSessionData] = useState<ChatSessionData | null>(null);
     
@@ -113,6 +116,21 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [videoError, setVideoError] = useState<string | null>(null);
 
     const [isBioPopoverOpen, setIsBioPopoverOpen] = useState(false);
+
+    // Resolve stylist avatar to a bundled image when possible
+    const getStylistAvatar = (stylistObj: { id: string; avatarUrl: string } | null): string => {
+        if (!stylistObj) return '';
+        switch (stylistObj.id) {
+            case 'tanvi_sankhe':
+                return TanviImg;
+            case 'muskaan_datt':
+                return MuskaanImg;
+            case 'riddhi_jogani':
+                return RiddhiImg;
+            default:
+                return stylistObj.avatarUrl || '';
+        }
+    };
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -427,7 +445,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 {stylist && (
                     <div className="relative flex-shrink-0 flex sm:items-center justify-between py-3 border-b-2 border-platinum/20 px-4">
                         <div className="flex items-center space-x-4">
-                            <img src={stylist.avatarUrl} alt={stylist.name} className="w-10 sm:w-12 h-10 sm:h-12 rounded-full" />
+                            <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-10 sm:w-12 h-10 sm:h-12 rounded-full" />
                             <div className="flex flex-col leading-tight">
                                 <div className="text-lg mt-1 flex items-center">
                                     <span className="text-platinum mr-1 font-semibold">{stylist.name}</span>
@@ -484,7 +502,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             <CloseIcon />
                         </button>
                         <div className="flex flex-col items-center">
-                            <img src={stylist.avatarUrl} alt={stylist.name} className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30"/>
+                            <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30"/>
                             <h4 className="text-center font-bold text-lg text-platinum">{stylist.name}</h4>
                             <p className="text-center text-sm text-platinum/60 mb-4">{stylist.title}</p>
                         </div>

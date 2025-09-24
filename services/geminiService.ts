@@ -98,6 +98,7 @@ export interface ChatSessionData {
     token: string;
     conversationSid: string;
     stylist: {
+    id: string;
         name: string;
         title: string;
         avatarUrl: string;
