@@ -40,7 +40,7 @@ const availableStylists = [
         ],
         socials: {
             Instagram: 'https://instagram.com/',
-            LinkedIn: 'https://linkedin.com/'
+            Pinterest: 'https://pinterest.com/'
         }
     },
     { 
@@ -57,7 +57,7 @@ const availableStylists = [
         ],
         socials: {
             Instagram: 'https://instagram.com/',
-            Portfolio: 'https://example.com/'
+            Pinterest: 'https://pinterest.com/'
         }
     },
     { 
@@ -73,7 +73,8 @@ const availableStylists = [
             'Assistant stylist experience across diverse formats'
         ],
         socials: {
-            Instagram: 'https://instagram.com/'
+            Instagram: 'https://instagram.com/',
+            Pinterest: 'https://pinterest.com/'
         }
     },
 ];
