@@ -99,7 +99,16 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
-    const [stylist, setStylist] = useState<{ id: string; name: string; title: string; avatarUrl: string; bio?: string } | null>(null);
+    const [stylist, setStylist] = useState<{
+        id: string;
+        name: string;
+        title: string;
+        avatarUrl: string;
+        bio?: string;
+        signatureAesthetic?: string;
+        highlights?: string[];
+        socials?: { [key: string]: string };
+    } | null>(null);
     const [isStylistTyping, setIsStylistTyping] = useState(false);
     const [sessionData, setSessionData] = useState<ChatSessionData | null>(null);
     
@@ -137,6 +146,9 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     // No inline video elements; audio plays via hidden element
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
+    const infoButtonRef = useRef<HTMLButtonElement>(null);
+    const closeBioBtnRef = useRef<HTMLButtonElement>(null);
+    const [bioAnimateIn, setBioAnimateIn] = useState(false);
     const canceledRef = useRef<boolean>(false);
     const sentInitialRef = useRef<boolean>(false);
 
@@ -255,7 +267,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-                setIsBioPopoverOpen(false);
+                closeBio();
             }
         }
         if (isBioPopoverOpen) {
@@ -269,11 +281,29 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     // Close bio overlay with Escape key for better UX
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setIsBioPopoverOpen(false);
+            if (e.key === 'Escape') closeBio();
         };
         if (isBioPopoverOpen) document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
     }, [isBioPopoverOpen]);
+
+    // Manage entrance animation and focus behavior
+    useEffect(() => {
+        if (isBioPopoverOpen) {
+            // trigger animate-in
+            setTimeout(() => setBioAnimateIn(true), 10);
+            // focus close button for accessibility
+            setTimeout(() => closeBioBtnRef.current?.focus(), 20);
+        } else {
+            setBioAnimateIn(false);
+        }
+    }, [isBioPopoverOpen]);
+
+    const closeBio = () => {
+        setIsBioPopoverOpen(false);
+        // return focus to the info button
+        setTimeout(() => infoButtonRef.current?.focus(), 0);
+    };
 
     const sendMessage = () => {
         if (input.trim() && conversation) {
@@ -455,7 +485,12 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             <div className="text-lg mt-1 flex items-center">
                                 <span className="text-platinum mr-1 font-semibold">{stylist ? stylist.name : 'Connecting to stylist…'}</span>
                                 {stylist && (
-                                    <button onClick={() => setIsBioPopoverOpen((prev: boolean) => !prev)} className="text-platinum/60 hover:text-white p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-platinum" aria-label="Stylist bio">
+                                    <button
+                                        ref={infoButtonRef}
+                                        onClick={() => setIsBioPopoverOpen((prev: boolean) => !prev)}
+                                        className="text-platinum/60 hover:text-white p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-platinum"
+                                        aria-label="Stylist bio"
+                                    >
                                         <InfoIcon />
                                     </button>
                                 )}
@@ -510,12 +545,13 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="stylist-bio-title"
-                            className="relative w-full max-w-2xl mx-4"
+                            className={`relative w-full max-w-2xl mx-4 transform transition-all duration-300 ease-out ${bioAnimateIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                         >
                             <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl">
                                 {/* Close */}
                                 <button
-                                    onClick={() => setIsBioPopoverOpen(false)}
+                                    ref={closeBioBtnRef}
+                                    onClick={closeBio}
                                     className="absolute top-4 right-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/30 text-platinum/80 hover:bg-black/50 hover:text-white transition"
                                     aria-label="Close stylist bio"
                                 >
@@ -537,11 +573,49 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                     <div className="mt-1 text-sm sm:text-base tracking-wide uppercase text-platinum/60">{stylist.title}</div>
                                     {/* Divider */}
                                     <div className="mx-auto my-6 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
-                                    {/* Bio */}
-                                    <div className="mx-auto max-w-3xl text-left">
-                                        <p className="leading-relaxed text-platinum/80 whitespace-pre-wrap">
-                                            {stylist.bio}
-                                        </p>
+                                    {/* Scrollable content container to avoid page scroll on long bios */}
+                                    <div className="mx-auto max-w-3xl text-left max-h-[70vh] overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent">
+                                        {/* Bio */}
+                                        {stylist.bio && (
+                                            <section className="mb-6">
+                                                <p className="leading-relaxed text-platinum/80 whitespace-pre-wrap">{stylist.bio}</p>
+                                            </section>
+                                        )}
+                                        {/* Signature Aesthetic */}
+                                        {stylist.signatureAesthetic && (
+                                            <section className="mb-6">
+                                                <h4 className="text-xs tracking-widest uppercase text-platinum/50 mb-2">Signature Aesthetic</h4>
+                                                <p className="text-platinum/80">{stylist.signatureAesthetic}</p>
+                                            </section>
+                                        )}
+                                        {/* Work Highlights */}
+                                        {!!(stylist.highlights && stylist.highlights.length) && (
+                                            <section className="mb-6">
+                                                <h4 className="text-xs tracking-widest uppercase text-platinum/50 mb-2">Work Highlights</h4>
+                                                <ul className="list-disc list-inside space-y-1 text-platinum/80">
+                                                    {stylist.highlights!.map((h, i) => (<li key={i}>{h}</li>))}
+                                                </ul>
+                                            </section>
+                                        )}
+                                        {/* Socials */}
+                                        {stylist.socials && Object.keys(stylist.socials).length > 0 && (
+                                            <section className="mt-6">
+                                                <h4 className="text-xs tracking-widest uppercase text-platinum/50 mb-2">Follow</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {Object.entries(stylist.socials).map(([network, url]) => (
+                                                        <a
+                                                            key={network}
+                                                            href={url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="px-3 py-1.5 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:border-platinum/60 transition"
+                                                        >
+                                                            {network}
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </section>
+                                        )}
                                     </div>
                                 </div>
                             </div>
