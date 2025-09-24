@@ -580,23 +580,23 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 </button>
                                 <div className="text-center flex flex-col h-full">
                                     {/* Sticky header: name/title */}
-                                    <div className="sticky top-0 z-10 px-6 sm:px-12 pt-8 pb-4 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
-                                        <div className="mx-auto max-w-3xl flex items-center gap-4 text-left">
-                                            <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full ring-1 ring-platinum/40 overflow-hidden">
+                                    <div className="sticky top-0 z-10 px-4 sm:px-12 pt-4 sm:pt-8 pb-2 sm:pb-4 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
+                                        <div className="mx-auto max-w-3xl flex items-center gap-3 sm:gap-4 text-left">
+                                            <div className="flex-shrink-0 w-8 h-8 sm:w-12 sm:h-12 rounded-full ring-1 ring-platinum/40 overflow-hidden">
                                                 {getStylistAvatar(stylist) ? (
                                                     <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full bg-platinum/20 flex items-center justify-center text-base sm:text-lg text-platinum/80 font-semibold">
+                                                    <div className="w-full h-full bg-platinum/20 flex items-center justify-center text-xs sm:text-lg text-platinum/80 font-semibold">
                                                         {stylist.name?.charAt(0) || 'S'}
                                                     </div>
                                                 )}
                                             </div>
                                             <div>
-                                                <h3 id="stylist-bio-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-platinum">{stylist.name}</h3>
-                                                <div className="mt-0.5 text-sm sm:text-base tracking-wide uppercase text-platinum/60">{stylist.title}</div>
+                                                <h3 id="stylist-bio-title" className="text-xl sm:text-3xl font-extrabold tracking-tight text-platinum">{stylist.name}</h3>
+                                                <div className="mt-0.5 text-xs sm:text-base tracking-wide uppercase text-platinum/60">{stylist.title}</div>
                                             </div>
                                         </div>
-                                        <div className="mx-auto mt-4 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
+                                        <div className="mx-auto mt-3 sm:mt-4 h-px w-20 sm:w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
                                     </div>
                                     {/* Scrollable body */}
                                     <div className="mx-auto max-w-3xl text-left flex-1 overflow-y-auto px-6 sm:px-12 py-6 pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent">
