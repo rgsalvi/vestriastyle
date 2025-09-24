@@ -80,8 +80,11 @@ const LoginPage: React.FC<{ onLogin: (identity: string) => Promise<void> }> = ({
                         ))}
                     </select>
                     {error && (
-                        <div className="text-sm text-red-300 bg-red-900/30 border border-red-500/30 rounded-md px-3 py-2">
-                            {error}
+                        <div role="alert" className="mt-2 flex items-start gap-2 p-3 rounded-xl border border-red-400/30 bg-red-900/20 text-red-300 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path fillRule="evenodd" d="M10.29 3.86a2 2 0 013.42 0l8.2 14.2A2 2 0 0120.2 21H3.8a2 2 0 01-1.71-2.94l8.2-14.2zM13 16a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v4a1 1 0 102 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <div className="leading-relaxed">{error}</div>
                         </div>
                     )}
                     <button
@@ -518,17 +521,22 @@ export const StylistDashboard: React.FC = () => {
                     <div className="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-black/20 h-full p-4">
                         {(videoCallRequestSid === activeConversation.sid && !videoRoom) && (
                             <div className="sticky top-0 z-10 mb-3" role="status" aria-live="polite">
-                                <div className="flex items-center justify-between bg-green-900/40 text-green-200 border border-green-600/30 rounded-lg px-3 py-2">
-                                    <div className="text-sm font-medium">User requested a video call</div>
-                                    <button onClick={joinVideoCall} disabled={isConnectingVideo} className="text-xs font-semibold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-full" aria-label="Join video call from banner">
+                                <div className="flex items-center justify-between rounded-xl border border-platinum/30 bg-platinum/5 text-platinum px-3 py-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-platinum/80" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414l2.293 2.293 6.543-6.543a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                        User requested a video call
+                                    </div>
+                                    <button onClick={joinVideoCall} disabled={isConnectingVideo} className="text-xs font-semibold bg-platinum text-dark-blue px-3 py-1.5 rounded-full hover:opacity-90 disabled:opacity-50" aria-label="Join video call from banner">
                                         {isConnectingVideo ? 'Joining…' : 'Join Now'}
                                     </button>
                                 </div>
                             </div>
                         )}
                         {bannerMessage && (
-                            <div className={`sticky top-0 z-10 ${videoCallRequestSid === activeConversation.sid && !videoRoom ? '' : 'mb-3'}`}>
-                                <div className={`px-3 py-2 rounded-lg text-sm border ${bannerType === 'error' ? 'bg-red-900/30 text-red-200 border-red-500/30' : bannerType === 'success' ? 'bg-emerald-900/30 text-emerald-200 border-emerald-500/30' : 'bg-black/30 text-platinum/70 border-platinum/20'}`}>{bannerMessage}</div>
+                            <div className={`sticky top-0 z-10 ${videoCallRequestSid === activeConversation.sid && !videoRoom ? '' : 'mb-3'}`} role={bannerType === 'error' ? 'alert' : 'status'} aria-live="polite">
+                                <div className={`px-3 py-2 rounded-xl text-sm border ${bannerType === 'error' ? 'bg-red-900/20 text-red-300 border-red-400/30' : bannerType === 'success' ? 'bg-platinum/5 text-platinum border-platinum/30' : 'bg-black/30 text-platinum/70 border-platinum/20'}`}>{bannerMessage}</div>
                             </div>
                         )}
                         {videoRoom && (
