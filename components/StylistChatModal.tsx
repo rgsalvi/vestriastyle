@@ -188,7 +188,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             let cancelled = false;
             try {
                 canceledRef.current = false;
-                const data = await initiateChatSession(analysisContext, newItemContext, user);
+                const data = await initiateChatSession(analysisContext, newItemContext, user, true);
                 if (cancelled || canceledRef.current) return;
                 setSessionData(data);
                 const twilioClient = await Client.create(data.token);

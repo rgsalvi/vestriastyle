@@ -15,6 +15,7 @@ import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
 import ProfilePage from './components/ProfilePage';
 import { getStyleAdvice } from './services/geminiService';
+import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser } from './services/firebase';
 import { loadUserProfile, saveUserProfile, uploadAvatar, listWardrobe } from './services/db';
@@ -672,21 +673,7 @@ const App: React.FC = () => {
             newItemContext={chatNewItem}
         />
       )}
-      {showPremiumUpsell && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Minimal inline upsell: reuse StyleRecipes modal behavior if needed */}
-          {/* For now, a simple banner directing to Premium section */}
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPremiumUpsell(false)} />
-          <div className="relative bg-[#1F2937] border border-platinum/20 rounded-2xl p-6 w-[90%] max-w-md text-center">
-            <h3 className="text-platinum text-xl font-semibold">Stylist Chat is a Premium feature</h3>
-            <p className="text-platinum/70 mt-2">Upgrade to unlock live 1‑on‑1 chat with professional stylists.</p>
-            <div className="mt-4 flex gap-2 justify-center">
-              <button className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80" onClick={() => setShowPremiumUpsell(false)}>Not now</button>
-              <button className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold" onClick={() => setShowPremiumUpsell(false)}>Upgrade</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showPremiumUpsell && <PremiumUpsellModal onClose={() => setShowPremiumUpsell(false)} />}
     </div>
   );
 };

@@ -67,6 +67,7 @@ export const StyleRecipes: React.FC<{ isLoggedIn?: boolean; onRequireLogin?: () 
                         <h3 className="text-xl font-semibold text-platinum">Ready to bring these recipes to life?</h3>
                         <p className="mt-2 text-platinum/60">Chat live with a professional stylist to see how you can adapt these to your unique wardrobe and body type.</p>
                         <button
+                            title={!isLoggedIn ? 'Sign in to chat with a stylist' : 'Premium feature'}
                             onClick={() => {
                                 if (!isLoggedIn) {
                                     onRequireLogin?.();

@@ -196,7 +196,11 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                     <WandIcon />
                     Refine This Look
                  </button>
-                      <button onClick={handleChatClick} className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200">
+                          <button
+                              onClick={handleChatClick}
+                              title={!user ? 'Sign in to chat with a stylist' : 'Premium feature'}
+                              className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200"
+                          >
                           <ChatIcon />
                           {user ? 'Chat with a Stylist' : 'Sign in to chat'}
                           <span className="ml-1.5 inline-block bg-platinum/20 text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">PRO</span>

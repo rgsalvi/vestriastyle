@@ -1,5 +1,7 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Optional: import admin for token verification and Firestore checks
+// import { adminDb } from './_firebaseAdmin';
 import twilio from 'twilio';
 
 // Securely access Twilio credentials from environment variables
@@ -90,6 +92,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { analysisContext, newItemContext, user } = req.body;
         if (!analysisContext || !user) {
             return res.status(400).json({ success: false, message: 'Missing analysis context or user info.' });
+        }
+
+        // Enforce premium entitlement (defense-in-depth)
+        // Expect shape: user: { id: string, ... }, optionally user.isPremium or profile lookup
+        const isPremium = !!(user.isPremium);
+        if (!isPremium) {
+            // Future enhancement: verify Firebase ID token and fetch profile from Firestore to confirm
+            // const token = req.headers.authorization?.replace('Bearer ', '');
+            // if (token) {
+            //   const decoded = await adminAuth.verifyIdToken(token);
+            //   const doc = await adminDb.doc(`users/${decoded.uid}/meta/profile`).get();
+            //   const premium = doc.exists && !!doc.data()?.isPremium;
+            //   if (!premium) return res.status(403).json({ success: false, message: 'Premium required.' });
+            // }
+            return res.status(403).json({ success: false, message: 'Premium required.' });
         }
 
         // Randomly assign one stylist for a 1-on-1 chat
