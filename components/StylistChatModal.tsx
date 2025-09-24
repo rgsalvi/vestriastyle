@@ -180,7 +180,8 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     // Initialize chat session when modal opens
     useEffect(() => {
         const initChat = async () => {
-            if (!isOpen || !user || !analysisContext) return;
+            if (!isOpen || !analysisContext) return;
+            if (!user) { onClose(); return; }
             if (initializedRef.current) return; // prevent duplicate inits
             initializedRef.current = true;
             setStatus('connecting');

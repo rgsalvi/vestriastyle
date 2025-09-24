@@ -56,6 +56,7 @@ export interface StyleProfile {
   favoriteBrands: string;
   bodyType: BodyType;
   avatarDataUrl?: string;
+  isPremium?: boolean;
 }
 
 export interface ChatMessage {

@@ -10,6 +10,7 @@ interface RecommendationDisplayProps {
   user: User | null;
   onOpenChat: (context: AiResponse, newItem: AnalysisItem | null) => void;
   newItem: AnalysisItem | null;
+    isPremium?: boolean;
 }
 
 const VestriaSymbol: React.FC<{ className?: string }> = ({ className }) => (
@@ -91,9 +92,10 @@ interface OutfitCarouselProps {
     onImageUpdate: (index: number, newImage: string) => void;
     user: User | null;
     onOpenChat: () => void;
+    isPremium?: boolean;
 }
 
-const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImageUpdate, user, onOpenChat }) => {
+const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImageUpdate, user, onOpenChat, isPremium }) => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [editText, setEditText] = useState('');
@@ -189,15 +191,16 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
                  </div>
               </div>
           ) : (
-             <div className="grid grid-cols-2 gap-3">
+                 <div className="grid grid-cols-2 gap-3">
                  <button onClick={handleRefineClick} className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200">
                     <WandIcon />
                     Refine This Look
                  </button>
-                 <button onClick={handleChatClick} className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200">
-                    <ChatIcon />
-                    Chat with a Stylist
-                 </button>
+                      <button onClick={handleChatClick} className="flex items-center justify-center text-sm font-semibold py-2 px-4 rounded-full bg-platinum/10 hover:bg-platinum/20 text-platinum ring-1 ring-inset ring-platinum/30 transition-colors duration-200">
+                          <ChatIcon />
+                          {user ? 'Chat with a Stylist' : 'Sign in to chat'}
+                          <span className="ml-1.5 inline-block bg-platinum/20 text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">PRO</span>
+                      </button>
              </div>
           )}
       </div>
@@ -205,7 +208,7 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
     );
 };
 
-export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems, user, onOpenChat, newItem }) => {
+export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ recommendation, isLoading, unsavedItems, onSaveUnsavedItems, user, onOpenChat, newItem, isPremium }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [updatedImages, setUpdatedImages] = useState<string[]>([]);
     
@@ -254,6 +257,7 @@ export const RecommendationDisplay: React.FC<RecommendationDisplayProps> = ({ re
                             images={updatedImages}
                             onImageUpdate={handleImageUpdate}
                             user={user}
+                            isPremium={isPremium}
                             onOpenChat={() => onOpenChat(recommendation, newItem)}
                         />
                     )}

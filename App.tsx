@@ -250,7 +250,7 @@ const App: React.FC = () => {
   const [unsavedItemsFromAnalysis, setUnsavedItemsFromAnalysis] = useState<AnalysisItem[]>([]);
   
   const [user, setUser] = useState<User | null>(null);
-  const [guestUser, setGuestUser] = useState<User | null>(null);
+  // No more guest chat users; chat is premium-only
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
@@ -499,16 +499,16 @@ const App: React.FC = () => {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
   
+  const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
   const handleOpenChat = (context: AiResponse, newItemForChat: AnalysisItem | null) => {
     if (!user) {
-        const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        const newGuestUser: User = {
-            id: guestId,
-            name: 'Guest User',
-            email: `${guestId}@vestria.style`,
-            picture: `https://picsum.photos/seed/${guestId}/100/100`,
-        };
-        setGuestUser(newGuestUser);
+      setShowLogin(true);
+      return;
+    }
+    // Require premium for stylist chat
+    if (!styleProfile?.isPremium) {
+      setShowPremiumUpsell(true);
+      return;
     }
     setChatContext(context);
     setChatNewItem(newItemForChat);
@@ -613,6 +613,7 @@ const App: React.FC = () => {
                       user={user}
                       onOpenChat={handleOpenChat}
                       newItem={newItem}
+                      isPremium={!!styleProfile?.isPremium}
                     />
                   </div>
                 </div>
@@ -625,13 +626,13 @@ const App: React.FC = () => {
               onSaveItem={handleSaveWardrobeItem}
               onDeleteItem={handleDeleteWardrobeItem}
             />
-            <StyleRecipes />
+            <StyleRecipes isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
           </>
         );
     }
   };
 
-  const activeUserForChat = user || guestUser;
+  const activeUserForChat = user; // chat requires authenticated user now
 
   return (
     <div className="min-h-screen bg-dark-blue flex flex-col">
@@ -665,12 +666,26 @@ const App: React.FC = () => {
             isOpen={isChatOpen}
             onClose={() => {
                 setIsChatOpen(false);
-                setGuestUser(null);
             }}
             user={activeUserForChat}
             analysisContext={chatContext}
             newItemContext={chatNewItem}
         />
+      )}
+      {showPremiumUpsell && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Minimal inline upsell: reuse StyleRecipes modal behavior if needed */}
+          {/* For now, a simple banner directing to Premium section */}
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowPremiumUpsell(false)} />
+          <div className="relative bg-[#1F2937] border border-platinum/20 rounded-2xl p-6 w-[90%] max-w-md text-center">
+            <h3 className="text-platinum text-xl font-semibold">Stylist Chat is a Premium feature</h3>
+            <p className="text-platinum/70 mt-2">Upgrade to unlock live 1‑on‑1 chat with professional stylists.</p>
+            <div className="mt-4 flex gap-2 justify-center">
+              <button className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80" onClick={() => setShowPremiumUpsell(false)}>Not now</button>
+              <button className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold" onClick={() => setShowPremiumUpsell(false)}>Upgrade</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

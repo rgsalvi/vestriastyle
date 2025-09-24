@@ -51,7 +51,7 @@ const ChatIcon: React.FC = () => (
 );
 
 
-export const StyleRecipes: React.FC = () => {
+export const StyleRecipes: React.FC<{ isLoggedIn?: boolean; onRequireLogin?: () => void }> = ({ isLoggedIn = false, onRequireLogin }) => {
     const [isUpsellModalOpen, setIsUpsellModalOpen] = useState(false);
 
     return (
@@ -67,7 +67,13 @@ export const StyleRecipes: React.FC = () => {
                         <h3 className="text-xl font-semibold text-platinum">Ready to bring these recipes to life?</h3>
                         <p className="mt-2 text-platinum/60">Chat live with a professional stylist to see how you can adapt these to your unique wardrobe and body type.</p>
                         <button
-                            onClick={() => setIsUpsellModalOpen(true)}
+                            onClick={() => {
+                                if (!isLoggedIn) {
+                                    onRequireLogin?.();
+                                    return;
+                                }
+                                setIsUpsellModalOpen(true);
+                            }}
                             className="mt-4 inline-flex items-center justify-center text-sm font-semibold py-2 px-5 rounded-full bg-platinum hover:bg-platinum/90 text-dark-blue transition-colors duration-200"
                         >
                             <ChatIcon />
