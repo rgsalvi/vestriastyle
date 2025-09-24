@@ -557,7 +557,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     </div>
                 )}
                 {isBioPopoverOpen && stylist && (
-                    <div className="absolute inset-0 z-40 flex items-center justify-center">
+                    <div className="absolute inset-0 z-40 flex items-center justify-center p-4 sm:p-6">
                         {/* Backdrop */}
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsBioPopoverOpen(false)} aria-hidden="true" />
                         {/* Dialog */}
@@ -568,7 +568,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             aria-labelledby="stylist-bio-title"
                             className={`relative w-full max-w-2xl mx-4 transform transition-all duration-300 ease-out ${bioAnimateIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                         >
-                            <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl">
+                            <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col">
                                 {/* Close */}
                                 <button
                                     ref={closeBioBtnRef}
@@ -578,9 +578,9 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                 >
                                     <CloseIcon />
                                 </button>
-                                <div className="px-8 py-10 sm:px-12 sm:py-12 text-center">
+                                <div className="px-6 py-8 sm:px-12 sm:py-12 text-center flex flex-col h-full">
                                     {/* Avatar */}
-                                    <div className="mx-auto mb-6 w-36 h-36 sm:w-40 sm:h-40 rounded-full ring-2 ring-platinum/40 shadow-lg overflow-hidden">
+                                    <div className="mx-auto mb-6 w-28 h-28 sm:w-40 sm:h-40 rounded-full ring-2 ring-platinum/40 shadow-lg overflow-hidden">
                                         {getStylistAvatar(stylist) ? (
                                             <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-full h-full object-cover" />
                                         ) : (
@@ -595,7 +595,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                     {/* Divider */}
                                     <div className="mx-auto my-6 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
                                     {/* Scrollable content container to avoid page scroll on long bios */}
-                                    <div className="mx-auto max-w-3xl text-left max-h-[70vh] overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent">
+                                    <div className="mx-auto max-w-3xl text-left flex-1 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-platinum/40 scrollbar-track-transparent">
                                         {/* Bio */}
                                         {stylist.bio && (
                                             <section className="mb-6">
