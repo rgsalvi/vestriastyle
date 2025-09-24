@@ -30,61 +30,60 @@ interface HeaderProps {
 }
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
-    <svg
-        viewBox="0 0 400 280"
-        xmlns="http://www.w3.org/2000/svg"
-        className={className}
-        aria-label="Vestria Style Logo"
-    >
-        <g fill="#C2BEBA">
-            {/* Symbol */}
-            <g transform="translate(150 0) scale(1)">
-                <g stroke="#C2BEBA" strokeWidth="8" strokeLinecap="round">
-                    <circle cx="20" cy="20" r="8" stroke="none"/>
-                    <circle cx="50" cy="20" r="8" stroke="none"/>
-                    <circle cx="80" cy="20" r="8" stroke="none"/>
-                    <circle cx="20" cy="50" r="8" stroke="none"/>
-                    <circle cx="50" cy="50" r="8" stroke="none"/>
-                    <circle cx="80" cy="50" r="8" stroke="none"/>
-                    <circle cx="20" cy="80" r="8" stroke="none"/>
-                    <circle cx="50" cy="80" r="8" stroke="none"/>
-                    <circle cx="80" cy="80" r="8" stroke="none"/>
-                    <line x1="80" y1="20" x2="20" y2="80"/>
-                    <line x1="20" y1="20" x2="42" y2="42"/>
-                    <line x1="58" y1="58" x2="80" y2="80"/>
-                </g>
-            </g>
-            {/* VESTRIA */}
-            <text
-                x="50%"
-                y="185"
-                dominantBaseline="middle"
-                textAnchor="middle"
-                fill="#C2BEBA"
-                fontSize="80"
-                fontFamily="Inter, sans-serif"
-                fontWeight="600"
-                letterSpacing="0.1em"
-                stroke="none"
-            >
-                VESTRIA
-            </text>
-            {/* STYLE */}
-            <text
-                x="50%"
-                y="245"
-                dominantBaseline="middle"
-                textAnchor="middle"
-                fill="#C2BEBA"
-                fontSize="36"
-                fontFamily="Space Grotesk, monospace"
-                letterSpacing="0.2em"
-                stroke="none"
-            >
-                STYLE
-            </text>
+  <svg
+    viewBox="0 0 400 280"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    aria-label="Vestria Style Logo"
+  >
+    <g fill="#C2BEBA">
+      {/* Symbol */}
+      <g transform="translate(150 0) scale(1)">
+        <g stroke="#C2BEBA" strokeWidth="8" strokeLinecap="round">
+          <circle cx="20" cy="20" r="8" stroke="none" />
+          <circle cx="50" cy="20" r="8" stroke="none" />
+          <circle cx="80" cy="20" r="8" stroke="none" />
+          <circle cx="20" cy="50" r="8" stroke="none" />
+          <circle cx="50" cy="50" r="8" stroke="none" />
+          <circle cx="80" cy="50" r="8" stroke="none" />
+          <circle cx="20" cy="80" r="8" stroke="none" />
+          <circle cx="50" cy="80" r="8" stroke="none" />
+          <circle cx="80" cy="80" r="8" stroke="none" />
+          <line x1="80" y1="20" x2="20" y2="80" />
+          <line x1="20" y1="20" x2="42" y2="42" />
+          <line x1="58" y1="58" x2="80" y2="80" />
         </g>
-    </svg>
+      </g>
+      {/* VESTRIA */}
+      <text
+        x="50%"
+        y="185"
+        dominantBaseline="middle"
+        textAnchor="middle"
+        fill="#C2BEBA"
+        fontSize="80"
+        fontFamily="Inter, sans-serif"
+        fontWeight="600"
+        stroke="none"
+      >
+        VESTRIA
+      </text>
+      {/* STYLE */}
+      <text
+        x="50%"
+        y="245"
+        dominantBaseline="middle"
+        textAnchor="middle"
+        fill="#C2BEBA"
+        fontSize="36"
+        fontFamily="Space Grotesk, monospace"
+        letterSpacing="0.2em"
+        stroke="none"
+      >
+        STYLE
+      </text>
+    </g>
+  </svg>
 );
 
 const EditProfileModal: React.FC<{
@@ -292,6 +291,8 @@ const App: React.FC = () => {
         setUser(mapped);
         (async () => {
           try {
+            // Ensure a minimal user doc exists immediately (creates users/{uid} with updatedAt)
+            try { await saveUserProfile(mapped.id, {}); } catch (e) { console.warn('ensure user doc exists failed (non-fatal)', e); }
             // Try cloud profile first
             const cloudProfile = await loadUserProfile(mapped.id);
             if (cloudProfile) {
@@ -324,7 +325,8 @@ const App: React.FC = () => {
                 // lazy migrate to cloud
                 try { await saveUserProfile(mapped.id, localProf); } catch (e) { console.warn('Failed to migrate local profile to cloud', e); }
               } else {
-                setShowOnboarding(!!fbUser.emailVerified);
+                // No profile anywhere: start onboarding regardless of email verification
+                setShowOnboarding(true);
               }
             }
           } catch (e) {
@@ -339,7 +341,8 @@ const App: React.FC = () => {
                 setBodyType(localProf.bodyType || 'None');
                 setShowOnboarding(false);
               } else {
-                setShowOnboarding(!!fbUser.emailVerified);
+                // Could not load any profile: show onboarding
+                setShowOnboarding(true);
               }
             } catch {}
           }
@@ -447,7 +450,8 @@ const App: React.FC = () => {
               photoURL = await uploadAvatar(user.id, profile.avatarDataUrl);
             }
           } catch (e) { console.warn('Avatar upload failed, using data URL fallback', e); }
-          const cloudProfile = { ...profile, isPremium: true, avatarDataUrl: photoURL || profile.avatarDataUrl };
+          // Do not force premium here; server will upgrade verified users as needed
+          const cloudProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl };
           try { await saveUserProfile(user.id, cloudProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
           localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile));
           setStyleProfile(cloudProfile);
@@ -656,11 +660,11 @@ const App: React.FC = () => {
               setUser(mergedUser);
               try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser)); } catch {}
               if (updatedProfile) {
-                const premiumProfile = { ...updatedProfile, isPremium: true, avatarDataUrl: photoURL || updatedProfile.avatarDataUrl || user.picture };
-                try { await withTimeout(saveUserProfile(mergedUser.id, premiumProfile), 10000, 'Profile save'); } catch (e) { console.warn('Failed to save profile to cloud', e); }
-                setStyleProfile(premiumProfile);
-                setBodyType(premiumProfile.bodyType || 'None');
-                try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(premiumProfile)); } catch {}
+                const updatedCloudProfile = { ...updatedProfile, avatarDataUrl: photoURL || updatedProfile.avatarDataUrl || user.picture };
+                try { await withTimeout(saveUserProfile(mergedUser.id, updatedCloudProfile), 10000, 'Profile save'); } catch (e) { console.warn('Failed to save profile to cloud', e); }
+                setStyleProfile(updatedCloudProfile);
+                setBodyType(updatedCloudProfile.bodyType || 'None');
+                try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(updatedCloudProfile)); } catch {}
               }
               updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
               setCurrentPage('main');
