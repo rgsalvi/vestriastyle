@@ -6,7 +6,8 @@ import twilio from 'twilio';
 const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
 const twilioApiKey = process.env.TWILIO_API_KEY_SID;
 const twilioApiSecret = process.env.TWILIO_API_KEY_SECRET;
-const twilioConversationServiceSid = process.env.TWILIO_CONVERSATION_SERVICE_SID;
+// Accept both singular and plural env var names for Conversations Service SID
+const twilioConversationServiceSid = process.env.TWILIO_CONVERSATION_SERVICE_SID || process.env.TWILIO_CONVERSATIONS_SERVICE_SID;
 
 // Validate that all required environment variables are set
 if (!twilioAccountSid || !twilioApiKey || !twilioApiSecret || !twilioConversationServiceSid) {
@@ -154,6 +155,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error) {
         console.error("Error in initiate-chat API:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        return res.status(500).json({ success: false, message: 'Failed to initiate chat session.', error: errorMessage });
+        // Bubble Twilio REST error codes where available to help diagnose env or identity issues
+        const detailed = (error as any)?.moreInfo || (error as any)?.code || undefined;
+        return res.status(500).json({ success: false, message: 'Failed to initiate chat session.', error: errorMessage, details: detailed });
     }
 }

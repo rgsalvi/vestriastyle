@@ -107,6 +107,7 @@ const processTwilioMessage = async (message: Message, currentUser: User): Promis
 
 export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
     const [status, setStatus] = useState<'connecting' | 'connected' | 'error' | 'idle'>('idle');
+    const [reloadCounter, setReloadCounter] = useState<number>(0);
     const [client, setClient] = useState<Client | null>(null);
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -136,6 +137,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [videoError, setVideoError] = useState<string | null>(null);
 
     const [isBioPopoverOpen, setIsBioPopoverOpen] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // Resolve stylist avatar to a bundled image when possible
     const getStylistAvatar = (stylistObj: { id: string; avatarUrl: string } | null): string => {
@@ -197,13 +199,16 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 if (!cancelled && !canceledRef.current) setStatus('connected');
             } catch (error) {
                 console.error("Chat initialization failed:", error);
-                if (!cancelled && !canceledRef.current) setStatus('error');
+                if (!cancelled && !canceledRef.current) {
+                    setErrorMsg(error instanceof Error ? error.message : String(error));
+                    setStatus('error');
+                }
             }
             return () => { cancelled = true; };
         };
         initChat();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, user, analysisContext, newItemContext]);
+    }, [isOpen, user, analysisContext, newItemContext, reloadCounter]);
 
     // Teardown when modal closes
     useEffect(() => {
@@ -215,6 +220,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             setMessages([]);
             setStatus('idle');
             setSessionData(null);
+            setErrorMsg(null);
             initializedRef.current = false;
             // Ensure we end any ongoing video call on teardown
             endVideoCall();
@@ -703,7 +709,25 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
 
                 <div className="flex flex-col h-full overflow-x-hidden overflow-y-auto p-4 space-y-4">
                     {status === 'connecting' && <div className="m-auto flex flex-col items-center"><Spinner /><p className="mt-2 text-platinum/70">Connecting to stylist...</p></div>}
-                    {status === 'error' && <div className="m-auto text-center"><p className="text-red-400 font-semibold">Connection Error</p><p className="text-platinum/70">Could not connect to the chat service. Please try again later.</p></div>}
+                    {status === 'error' && (
+                        <div className="m-auto text-center space-y-3">
+                            <div>
+                                <p className="text-red-400 font-semibold">Connection Error</p>
+                                <p className="text-platinum/70">Could not connect to the chat service. Please try again later.</p>
+                                {errorMsg && (
+                                    <p className="mt-1 text-[12px] text-platinum/50 break-words">{errorMsg}</p>
+                                )}
+                            </div>
+                            <div>
+                                <button
+                                    onClick={() => { initializedRef.current = false; setErrorMsg(null); setReloadCounter((c) => c + 1); }}
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-platinum/30 text-sm text-platinum/90 hover:text-white hover:border-platinum/60 transition"
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {status === 'connected' && messages.map((message: ChatMessage) => (
                         <div key={message.id} className={`col-start-1 col-end-11 p-3 rounded-lg ${message.sender === 'system' ? 'col-span-12' : ''}`}>
                              {message.sender === 'system' ? (

@@ -7,12 +7,19 @@ import twilio from 'twilio';
 const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
 const twilioApiKey = process.env.TWILIO_API_KEY_SID;
 const twilioApiSecret = process.env.TWILIO_API_KEY_SECRET;
-const twilioConversationServiceSid = process.env.TWILIO_CONVERSATION_SERVICE_SID;
+// Accept both singular and plural env var names for Conversations Service SID
+const twilioConversationServiceSid = process.env.TWILIO_CONVERSATION_SERVICE_SID || process.env.TWILIO_CONVERSATIONS_SERVICE_SID;
 
 // Validate that all required environment variables are set
 if (!twilioAccountSid || !twilioApiKey || !twilioApiSecret || !twilioConversationServiceSid) {
   throw new Error("Twilio environment variables are not set. Please check your Vercel project settings.");
 }
+
+// After the guard above, it's safe to assert as defined for TypeScript
+const ACCOUNT_SID: string = twilioAccountSid!;
+const API_KEY: string = twilioApiKey!;
+const API_SECRET: string = twilioApiSecret!;
+const CONV_SERVICE_SID: string = twilioConversationServiceSid!;
 
 const AccessToken = twilio.jwt.AccessToken;
 const ChatGrant = AccessToken.ChatGrant;
@@ -34,10 +41,10 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         }
         
         const chatGrant = new ChatGrant({
-            serviceSid: twilioConversationServiceSid,
+            serviceSid: CONV_SERVICE_SID,
         });
 
-        const token = new AccessToken(twilioAccountSid, twilioApiKey, twilioApiSecret, {
+        const token = new AccessToken(ACCOUNT_SID, API_KEY, API_SECRET, {
             identity: identity,
             ttl: 86400 // 24 hours
         });
