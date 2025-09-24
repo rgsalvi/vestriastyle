@@ -2,6 +2,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 // Import admin for token verification and Firestore checks
 import { adminAuth, adminDb } from './_firebaseAdmin';
+import { FieldValue } from 'firebase-admin/firestore';
 import twilio from 'twilio';
 
 // Securely access Twilio credentials from environment variables
@@ -102,15 +103,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(401).json({ success: false, message: 'Missing Authorization token.' });
         }
         let uid: string;
+        let emailVerified = false;
         try {
             const decoded = await adminAuth.verifyIdToken(idToken);
             uid = decoded.uid;
+            emailVerified = !!(decoded as any).email_verified;
         } catch (e) {
             return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
         }
         // Read premium flag from Firestore profile: users/{uid}/meta/profile
         const profileSnap = await adminDb.doc(`users/${uid}/meta/profile`).get();
-        const isPremium = profileSnap.exists ? !!profileSnap.data()?.isPremium : false;
+        let isPremium = profileSnap.exists ? !!profileSnap.data()?.isPremium : false;
+        // Launch promo: optionally auto-upgrade verified users and backfill Firestore
+        const promoEnabled = (process.env.LAUNCH_PROMO_AUTO_PREMIUM || '').toLowerCase() === 'true';
+        if (!isPremium && promoEnabled && emailVerified) {
+            try {
+                await adminDb.doc(`users/${uid}/meta/profile`).set({ isPremium: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+                isPremium = true;
+            } catch {}
+        }
         if (!isPremium) {
             return res.status(403).json({ success: false, message: 'Premium required.' });
         }
