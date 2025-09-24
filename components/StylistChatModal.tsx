@@ -56,6 +56,18 @@ const EndCallIcon: React.FC = () => (
     </svg>
 );
 
+// Social icons
+const InstagramIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+        <path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm0 2h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3zm11 1a1 1 0 100 2 1 1 0 000-2zM12 7a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6z" />
+    </svg>
+);
+const PinterestIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+        <path d="M12 2C6.486 2 2 6.201 2 11.5c0 3.84 2.331 7.13 5.657 8.797-.079-.747-.151-1.895.031-2.712.165-.72 1.065-4.574 1.065-4.574s-.271-.54-.271-1.337c0-1.252.726-2.187 1.631-2.187.769 0 1.14.577 1.14 1.27 0 .774-.494 1.931-.75 3.004-.213.905.451 1.644 1.341 1.644 1.611 0 2.848-1.699 2.848-4.151 0-2.17-1.559-3.688-3.783-3.688-2.578 0-4.09 1.934-4.09 3.934 0 .778.3 1.614.676 2.067a.272.272 0 01.063.262c-.069.291-.223.905-.254 1.03-.04.166-.132.202-.306.122-1.142-.53-1.857-2.196-1.857-3.538 0-2.877 2.091-5.518 6.029-5.518 3.165 0 5.623 2.255 5.623 5.268 0 3.142-1.982 5.672-4.73 5.672-0.923 0-1.79-.479-2.087-1.045l-.567 2.163c-.205.791-.761 1.779-1.135 2.383.852.263 1.753.406 2.691.406 5.514 0 10-4.201 10-9.5S17.514 2 12 2z" />
+    </svg>
+);
+
 
 interface StylistChatModalProps {
     isOpen: boolean;
@@ -602,17 +614,25 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                             <section className="mt-6">
                                                 <h4 className="text-xs tracking-widest uppercase text-platinum/50 mb-2">Follow</h4>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {Object.entries(stylist.socials).map(([network, url]) => (
-                                                        <a
-                                                            key={network}
-                                                            href={url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="px-3 py-1.5 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:border-platinum/60 transition"
-                                                        >
-                                                            {network}
-                                                        </a>
-                                                    ))}
+                                                    {Object.entries(stylist.socials).map(([network, url]) => {
+                                                        const key = network.toLowerCase();
+                                                        const Icon = key === 'instagram' ? InstagramIcon : key === 'pinterest' ? PinterestIcon : null;
+                                                        return (
+                                                            <a
+                                                                key={network}
+                                                                href={url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:border-platinum/60 transition"
+                                                                aria-label={`Follow on ${network}`}
+                                                            >
+                                                                <span className="inline-flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20">
+                                                                    {Icon ? <Icon /> : <span className="text-[10px] sm:text-xs font-semibold">{network.slice(0, 1).toUpperCase()}</span>}
+                                                                </span>
+                                                                <span className="capitalize">{network}</span>
+                                                            </a>
+                                                        );
+                                                    })}
                                                 </div>
                                             </section>
                                         )}
