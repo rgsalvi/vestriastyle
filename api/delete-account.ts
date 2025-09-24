@@ -20,7 +20,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Delete profile doc
+    // Delete profile docs (new and legacy path)
+    await adminDb.doc(`users/${uid}/profile`).delete().catch(() => {});
     await adminDb.doc(`users/${uid}/meta/profile`).delete().catch(() => {});
     // Delete wardrobe docs
     const wardSnap = await adminDb.collection(`users/${uid}/wardrobe`).get();
@@ -30,6 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Delete avatar from storage (best-effort)
     try {
       const bucket = getStorage().bucket();
+      // Our uploads use users/{uid}/avatar.jpg
       await bucket.file(`users/${uid}/avatar.jpg`).delete({ ignoreNotFound: true });
     } catch {}
     return res.status(200).json({ success: true });

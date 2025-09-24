@@ -112,13 +112,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
         }
         // Read premium flag from Firestore profile: users/{uid}/meta/profile
-        const profileSnap = await adminDb.doc(`users/${uid}/meta/profile`).get();
-        let isPremium = profileSnap.exists ? !!profileSnap.data()?.isPremium : false;
+        let isPremium = false;
+        const profileSnap = await adminDb.doc(`users/${uid}/profile`).get();
+        if (profileSnap.exists) {
+            isPremium = !!profileSnap.data()?.isPremium;
+        } else {
+            const legacySnap = await adminDb.doc(`users/${uid}/meta/profile`).get();
+            isPremium = legacySnap.exists ? !!legacySnap.data()?.isPremium : false;
+        }
         // Launch promo: optionally auto-upgrade verified users and backfill Firestore
         const promoEnabled = (process.env.LAUNCH_PROMO_AUTO_PREMIUM || '').toLowerCase() === 'true';
         if (!isPremium && promoEnabled && emailVerified) {
             try {
-                await adminDb.doc(`users/${uid}/meta/profile`).set({ isPremium: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+                await adminDb.doc(`users/${uid}/profile`).set({ isPremium: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
                 isPremium = true;
             } catch {}
         }

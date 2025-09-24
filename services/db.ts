@@ -7,7 +7,7 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 export const userDocRef = (uid: string) => doc(db, 'users', uid);
-export const profileDocRef = (uid: string) => doc(db, 'users', uid, 'meta', 'profile');
+export const profileDocRef = (uid: string) => doc(db, 'users', uid, 'profile');
 export const wardrobeColRef = (uid: string) => collection(db, 'users', uid, 'wardrobe');
 
 export async function loadUserProfile(uid: string): Promise<StyleProfile | null> {
@@ -20,8 +20,11 @@ export async function loadUserProfile(uid: string): Promise<StyleProfile | null>
     }
   } catch {}
   // Fallback to client SDK
-  const snap = await getDoc(profileDocRef(uid));
-  return snap.exists() ? (snap.data() as StyleProfile) : null;
+  let snap = await getDoc(profileDocRef(uid));
+  if (snap.exists()) return snap.data() as StyleProfile;
+  // Fallback to legacy location users/{uid}/meta/profile
+  const legacy = await getDoc(doc(db, 'users', uid, 'meta', 'profile'));
+  return legacy.exists() ? (legacy.data() as StyleProfile) : null;
 }
 
 export async function saveUserProfile(uid: string, profile: Partial<StyleProfile>): Promise<void> {
