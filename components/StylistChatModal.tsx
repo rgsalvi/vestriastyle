@@ -50,9 +50,9 @@ const MicOffIcon: React.FC = () => (
     </svg>
 );
 const EndCallIcon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" clipRule="evenodd" />
-        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" clipRule="evenodd" />
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+        <path d="M21.707 20.293l-18-18a1 1 0 10-1.414 1.414l3.133 3.133A18.94 18.94 0 003 12c0 .552.448 1 1 1h3a1 1 0 001-1c0-.69.082-1.362.237-2.007l1.86 1.86c-.044.378-.097.757-.097 1.147a1 1 0 001 1h3a1 1 0 001-1c0-.603.074-1.19.212-1.757l6.495 6.495a1 1 0 001.414-1.414z" />
+        <path d="M17.5 14.5c.276-.92.5-1.903.5-2.5a1 1 0 011-1h3a1 1 0 011 1c0 2.761-1.791 5-4 5-.837 0-1.823-.328-2.842-.863l1.342-1.342zM6.5 9.5c.92-.276 1.903-.5 2.5-.5a1 1 0 001-1V5a1 1 0 00-1-1C6.239 4 4 5.791 4 8c0 .837.328 1.823.863 2.842L6.5 9.5z" />
     </svg>
 );
 
@@ -157,6 +157,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const fileInputRef = useRef<HTMLInputElement>(null);
     // No inline video elements; audio plays via hidden element
     const remoteAudioRef = useRef<HTMLAudioElement>(null);
+    const localVideoRef = useRef<HTMLVideoElement>(null);
     const popoverRef = useRef<HTMLDivElement>(null);
     const infoButtonRef = useRef<HTMLButtonElement>(null);
     const closeBioBtnRef = useRef<HTMLButtonElement>(null);
@@ -258,6 +259,11 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         if (!conversation) return;
 
         const onMessageAdded = async (message: Message) => {
+            const attrs = (message as any).attributes || {};
+            if (attrs && attrs.type === 'video_call_end') {
+                endVideoCall();
+                return;
+            }
             const processedMsg = await processTwilioMessage(message, user);
             setMessages((prev: ChatMessage[]) => [...prev, processedMsg]);
         };
@@ -365,6 +371,16 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         }
     };
 
+    const notifyCallEnded = async () => {
+        try {
+            if (conversation) {
+                await conversation.sendMessage('Call ended', { type: 'video_call_end' });
+            }
+        } catch (e) {
+            console.error('Failed to notify stylist about call end:', e);
+        }
+    };
+
     const startVideoCall = async () => {
         if (!sessionData?.conversationSid) return;
         if (isConnectingVideo || videoRoom) return;
@@ -384,7 +400,14 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             const tracks: LocalTrack[] = await createLocalTracks({ audio: true, video: true });
             const vTrack = tracks.find((t: LocalTrack) => t.kind === 'video') as LocalVideoTrack | undefined;
             const aTrack = tracks.find((t: LocalTrack) => t.kind === 'audio') as LocalAudioTrack | undefined;
-            if (vTrack) setLocalVideoTrack(vTrack);
+            if (vTrack) {
+                setLocalVideoTrack(vTrack);
+                try {
+                    if (localVideoRef.current) {
+                        vTrack.attach(localVideoRef.current);
+                    }
+                } catch {}
+            }
             if (aTrack) setLocalAudioTrack(aTrack);
             setIsMuted(false);
             setIsCameraOff(false);
@@ -431,7 +454,8 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             if (localVideoTrack) {
                 localVideoTrack.stop();
                 // Detach from any elements if attached elsewhere
-                localVideoTrack.detach();
+                try { localVideoTrack.detach(); } catch {}
+                try { if (localVideoRef.current) localVideoRef.current.srcObject = null; } catch {}
             }
         } catch {}
         try {
@@ -446,6 +470,8 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         setVideoRoom(null);
         setIsMuted(false);
         setIsCameraOff(false);
+        // Notify the other side to end as well
+        notifyCallEnded();
     };
 
     const toggleMute = () => {
@@ -543,7 +569,13 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             </div>
                         )}
                         <div className="flex items-center justify-between bg-black/30 border border-platinum/20 rounded-lg px-3 py-2">
-                            <div className="text-platinum/80 text-sm">Live call connected</div>
+                            <div className="flex items-center gap-3">
+                                <div className="relative w-32 h-20 bg-black/40 rounded-md overflow-hidden ring-1 ring-platinum/20">
+                                    <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-[10px] px-1 py-0.5 text-platinum/80">You</div>
+                                </div>
+                                <div className="text-platinum/80 text-sm">Live call connected</div>
+                            </div>
                             <div className="flex items-center gap-2">
                                 <audio ref={remoteAudioRef} autoPlay />
                                 <button onClick={toggleMute} className={`px-3 py-1.5 rounded-full text-sm ${isMuted ? 'bg-red-600 text-white' : 'bg-platinum/20 text-platinum'}`} aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}>

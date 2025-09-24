@@ -23,9 +23,9 @@ const MicOffIcon: React.FC = () => (
     </svg>
 );
 const EndCallIcon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10.707 10.293a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414l-3-3z" />
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" clipRule="evenodd" />
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+        <path d="M21.707 20.293l-18-18a1 1 0 10-1.414 1.414l3.133 3.133A18.94 18.94 0 003 12c0 .552.448 1 1 1h3a1 1 0 001-1c0-.69.082-1.362.237-2.007l1.86 1.86c-.044.378-.097.757-.097 1.147a1 1 0 001 1h3a1 1 0 001-1c0-.603.074-1.19.212-1.757l6.495 6.495a1 1 0 001.414-1.414z" />
+        <path d="M17.5 14.5c.276-.92.5-1.903.5-2.5a1 1 0 011-1h3a1 1 0 011 1c0 2.761-1.791 5-4 5-.837 0-1.823-.328-2.842-.863l1.342-1.342zM6.5 9.5c.92-.276 1.903-.5 2.5-.5a1 1 0 001-1V5a1 1 0 00-1-1C6.239 4 4 5.791 4 8c0 .837.328 1.823.863 2.842L6.5 9.5z" />
     </svg>
 );
 
@@ -260,12 +260,17 @@ export const StylistDashboard: React.FC = () => {
             }
             
             const onMessageAdded = async (message: Message) => {
-                if (message.attributes && typeof message.attributes === 'object' && (message.attributes as any).type === 'video_call_request') {
+                const attrs = (message as any).attributes || {};
+                if (attrs.type === 'video_call_request') {
                     setVideoCallRequestSid(activeConversation.sid);
-                } else {
-                    const processedMsg = await processTwilioMessage(message);
-                    setMessages(prev => [...prev, processedMsg]);
+                    return;
                 }
+                if (attrs.type === 'video_call_end') {
+                    endVideoCall();
+                    return;
+                }
+                const processedMsg = await processTwilioMessage(message);
+                setMessages(prev => [...prev, processedMsg]);
             };
             
             const onTypingStarted = (participant: Participant) => {
@@ -402,6 +407,7 @@ export const StylistDashboard: React.FC = () => {
         setVideoCallRequestSid(null);
         setBannerType('info');
         setBannerMessage('Call ended');
+        try { activeConversation?.sendMessage('Call ended', { type: 'video_call_end' }); } catch {}
     };
 
     const toggleMute = () => {
