@@ -164,52 +164,61 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const canceledRef = useRef<boolean>(false);
     const sentInitialRef = useRef<boolean>(false);
 
+    const initializedRef = useRef<boolean>(false);
+
+    // Initialize chat session when modal opens
     useEffect(() => {
         const initChat = async () => {
-            if (isOpen && user && analysisContext && status === 'idle') {
-                setStatus('connecting');
-                try {
-                    canceledRef.current = false;
-                    const data = await initiateChatSession(analysisContext, newItemContext, user);
-                    if (canceledRef.current) return;
-                    setSessionData(data);
-                    const twilioClient = await Client.create(data.token);
-                    if (canceledRef.current) { try { twilioClient.shutdown(); } catch {} return; }
-                    setClient(twilioClient);
-                    
-                    const conv = await twilioClient.getConversationBySid(data.conversationSid);
-                    if (canceledRef.current) { try { twilioClient.shutdown(); } catch {} return; }
-                    setConversation(conv);
-                    
-                    setStylist(data.stylist);
-                    
-                    const twilioMessages = (await conv.getMessages()).items;
-                    const processedMessages = await Promise.all(twilioMessages.map((msg: Message) => processTwilioMessage(msg, user)));
-                    setMessages(processedMessages.sort((a: ChatMessage, b: ChatMessage) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+            if (!isOpen || !user || !analysisContext) return;
+            if (initializedRef.current) return; // prevent duplicate inits
+            initializedRef.current = true;
+            setStatus('connecting');
+            let cancelled = false;
+            try {
+                canceledRef.current = false;
+                const data = await initiateChatSession(analysisContext, newItemContext, user);
+                if (cancelled || canceledRef.current) return;
+                setSessionData(data);
+                const twilioClient = await Client.create(data.token);
+                if (cancelled || canceledRef.current) { try { twilioClient.shutdown(); } catch {} return; }
+                setClient(twilioClient);
 
-                    setStatus('connected');
-                } catch (error) {
-                    console.error("Chat initialization failed:", error);
-                    setStatus('error');
-                }
+                const conv = await twilioClient.getConversationBySid(data.conversationSid);
+                if (cancelled || canceledRef.current) { try { twilioClient.shutdown(); } catch {} return; }
+                setConversation(conv);
+
+                setStylist(data.stylist);
+
+                const twilioMessages = (await conv.getMessages()).items;
+                const processedMessages = await Promise.all(twilioMessages.map((msg: Message) => processTwilioMessage(msg, user)));
+                setMessages(processedMessages.sort((a: ChatMessage, b: ChatMessage) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+
+                if (!cancelled && !canceledRef.current) setStatus('connected');
+            } catch (error) {
+                console.error("Chat initialization failed:", error);
+                if (!cancelled && !canceledRef.current) setStatus('error');
             }
+            return () => { cancelled = true; };
         };
         initChat();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, user, analysisContext, newItemContext]);
 
-        return () => {
+    // Teardown when modal closes
+    useEffect(() => {
+        if (!isOpen) {
             canceledRef.current = true;
-            if (client) {
-                client.shutdown();
-                setClient(null);
-                setConversation(null);
-                setMessages([]);
-                setStatus('idle');
-                setSessionData(null);
-                // Ensure we end any ongoing video call on teardown
-                endVideoCall();
-            }
-        };
-    }, [isOpen, user, analysisContext, newItemContext, status]);
+            try { if (client) client.shutdown(); } catch {}
+            setClient(null);
+            setConversation(null);
+            setMessages([]);
+            setStatus('idle');
+            setSessionData(null);
+            initializedRef.current = false;
+            // Ensure we end any ongoing video call on teardown
+            endVideoCall();
+        }
+    }, [isOpen, client]);
 
     useEffect(() => {
         const maybeSendInitialImages = async () => {
