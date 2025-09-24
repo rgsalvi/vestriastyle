@@ -3,6 +3,7 @@ import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
 import { deleteCurrentUser } from '../services/firebase';
+import { deleteAllUserData } from '../services/db';
 
 interface ProfilePageProps {
   user: User;
@@ -144,9 +145,18 @@ const DeleteAccountBlock: React.FC = () => {
   const reset = () => { setConfirming(false); setStep(1); setConfirmText(''); setAck(false); };
 
   const doDelete = async () => {
-    await deleteCurrentUser();
-    localStorage.clear();
-    location.href = '/';
+    try {
+      const raw = localStorage.getItem('ai-wardrobe-user');
+      const current = raw ? JSON.parse(raw) : null;
+      const uid = current?.id as string | undefined;
+      if (uid) {
+        try { await deleteAllUserData(uid); } catch (e) { console.warn('Failed to delete Firestore/Storage data', e); }
+      }
+    } finally {
+      await deleteCurrentUser();
+      localStorage.clear();
+      location.href = '/';
+    }
   };
 
   if (!confirming) {

@@ -17,6 +17,7 @@ import ProfilePage from './components/ProfilePage';
 import { getStyleAdvice } from './services/geminiService';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser } from './services/firebase';
+import { loadUserProfile, saveUserProfile, uploadAvatar, listWardrobe } from './services/db';
 
 interface HeaderProps {
   user: User | null;
@@ -269,20 +270,50 @@ const App: React.FC = () => {
           id: fbUser.uid,
           name: fbUser.displayName || fbUser.email || 'User',
           email: fbUser.email || '',
-          picture: `https://ui-avatars.com/api/?name=${encodeURIComponent(fbUser.displayName || fbUser.email || 'User')}`,
+          picture: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(fbUser.displayName || fbUser.email || 'User')}`,
         };
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped));
         setUser(mapped);
-        const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
-        if (!profileRaw) {
-          // Only show onboarding after email verification
-          setShowOnboarding(!!fbUser.emailVerified);
-        } else {
-          const profileData = JSON.parse(profileRaw);
-          setStyleProfile(profileData);
-          setBodyType(profileData.bodyType || 'None');
-          setShowOnboarding(false);
-        }
+        (async () => {
+          // Try cloud profile first
+          const cloudProfile = await loadUserProfile(mapped.id);
+          if (cloudProfile) {
+            setStyleProfile(cloudProfile);
+            setBodyType(cloudProfile.bodyType || 'None');
+            setShowOnboarding(false);
+            localStorage.setItem(`${STYLE_PROFILE_KEY}-${mapped.id}`, JSON.stringify(cloudProfile));
+          } else {
+            // Fallback to local and decide onboarding
+            const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
+            if (profileRaw) {
+              const localProf = JSON.parse(profileRaw);
+              setStyleProfile(localProf);
+              setBodyType(localProf.bodyType || 'None');
+              setShowOnboarding(false);
+              // lazy migrate to cloud
+              try { await saveUserProfile(mapped.id, localProf); } catch (e) { console.warn('Failed to migrate local profile to cloud', e); }
+            } else {
+              setShowOnboarding(!!fbUser.emailVerified);
+            }
+          }
+          // Wardrobe cloud load (non-blocking). If none, keep local.
+          try {
+            const cloudWardrobe = await listWardrobe(mapped.id);
+            if (cloudWardrobe && cloudWardrobe.length > 0) {
+              setManagedWardrobe(cloudWardrobe);
+              localStorage.setItem(`${WARDROBE_STORAGE_KEY}-${mapped.id}`, JSON.stringify(cloudWardrobe));
+            } else {
+              const savedWardrobe = localStorage.getItem(`${WARDROBE_STORAGE_KEY}-${mapped.id}`);
+              if (savedWardrobe) {
+                setManagedWardrobe(JSON.parse(savedWardrobe));
+              } else {
+                setManagedWardrobe([]);
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to load wardrobe from cloud', e);
+          }
+        })();
       } else {
         setUser(null);
         setStyleProfile(null);
@@ -306,17 +337,27 @@ const App: React.FC = () => {
 
   const handleOnboardingComplete = (profile: StyleProfile) => {
     if (user) {
-        localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(profile));
-        setStyleProfile(profile);
-        setBodyType(profile.bodyType || 'None');
-        if (profile.avatarDataUrl) {
-          const updatedUser = { ...user, picture: profile.avatarDataUrl } as User;
-          setUser(updatedUser);
-          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-          // fire-and-forget Firebase profile update
-          updateUserProfile(updatedUser.name, profile.avatarDataUrl).catch(() => {});
-        }
-        setShowOnboarding(false);
+        (async () => {
+          let photoURL: string | undefined = undefined;
+          try {
+            if (profile.avatarDataUrl && profile.avatarDataUrl.startsWith('data:')) {
+              photoURL = await uploadAvatar(user.id, profile.avatarDataUrl);
+            }
+          } catch (e) { console.warn('Avatar upload failed, using data URL fallback', e); }
+          const cloudProfile = { ...profile };
+          try { await saveUserProfile(user.id, cloudProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
+          localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile));
+          setStyleProfile(cloudProfile);
+          setBodyType(cloudProfile.bodyType || 'None');
+          if (photoURL || profile.avatarDataUrl) {
+            const newPic = photoURL || profile.avatarDataUrl!;
+            const updatedUser = { ...user, picture: newPic } as User;
+            setUser(updatedUser);
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+            updateUserProfile(updatedUser.name, newPic).catch(() => {});
+          }
+          setShowOnboarding(false);
+        })();
     }
   };
 
@@ -499,18 +540,27 @@ const App: React.FC = () => {
             initialProfile={styleProfile}
             onBack={() => setCurrentPage('main')}
             onSave={(updatedUser, updatedProfile) => {
-              const mergedUser = { ...user, ...updatedUser } as User;
-              setUser(mergedUser);
-              localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser));
-              if (updatedProfile) {
-                setStyleProfile(updatedProfile);
-                setBodyType(updatedProfile.bodyType || 'None');
-                localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(updatedProfile));
-              }
-              updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
-              setCurrentPage('main');
-              setProfileSavedBanner('Profile updated');
-              setTimeout(() => setProfileSavedBanner(null), 3000);
+              (async () => {
+                let photoURL = updatedUser.picture;
+                try {
+                  if (updatedUser.picture && updatedUser.picture.startsWith('data:')) {
+                    photoURL = await uploadAvatar(user.id, updatedUser.picture);
+                  }
+                } catch (e) { console.warn('Avatar upload failed', e); }
+                const mergedUser = { ...user, ...updatedUser, picture: photoURL || updatedUser.picture || user.picture } as User;
+                setUser(mergedUser);
+                localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser));
+                if (updatedProfile) {
+                  try { await saveUserProfile(mergedUser.id, updatedProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
+                  setStyleProfile(updatedProfile);
+                  setBodyType(updatedProfile.bodyType || 'None');
+                  localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(updatedProfile));
+                }
+                updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
+                setCurrentPage('main');
+                setProfileSavedBanner('Profile updated');
+                setTimeout(() => setProfileSavedBanner(null), 3000);
+              })();
             }}
           />
         ) : null;

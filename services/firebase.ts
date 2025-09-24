@@ -11,7 +11,7 @@ const firebaseConfig = {
   measurementId: "G-N7K4N9K8V2"
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
