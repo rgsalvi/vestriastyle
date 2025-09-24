@@ -48,7 +48,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
         setError(null); setMessage(null);
         try {
             await resetPassword(email);
-            setMessage('Password reset email sent. Check your inbox.');
+            setMessage('Password reset email sent. Please check your inbox (and Spam) for a reset link.');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to send reset email.');
         }
@@ -56,7 +56,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
 
     const handleResendVerification = async () => {
         setError(null); setMessage(null);
-        try { await resendVerification(); setMessage('Verification email sent again.'); }
+        try { await resendVerification(); setMessage('Verification email sent again. Please check your inbox (and Spam) for the verification link.'); }
         catch (err) { setError(err instanceof Error ? err.message : 'Failed to send verification email.'); }
     };
 
@@ -75,7 +75,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 <p className="mt-2 text-lg text-platinum/60">Use your email and password. We’ll verify your email after signup.</p>
 
                                 {error && (
-                                        <div className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-red-400/30 bg-red-900/20 text-red-300">
+                                    <div role="alert" className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-red-400/30 bg-red-900/20 text-red-300">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                                 <path fillRule="evenodd" d="M10.29 3.86a2 2 0 013.42 0l8.2 14.2A2 2 0 0120.2 21H3.8a2 2 0 01-1.71-2.94l8.2-14.2zM13 16a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v4a1 1 0 102 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
                                             </svg>
@@ -83,7 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                                         </div>
                                 )}
                                 {message && (
-                                        <div className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-platinum/30 bg-platinum/5 text-platinum">
+                                    <div role="status" className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-platinum/30 bg-platinum/5 text-platinum">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0 text-platinum/80" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414l2.293 2.293 6.543-6.543a1 1 0 011.414 0z" clipRule="evenodd" />
                                             </svg>
