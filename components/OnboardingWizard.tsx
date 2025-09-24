@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
+import { resizeImageToDataUrl } from '../utils/imageProcessor';
 
 interface OnboardingWizardProps {
   user: User;
@@ -90,13 +91,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
                                     const f = e.target.files?.[0];
                                     if (f) {
-                                        const reader = new FileReader();
-                                        reader.onload = () => {
-                                            const dataUrl = reader.result as string;
-                                            setAvatarPreview(dataUrl);
-                                            setProfile(p => ({ ...p, avatarDataUrl: dataUrl }));
-                                        };
-                                        reader.readAsDataURL(f);
+                                        const dataUrl = await resizeImageToDataUrl(f, 512, 0.85);
+                                        setAvatarPreview(dataUrl);
+                                        setProfile(p => ({ ...p, avatarDataUrl: dataUrl }));
                                     }
                                 }} />
                                 <p className="mt-2 text-xs text-platinum/60">PNG/JPG, up to ~2MB</p>

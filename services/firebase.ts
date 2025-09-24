@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCdw-72plQ9WDlSBn3c_dQopah6-FLNqAg",
@@ -27,3 +27,14 @@ export const signIn = (email: string, password: string) => signInWithEmailAndPas
 export const signOut = () => fbSignOut(auth);
 export const resendVerification = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
 export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
+export const updateUserProfile = async (displayName?: string, photoURL?: string) => {
+  if (!auth.currentUser) return;
+  await updateProfile(auth.currentUser, {
+    displayName: displayName ?? auth.currentUser.displayName ?? undefined,
+    photoURL: photoURL ?? auth.currentUser.photoURL ?? undefined,
+  });
+};
+export const deleteCurrentUser = async () => {
+  if (!auth.currentUser) return;
+  await deleteUser(auth.currentUser);
+};

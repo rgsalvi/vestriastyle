@@ -16,7 +16,7 @@ import { StylistChatModal } from './components/StylistChatModal';
 import ProfilePage from './components/ProfilePage';
 import { getStyleAdvice } from './services/geminiService';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
-import { observeAuth, signOut as fbSignOut } from './services/firebase';
+import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser } from './services/firebase';
 
 interface HeaderProps {
   user: User | null;
@@ -312,6 +312,8 @@ const App: React.FC = () => {
           const updatedUser = { ...user, picture: profile.avatarDataUrl } as User;
           setUser(updatedUser);
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+          // fire-and-forget Firebase profile update
+          updateUserProfile(updatedUser.name, profile.avatarDataUrl).catch(() => {});
         }
         setShowOnboarding(false);
     }
@@ -504,6 +506,7 @@ const App: React.FC = () => {
                 setBodyType(updatedProfile.bodyType || 'None');
                 localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(updatedProfile));
               }
+              updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
               setCurrentPage('main');
             }}
           />

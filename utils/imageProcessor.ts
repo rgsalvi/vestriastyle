@@ -19,7 +19,7 @@ async function getModel(): Promise<faceDetection.FaceDetector> {
     try {
         await tf.setBackend('webgl');
         const detector = await faceDetection.createDetector(
-            faceDetection.SupportedModels.BlazeFace,
+            faceDetection.SupportedModels.MediaPipeFaceDetector,
             { runtime: 'tfjs', maxFaces: 10 }
         );
         model = detector;
@@ -99,3 +99,24 @@ export const anonymizeImage = async (file: File): Promise<File> => {
         return file; // Return original file on error
     }
 };
+
+export const resizeImageToDataUrl = async (file: File, maxSize = 512, quality = 0.85): Promise<string> => {
+    const img = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+    canvas.width = Math.max(1, Math.floor(img.width * scale));
+    canvas.height = Math.max(1, Math.floor(img.height * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return await fileToDataUrl(file);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+    img.close();
+    return dataUrl;
+};
+
+const fileToDataUrl = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+});

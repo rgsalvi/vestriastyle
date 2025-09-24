@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
+import { resizeImageToDataUrl } from '../utils/imageProcessor';
+import { deleteCurrentUser } from '../services/firebase';
 
 interface ProfilePageProps {
   user: User;
@@ -37,13 +39,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
   };
 
   const handleAvatarSelect = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setAvatar(dataUrl);
-      setProfile(p => ({ ...p, avatarDataUrl: dataUrl }));
-    };
-    reader.readAsDataURL(file);
+    const dataUrl = await resizeImageToDataUrl(file, 512, 0.85);
+    setAvatar(dataUrl);
+    setProfile(p => ({ ...p, avatarDataUrl: dataUrl }));
   };
 
   return (
@@ -124,9 +122,74 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
           <button onClick={onBack} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80 hover:bg-black/20">Cancel</button>
           <button onClick={() => onSave({ name: name.trim() || user.name, picture: avatar }, profile)} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold hover:opacity-90">Save Changes</button>
         </div>
+
+        <div className="mt-10 border-t border-platinum/20 pt-6">
+          <h3 className="text-lg font-semibold text-red-300">Danger Zone</h3>
+          <p className="text-sm text-platinum/60 mt-1">Deleting your account is permanent and cannot be undone.</p>
+          <DeleteAccountBlock />
+        </div>
       </div>
     </div>
   );
 };
 
 export default ProfilePage;
+
+const DeleteAccountBlock: React.FC = () => {
+  const [confirming, setConfirming] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [confirmText, setConfirmText] = useState('');
+  const [ack, setAck] = useState(false);
+
+  const reset = () => { setConfirming(false); setStep(1); setConfirmText(''); setAck(false); };
+
+  const doDelete = async () => {
+    await deleteCurrentUser();
+    localStorage.clear();
+    location.href = '/';
+  };
+
+  if (!confirming) {
+    return (
+      <div className="mt-4">
+        <button onClick={() => setConfirming(true)} className="text-sm text-red-400 hover:text-red-300 underline decoration-red-400/40 underline-offset-4">Delete my account</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 bg-red-900/20 border border-red-400/30 rounded-xl p-4 space-y-3">
+      {step === 1 && (
+        <div>
+          <p className="text-sm text-red-200">This will permanently remove your profile and all associated data. Are you absolutely sure?</p>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => setStep(2)} className="px-3 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white text-sm">I understand</button>
+            <button onClick={reset} className="px-3 py-2 rounded-full border border-platinum/30 text-platinum/80 hover:bg-black/20 text-sm">Cancel</button>
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div>
+          <label className="block text-sm text-red-200">Type DELETE to confirm:</label>
+          <div className="mt-2 flex items-center gap-2">
+            <input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder="DELETE" className="rounded-full bg-black/20 border border-platinum/30 px-3 py-2 text-platinum text-sm" />
+            <button disabled={confirmText !== 'DELETE'} onClick={() => setStep(3)} className={`px-3 py-2 rounded-full text-sm font-semibold ${confirmText === 'DELETE' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-900/40 text-red-200 cursor-not-allowed'}`}>Continue</button>
+            <button onClick={reset} className="px-3 py-2 rounded-full border border-platinum/30 text-platinum/80 hover:bg-black/20 text-sm">Cancel</button>
+          </div>
+        </div>
+      )}
+      {step === 3 && (
+        <div>
+          <label className="inline-flex items-center gap-2 text-sm text-red-200">
+            <input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} className="rounded" />
+            I acknowledge that this action is permanent and non-reversible.
+          </label>
+          <div className="mt-3 flex gap-2">
+            <button disabled={!ack} onClick={doDelete} className={`px-3 py-2 rounded-full text-sm font-semibold ${ack ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-900/40 text-red-200 cursor-not-allowed'}`}>Permanently delete my account</button>
+            <button onClick={reset} className="px-3 py-2 rounded-full border border-platinum/30 text-platinum/80 hover:bg-black/20 text-sm">Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
