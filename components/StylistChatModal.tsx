@@ -49,6 +49,11 @@ const MicOffIcon: React.FC = () => (
       <path fillRule="evenodd" d="M10 18a7 7 0 005.47-2.502a1 1 0 00-1.353-1.476A5.002 5.002 0 015 8a1 1 0 00-2 0 7 7 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07zM9.243 3.03a3 3 0 014.514 0 1 1 0 001.528-1.303A5 5 0 006.183 6.9a1 1 0 101.93.513A3.001 3.001 0 019.243 3.03zM5.383 6.383a1 1 0 00-1.414 1.414l9.192 9.192a1 1 0 001.414-1.414L5.383 6.383z" clipRule="evenodd" />
     </svg>
 );
+const SwitchCameraIcon: React.FC = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+        <path d="M20 7h-1.586l-1.707-1.707A1 1 0 0015.586 5H8.414a1 1 0 00-.707.293L6 7H4a2 2 0 00-2 2v7a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zm-8 2a5 5 0 11-4.546 2.916 1 1 0 111.792-.896A3 3 0 1012 16a1 1 0 010 2 5 5 0 010-10zm8 8H4V9h3l2-2h6l2 2h3v8z" />
+    </svg>
+);
 const EndCallIcon: React.FC = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
         <path d="M21.707 20.293l-18-18a1 1 0 10-1.414 1.414l3.133 3.133A18.94 18.94 0 003 12c0 .552.448 1 1 1h3a1 1 0 001-1c0-.69.082-1.362.237-2.007l1.86 1.86c-.044.378-.097.757-.097 1.147a1 1 0 001 1h3a1 1 0 001-1c0-.603.074-1.19.212-1.757l6.495 6.495a1 1 0 001.414-1.414z" />
@@ -135,6 +140,9 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
     const [isCameraOff, setIsCameraOff] = useState(false);
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<RemoteAudioTrack | null>(null);
     const [videoError, setVideoError] = useState<string | null>(null);
+    const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+    const [currentVideoDeviceId, setCurrentVideoDeviceId] = useState<string | null>(null);
+    const [isSwitchingCamera, setIsSwitchingCamera] = useState<boolean>(false);
 
     const [isBioPopoverOpen, setIsBioPopoverOpen] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -413,6 +421,17 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                         vTrack.attach(localVideoRef.current);
                     }
                 } catch {}
+                try {
+                    // Capture current deviceId/facing for switch logic
+                    const msTrack = (vTrack as any)?.mediaStreamTrack;
+                    const settings: MediaTrackSettings = (msTrack?.getSettings?.()) || ({} as MediaTrackSettings);
+                    if (settings && (settings as any).deviceId) setCurrentVideoDeviceId((settings as any).deviceId as string);
+                    if (navigator.mediaDevices?.enumerateDevices) {
+                        const devices = await navigator.mediaDevices.enumerateDevices();
+                        const vids = devices.filter(d => d.kind === 'videoinput');
+                        setVideoDevices(vids);
+                    }
+                } catch (e) { /* non-fatal */ }
             }
             if (aTrack) setLocalAudioTrack(aTrack);
             setIsMuted(false);
@@ -473,11 +492,77 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
         setLocalVideoTrack(null);
         setLocalAudioTrack(null);
         setRemoteAudioTrack(null);
+        setVideoDevices([]);
+        setCurrentVideoDeviceId(null);
+        setIsSwitchingCamera(false);
         setVideoRoom(null);
         setIsMuted(false);
         setIsCameraOff(false);
         // Notify the other side to end as well
         notifyCallEnded();
+    };
+
+    const switchCamera = async () => {
+        if (!localVideoTrack) return;
+        setIsSwitchingCamera(true);
+        try {
+            let constraints: MediaTrackConstraints | undefined;
+            if (videoDevices.length > 1 && currentVideoDeviceId) {
+                const idx = videoDevices.findIndex(d => d.deviceId === currentVideoDeviceId);
+                const next = videoDevices[(idx + 1 + videoDevices.length) % videoDevices.length];
+                constraints = { deviceId: { exact: next.deviceId } } as any;
+            } else {
+                const msTrack = (localVideoTrack as any)?.mediaStreamTrack;
+                const settings: MediaTrackSettings = (msTrack?.getSettings?.()) || ({} as MediaTrackSettings);
+                const currentFacing = (settings as any)?.facingMode as ('user' | 'environment' | undefined);
+                const nextFacing = currentFacing === 'environment' ? 'user' : 'environment';
+                constraints = { facingMode: nextFacing } as any;
+            }
+
+            // restart is available on LocalVideoTrack in twilio-video; cast to any in case of typing gaps
+            const restart = (localVideoTrack as any).restart as ((c?: MediaTrackConstraints) => Promise<void>) | undefined;
+            if (restart) {
+                await restart(constraints);
+            } else {
+                // Fallback: stop and recreate the track using createLocalTracks and republish to the room
+                try { localVideoTrack.detach(); } catch {}
+                try { localVideoTrack.stop(); } catch {}
+                const newTracks = await createLocalTracks({ video: constraints as any });
+                const newV = newTracks.find(t => t.kind === 'video') as LocalVideoTrack | undefined;
+                if (newV) {
+                    // Replace track in the room so remote continues to see video
+                    try {
+                        if (videoRoom) {
+                            const lp = (videoRoom as any).localParticipant;
+                            try { lp?.unpublishTrack?.(localVideoTrack as any); } catch {}
+                            try { await lp?.publishTrack?.(newV as any); } catch {}
+                        }
+                    } catch {}
+                    setLocalVideoTrack(newV);
+                    try { newV.attach(localVideoRef.current!); } catch {}
+                }
+            }
+
+            // Re-attach to ensure preview updates
+            try { (localVideoTrack as any)?.detach?.(); } catch {}
+            try { if (localVideoRef.current) (localVideoTrack as any)?.attach?.(localVideoRef.current); } catch {}
+
+            // Refresh current device id after switch
+            try {
+                const msTrack2 = (localVideoTrack as any)?.mediaStreamTrack;
+                const s2: MediaTrackSettings = (msTrack2?.getSettings?.()) || ({} as MediaTrackSettings);
+                if ((s2 as any).deviceId) setCurrentVideoDeviceId((s2 as any).deviceId as string);
+                if (navigator.mediaDevices?.enumerateDevices) {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    setVideoDevices(devices.filter(d => d.kind === 'videoinput'));
+                }
+            } catch {}
+        } catch (err) {
+            console.error('Failed to switch camera:', err);
+            setVideoError(err instanceof Error ? err.message : 'Could not switch camera.');
+        } finally {
+            setIsSwitchingCamera(false);
+        }
     };
 
     const toggleMute = () => {
@@ -594,6 +679,15 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                                     aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
                                 >
                                     {isMuted ? <MicOffIcon /> : <MicOnIcon />}
+                                </button>
+                                <button
+                                    onClick={switchCamera}
+                                    disabled={!localVideoTrack || isSwitchingCamera}
+                                    className={`h-12 w-12 rounded-full flex items-center justify-center ${isSwitchingCamera ? 'bg-white/10 text-white opacity-60' : 'bg-white/15 text-white hover:bg-white/25'} transition`}
+                                    aria-label="Switch camera"
+                                    title="Switch camera"
+                                >
+                                    <SwitchCameraIcon />
                                 </button>
                                 <button
                                     onClick={endVideoCall}
