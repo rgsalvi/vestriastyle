@@ -445,7 +445,13 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 {stylist && (
                     <div className="relative flex-shrink-0 flex sm:items-center justify-between py-3 border-b-2 border-platinum/20 px-4">
                         <div className="flex items-center space-x-4">
-                            <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-10 sm:w-12 h-10 sm:h-12 rounded-full" />
+                            {getStylistAvatar(stylist) ? (
+                                <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-10 sm:w-12 h-10 sm:h-12 rounded-full" />
+                            ) : (
+                                <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-platinum/20 flex items-center justify-center text-platinum/80 font-semibold">
+                                    {stylist.name?.charAt(0) || 'S'}
+                                </div>
+                            )}
                             <div className="flex flex-col leading-tight">
                                 <div className="text-lg mt-1 flex items-center">
                                     <span className="text-platinum mr-1 font-semibold">{stylist.name}</span>
@@ -502,7 +508,13 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             <CloseIcon />
                         </button>
                         <div className="flex flex-col items-center">
-                            <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30"/>
+                            {getStylistAvatar(stylist) ? (
+                                <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30"/>
+                            ) : (
+                                <div className="w-20 h-20 rounded-full mb-3 border-2 border-platinum/30 bg-platinum/20 flex items-center justify-center text-lg text-platinum/80 font-semibold">
+                                    {stylist.name?.charAt(0) || 'S'}
+                                </div>
+                            )}
                             <h4 className="text-center font-bold text-lg text-platinum">{stylist.name}</h4>
                             <p className="text-center text-sm text-platinum/60 mb-4">{stylist.title}</p>
                         </div>
@@ -525,7 +537,13 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                              ) : (
                                 <div className={`flex flex-row items-start ${message.sender === 'user' ? 'justify-end flex-row-reverse' : ''}`}>
                                      {message.sender === 'stylist' && stylist && (
-                                         <img src={stylist.avatarUrl} alt={stylist.name} className="w-8 h-8 rounded-full mr-3 flex-shrink-0" />
+                                         getStylistAvatar(stylist) ? (
+                                            <img src={getStylistAvatar(stylist)} alt={stylist.name} className="w-8 h-8 rounded-full mr-3 flex-shrink-0" />
+                                         ) : (
+                                            <div className="w-8 h-8 rounded-full bg-platinum/20 mr-3 flex-shrink-0 flex items-center justify-center text-[0.8rem] text-platinum/80 font-semibold">
+                                                {stylist.name?.charAt(0) || 'S'}
+                                            </div>
+                                         )
                                      )}
                                      <div className={`relative text-sm py-2 px-4 shadow rounded-xl ${message.sender === 'user' ? 'bg-platinum/10 text-platinum' : 'bg-[#1F2937] text-platinum'}`}>
                                          {message.imageUrl ? (
@@ -544,7 +562,15 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                     ))}
                     {isStylistTyping && (
                          <div className="flex flex-row items-center">
-                             {stylist && <img src={stylist.avatarUrl} alt="Stylist typing" className="w-8 h-8 rounded-full mr-3" />}
+                             {stylist && (
+                                getStylistAvatar(stylist) ? (
+                                    <img src={getStylistAvatar(stylist)} alt="Stylist typing" className="w-8 h-8 rounded-full mr-3" />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-platinum/20 mr-3 flex items-center justify-center text-[0.8rem] text-platinum/80 font-semibold">
+                                        {stylist.name?.charAt(0) || 'S'}
+                                    </div>
+                                )
+                             )}
                              <div className="relative text-sm bg-[#1F2937] py-2 px-4 shadow rounded-xl">
                                 <div className="flex items-center space-x-1">
                                     <span className="w-1.5 h-1.5 bg-platinum/50 rounded-full animate-pulse delay-75"></span>
