@@ -443,20 +443,30 @@ export const StylistDashboard: React.FC = () => {
                             <div ref={messageEndRef} />
                         </div>
                         <div className="flex flex-row items-center h-16 rounded-xl bg-dark-blue w-full px-4 ring-1 ring-platinum/20">
-                            <button onClick={attachFile} className="flex items-center justify-center text-platinum/70 hover:text-white">
+                            <button onClick={attachFile} aria-label="Attach file" className="flex items-center justify-center text-platinum/70 hover:text-white">
                                 <AttachIcon />
                             </button>
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                             <div className="flex-grow ml-4">
-                                <input type="text" value={input} onChange={handleInputChange} onKeyPress={e => e.key === 'Enter' && sendMessage()} className="flex w-full border rounded-full focus:outline-none focus:border-platinum/50 pl-4 h-10 bg-black/20 text-platinum border-transparent" placeholder="Type your message..."/>
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={handleInputChange}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+                                    }}
+                                    className="flex w-full border rounded-full focus:outline-none focus:border-platinum/50 pl-4 h-10 bg-black/20 text-platinum border-transparent"
+                                    placeholder="Type your message..."
+                                    aria-label="Message input"
+                                />
                             </div>
                             <div className="ml-4 flex items-center space-x-2">
-                                 {videoCallRequestSid === activeConversation.sid && !videoRoom && (
-                                    <button onClick={joinVideoCall} disabled={isConnectingVideo} className="text-xs font-semibold bg-green-600 text-white px-3 py-2 rounded-full animate-pulse">
-                                        {isConnectingVideo ? "Joining..." : "Join Video Call"}
-                                    </button>
-                                )}
-                                <button onClick={sendMessage} className="flex items-center justify-center bg-platinum hover:bg-platinum/90 rounded-full text-dark-blue h-10 w-10 flex-shrink-0 transition-colors">
+                                     {videoCallRequestSid === activeConversation.sid && !videoRoom && (
+                                        <button onClick={joinVideoCall} disabled={isConnectingVideo} className="text-xs font-semibold bg-green-600 text-white px-3 py-2 rounded-full animate-pulse" aria-label="Join video call">
+                                            {isConnectingVideo ? "Joining..." : "Join Video Call"}
+                                        </button>
+                                    )}
+                                    <button onClick={sendMessage} aria-label="Send message" className="flex items-center justify-center bg-platinum hover:bg-platinum/90 rounded-full text-dark-blue h-10 w-10 flex-shrink-0 transition-colors">
                                     <svg className="w-6 h-6 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                                 </button>
                             </div>
