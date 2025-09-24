@@ -378,7 +378,13 @@ const App: React.FC = () => {
         return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-platinum"></div></div>;
     }
   if (showLogin) {
-    return <LoginPage onBack={() => setShowLogin(false)} />;
+    return (
+      <LoginPage 
+        onBack={() => setShowLogin(false)}
+        onNavigateToTerms={() => setCurrentPage('terms')}
+        onNavigateToPrivacy={() => setCurrentPage('privacy')}
+      />
+    );
   }
   if (user && showOnboarding) {
         return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;

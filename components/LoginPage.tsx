@@ -3,6 +3,8 @@ import { signUp, signIn, resetPassword, resendVerification } from '../services/f
 
 interface LoginPageProps {
     onBack: () => void;
+    onNavigateToTerms: () => void;
+    onNavigateToPrivacy: () => void;
 }
 
 const BackArrowIcon: React.FC = () => (
@@ -12,7 +14,7 @@ const BackArrowIcon: React.FC = () => (
 );
 
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms, onNavigateToPrivacy }) => {
     const [mode, setMode] = useState<'signin' | 'signup'>('signup');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -29,7 +31,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
         try {
             if (mode === 'signup') {
                 await signUp(email, password, name.trim() || undefined);
-                setMessage('Account created. Please check your email to verify your address before signing in.');
+                setMessage('Account created. Please check your email (including the Spam folder) for a link to verify your address before trying to sign in.');
             } else {
                 await signIn(email, password);
                 setMessage('Signed in successfully.');
@@ -72,12 +74,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                 <h2 className="text-3xl font-bold text-platinum tracking-tight mt-8">{mode === 'signup' ? 'Create an Account' : 'Welcome back'}</h2>
                 <p className="mt-2 text-lg text-platinum/60">Use your email and password. We’ll verify your email after signup.</p>
 
-                {error && (
-                    <div className="mt-6 text-red-400 bg-red-900/20 p-3 rounded-lg border border-red-400/30">{error}</div>
-                )}
-                {message && (
-                    <div className="mt-6 text-green-300 bg-emerald-900/20 p-3 rounded-lg border border-emerald-400/30">{message}</div>
-                )}
+                                {error && (
+                                        <div className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-red-400/30 bg-red-900/20 text-red-300">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                                <path fillRule="evenodd" d="M10.29 3.86a2 2 0 013.42 0l8.2 14.2A2 2 0 0120.2 21H3.8a2 2 0 01-1.71-2.94l8.2-14.2zM13 16a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v4a1 1 0 102 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                            <div className="text-sm leading-relaxed">{error}</div>
+                                        </div>
+                                )}
+                                {message && (
+                                        <div className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-platinum/30 bg-platinum/5 text-platinum">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0 text-platinum/80" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414l2.293 2.293 6.543-6.543a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                            <div className="text-sm leading-relaxed">{message}</div>
+                                        </div>
+                                )}
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-4 text-left">
                     {mode === 'signup' && (
@@ -97,10 +109,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                     <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait…' : (mode === 'signup' ? 'Sign Up' : 'Sign In')}</button>
                 </form>
 
-                <div className="mt-4 flex items-center justify-between text-sm">
-                    <button onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')} className="text-platinum/80 hover:text-white">{mode === 'signup' ? 'Have an account? Sign in' : 'New here? Create an account'}</button>
-                    {mode === 'signin' && <button onClick={handleReset} className="text-platinum/60 hover:text-white">Forgot password?</button>}
-                </div>
+                                <div className="mt-6 flex items-center justify-between text-sm">
+                                        <div className="flex items-center">
+                                                <span className="text-platinum/60">{mode === 'signup' ? 'Have an account?' : 'New here?'}</span>
+                                                <button
+                                                    onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
+                                                    className="ml-2 inline-flex items-center font-semibold text-platinum underline decoration-platinum/40 underline-offset-4 hover:text-white hover:decoration-white transition-colors"
+                                                >
+                                                    {mode === 'signup' ? 'Sign in' : 'Create an account'}
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="ml-1 h-4 w-4">
+                                                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                        </div>
+                                        {mode === 'signin' && (
+                                            <button onClick={handleReset} className="text-platinum/60 hover:text-white underline decoration-platinum/30 underline-offset-4">Forgot password?</button>
+                                        )}
+                                </div>
 
                 {mode === 'signin' && (
                     <div className="mt-3 text-xs text-platinum/50">
@@ -108,7 +133,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                     </div>
                 )}
 
-                <p className="mt-8 text-xs text-platinum/40">By signing in, you agree to our Terms of Service and Privacy Policy.</p>
+                                <p className="mt-8 text-xs text-platinum/50">
+                                    By signing in, you agree to our{' '}
+                                    <button onClick={onNavigateToTerms} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Terms of Service</button>
+                                    {' '}and{' '}
+                                    <button onClick={onNavigateToPrivacy} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Privacy Policy</button>.
+                                </p>
             </div>
         </div>
     );
