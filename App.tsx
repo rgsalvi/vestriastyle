@@ -14,7 +14,7 @@ import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
 import ProfilePage from './components/ProfilePage';
-import { getStyleAdvice } from './services/geminiService';
+import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth } from './services/firebase';
@@ -37,7 +37,6 @@ const Logo: React.FC<{ className?: string }> = ({ className }) => (
     aria-label="Vestria Style Logo"
   >
     <g fill="#C2BEBA">
-      {/* Symbol */}
       <g transform="translate(150 0) scale(1)">
         <g stroke="#C2BEBA" strokeWidth="8" strokeLinecap="round">
           <circle cx="20" cy="20" r="8" stroke="none" />
@@ -54,34 +53,8 @@ const Logo: React.FC<{ className?: string }> = ({ className }) => (
           <line x1="58" y1="58" x2="80" y2="80" />
         </g>
       </g>
-      {/* VESTRIA */}
-      <text
-        x="50%"
-        y="185"
-        dominantBaseline="middle"
-        textAnchor="middle"
-        fill="#C2BEBA"
-        fontSize="80"
-        fontFamily="Inter, sans-serif"
-        fontWeight="600"
-        stroke="none"
-      >
-        VESTRIA
-      </text>
-      {/* STYLE */}
-      <text
-        x="50%"
-        y="245"
-        dominantBaseline="middle"
-        textAnchor="middle"
-        fill="#C2BEBA"
-        fontSize="36"
-        fontFamily="Space Grotesk, monospace"
-        letterSpacing="0.2em"
-        stroke="none"
-      >
-        STYLE
-      </text>
+      <text x="50%" y="185" dominantBaseline="middle" textAnchor="middle" fill="#C2BEBA" fontSize="80" fontFamily="Inter, sans-serif" fontWeight="600" stroke="none">VESTRIA</text>
+      <text x="50%" y="245" dominantBaseline="middle" textAnchor="middle" fill="#C2BEBA" fontSize="36" fontFamily="Space Grotesk, monospace" letterSpacing="0.2em" stroke="none">STYLE</text>
     </g>
   </svg>
 );
@@ -268,6 +241,8 @@ const App: React.FC = () => {
   const [chatNewItem, setChatNewItem] = useState<AnalysisItem | null>(null);
   // Profile page controlled via currentPage === 'profile'
   const [profileSavedBanner, setProfileSavedBanner] = useState<string | null>(null);
+  const [onboardingGateBanner, setOnboardingGateBanner] = useState(false);
+  const [pendingChatRetry, setPendingChatRetry] = useState<{ context: AiResponse; newItem: AnalysisItem | null } | null>(null);
 
   // Utility: prevent indefinite hangs by timing out slow promises
   const withTimeout = useCallback(async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
@@ -514,6 +489,21 @@ const App: React.FC = () => {
             updateUserProfile(updatedUser.name, newPic).catch(() => {});
           }
           setShowOnboarding(false);
+          // Auto-retry pending chat if user completed onboarding after being blocked
+          if (pendingChatRetry) {
+            const retry = pendingChatRetry;
+            setTimeout(async () => {
+              try {
+                trackEvent('chat_retry_after_onboarding');
+                const session = await initiateChatSession(retry.context, retry.newItem, user as any, true);
+                setChatContext(retry.context);
+                setChatNewItem(retry.newItem);
+                setIsChatOpen(true);
+                setPendingChatRetry(null);
+                setOnboardingGateBanner(false);
+              } catch (e) { console.warn('Chat retry failed post-onboarding', e); }
+            }, 400);
+          }
           // If user not yet verified, we could show a transient banner (handled via profileSavedBanner)
           if (user && !auth.currentUser?.emailVerified) {
             setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
@@ -670,9 +660,11 @@ const App: React.FC = () => {
       setShowLogin(true);
       return;
     }
-    // Ensure onboarding is complete before attempting chat
     if (!styleProfile || !isProfileComplete(styleProfile)) {
       setShowOnboarding(true);
+      setOnboardingGateBanner(true);
+      setPendingChatRetry({ context, newItem: newItemForChat });
+      trackEvent('chat_attempt_blocked_onboarding');
       return;
     }
     // Require premium for stylist chat
@@ -806,13 +798,45 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-dark-blue flex flex-col">
       <div className="flex-grow">
-        {profileSavedBanner && (
-          <div className="sticky top-0 z-30">
-            <div className="mx-auto max-w-3xl mt-3 px-4">
-              <div role="status" className="px-3 py-2 rounded-xl text-sm border border-platinum/30 bg-platinum/5 text-platinum shadow">
-                {profileSavedBanner}
+        {(profileSavedBanner || onboardingGateBanner) && (
+          <div className="sticky top-0 z-30 space-y-2">
+            {profileSavedBanner && (
+              <div className="mx-auto max-w-3xl mt-3 px-4">
+                <div role="status" className="px-3 py-2 rounded-xl text-sm border border-platinum/30 bg-platinum/5 text-platinum shadow">
+                  {profileSavedBanner}
+                </div>
               </div>
-            </div>
+            )}
+            {onboardingGateBanner && (
+              <div className="mx-auto max-w-3xl px-4">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between px-4 py-3 rounded-xl text-sm border border-amber-400/40 bg-amber-400/10 text-amber-200 shadow">
+                  <span>Please complete your style profile to be able to chat with a stylist.</span>
+                  <div className="flex gap-2">
+                    {pendingChatRetry && !showOnboarding && (
+                      <button
+                        onClick={async () => {
+                          if (!styleProfile || !isProfileComplete(styleProfile)) { setShowOnboarding(true); return; }
+                          try {
+                            trackEvent('chat_manual_retry_banner');
+                            const session = await initiateChatSession(pendingChatRetry.context, pendingChatRetry.newItem, user as any, true);
+                            setChatContext(pendingChatRetry.context);
+                            setChatNewItem(pendingChatRetry.newItem);
+                            setIsChatOpen(true);
+                            setPendingChatRetry(null);
+                            setOnboardingGateBanner(false);
+                          } catch (e) { console.warn('Manual retry failed', e); }
+                        }}
+                        className="px-3 py-1 rounded-full bg-platinum text-dark-blue font-semibold text-xs hover:opacity-90"
+                      >Retry Chat</button>
+                    )}
+                    <button
+                      onClick={() => { setShowOnboarding(true); trackEvent('banner_start_onboarding'); }}
+                      className="px-3 py-1 rounded-full bg-dark-blue/40 border border-amber-400/40 text-amber-100 font-medium text-xs hover:bg-dark-blue/60"
+                    >Complete Now</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
         <Header 

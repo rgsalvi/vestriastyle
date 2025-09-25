@@ -122,6 +122,29 @@ export interface ChatSessionData {
 }
 
 
+// Lightweight analytics event sender (best-effort, fire-and-forget)
+export async function trackEvent(type: string, meta?: any) {
+  try {
+    let idToken: string | undefined;
+    try {
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      idToken = await auth.currentUser?.getIdToken();
+    } catch {}
+    await fetch('/api/track-event', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+      },
+      body: JSON.stringify({ type, meta }),
+      keepalive: true,
+    });
+  } catch (e) {
+    // swallow
+  }
+}
+
 export const initiateChatSession = async (analysisContext: AiResponse, newItemContext: AnalysisItem | null, user: User, isPremium: boolean): Promise<ChatSessionData> => {
     try {
         let idToken: string | undefined = undefined;
@@ -147,6 +170,9 @@ export const initiateChatSession = async (analysisContext: AiResponse, newItemCo
         const msg = errorData.message || 'Server responded with an error';
         const err = new Error(code ? `${msg}: ${code}` : msg) as any;
         if (code) err.code = code;
+        if (code === 'ONBOARDING_INCOMPLETE') {
+          trackEvent('chat_denied_onboarding_incomplete');
+        }
         throw err;
       } catch (e) {
         if (e instanceof Error) throw e;
