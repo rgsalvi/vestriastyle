@@ -670,6 +670,11 @@ const App: React.FC = () => {
       setShowLogin(true);
       return;
     }
+    // Ensure onboarding is complete before attempting chat
+    if (!styleProfile || !isProfileComplete(styleProfile)) {
+      setShowOnboarding(true);
+      return;
+    }
     // Require premium for stylist chat
     if (!styleProfile?.isPremium) {
       setShowPremiumUpsell(true);
@@ -834,6 +839,10 @@ const App: React.FC = () => {
             user={activeUserForChat}
             analysisContext={chatContext}
             newItemContext={chatNewItem}
+            onRequireOnboarding={() => {
+              setIsChatOpen(false);
+              setShowOnboarding(true);
+            }}
         />
       )}
       {showPremiumUpsell && <PremiumUpsellModal onClose={() => setShowPremiumUpsell(false)} />}

@@ -114,11 +114,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Read premium flag from Firestore profile: users/{uid}/meta/profile
         let isPremium = false;
         const userDoc = await adminDb.doc(`users/${uid}`).get();
+        let profileData: any = null;
         if (userDoc.exists) {
-            isPremium = !!userDoc.data()?.isPremium;
+            profileData = userDoc.data() || {};
+            isPremium = !!profileData.isPremium;
         } else {
             const legacySnap = await adminDb.doc(`users/${uid}/meta/profile`).get();
-            isPremium = legacySnap.exists ? !!legacySnap.data()?.isPremium : false;
+            if (legacySnap.exists) {
+              profileData = legacySnap.data();
+              isPremium = !!profileData.isPremium;
+            }
         }
         // Launch promo: optionally auto-upgrade verified users and backfill Firestore
         const promoEnabled = (process.env.LAUNCH_PROMO_AUTO_PREMIUM || '').toLowerCase() === 'true';
@@ -131,6 +136,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!isPremium) {
             return res.status(403).json({ success: false, message: 'Premium required.' });
         }
+
+                // Onboarding enforcement Phase 2 (soft): require onboardingComplete flag OR essential fields
+                const hasEssential = profileData && profileData.bodyType && profileData.bodyType !== 'None' && Array.isArray(profileData.styleArchetypes) && profileData.styleArchetypes.length > 0;
+                const hasFlag = !!profileData?.onboardingComplete;
+                if (!hasFlag && hasEssential) {
+                    // Backfill flag silently
+                    try {
+                        await adminDb.doc(`users/${uid}`).set({ onboardingComplete: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+                        console.log('[chat-onboarding] backfill_flag uid=', uid);
+                    } catch (e) {
+                        console.warn('[chat-onboarding] backfill_failed uid=', uid, e);
+                    }
+                } else if (!hasFlag && !hasEssential) {
+                    console.log('[chat-onboarding] deny_incomplete uid=', uid);
+                    return res.status(400).json({ success: false, message: 'Onboarding incomplete. Please finish your style profile first.', error: 'ONBOARDING_INCOMPLETE' });
+                } else {
+                    console.log('[chat-onboarding] allow uid=', uid, 'flag=', hasFlag, 'essential=', hasEssential);
+                }
 
         // Randomly assign one stylist for a 1-on-1 chat
         const assignedStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];

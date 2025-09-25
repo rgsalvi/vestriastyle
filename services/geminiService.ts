@@ -140,17 +140,23 @@ export const initiateChatSession = async (analysisContext: AiResponse, newItemCo
         });
 
     if (!response.ok) {
-      let errorText = 'Server responded with an error';
       try {
         const errorData = await response.json();
-        errorText = `${errorData.message ?? 'Server responded with an error'}${errorData.error ? `: ${errorData.error}` : ''}`;
-      } catch {}
-      throw new Error(errorText);
+        // Preserve structured error codes for caller logic
+        const code = errorData.error;
+        const msg = errorData.message || 'Server responded with an error';
+        const err = new Error(code ? `${msg}: ${code}` : msg) as any;
+        if (code) err.code = code;
+        throw err;
+      } catch (e) {
+        if (e instanceof Error) throw e;
+        throw new Error('Server responded with an error');
+      }
     }
 
     return await response.json() as ChatSessionData;
-    } catch (error) {
-        console.error("Error initiating chat session:", error);
-        throw new Error("Could not connect to the stylist service. Please try again later.");
-    }
+  } catch (error: any) {
+    console.error("Error initiating chat session:", error);
+    throw error;
+  }
 };

@@ -80,6 +80,7 @@ interface StylistChatModalProps {
     user: User;
     analysisContext: AiResponse | null;
     newItemContext: AnalysisItem | null;
+    onRequireOnboarding?: () => void; // invoked if server reports onboarding incomplete mid-flow
 }
 
 const isDataUrl = (s: string | null): boolean => !!s && s.startsWith('data:image');
@@ -110,7 +111,7 @@ const processTwilioMessage = async (message: Message, currentUser: User): Promis
     };
 }
 
-export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext }) => {
+export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onClose, user, analysisContext, newItemContext, onRequireOnboarding }) => {
     const [status, setStatus] = useState<'connecting' | 'connected' | 'error' | 'idle'>('idle');
     const [reloadCounter, setReloadCounter] = useState<number>(0);
     const [client, setClient] = useState<Client | null>(null);
@@ -189,7 +190,17 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
             try {
                 canceledRef.current = false;
                 // During launch bonus, all verified users are treated as premium; value is checked client-side and sent here.
-                const data = await initiateChatSession(analysisContext, newItemContext, user, true);
+                let data: ChatSessionData | null = null;
+                try {
+                    data = await initiateChatSession(analysisContext, newItemContext, user, true);
+                } catch (e: any) {
+                    if (e && e.code === 'ONBOARDING_INCOMPLETE') {
+                        // Propagate requirement to parent to relaunch onboarding
+                        if (onRequireOnboarding) onRequireOnboarding();
+                        throw e; // allow status=error to be set
+                    }
+                    throw e;
+                }
                 if (cancelled || canceledRef.current) return;
                 setSessionData(data);
                 const twilioClient = await Client.create(data.token);
