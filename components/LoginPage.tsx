@@ -20,6 +20,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [errorCode, setErrorCode] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -28,7 +29,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
         switch (code) {
             case 'auth/invalid-credential':
             case 'auth/wrong-password':
-                return 'That email and password don\'t match. Double‑check your password or reset it below.';
+                return 'mismatch'; // handled with custom luxury copy below
             case 'auth/user-not-found':
                 return mode === 'signin'
                     ? 'No account found with that email. Create an account instead.'
@@ -51,6 +52,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        setErrorCode(null);
         setMessage(null);
         setLoading(true);
         try {
@@ -66,31 +68,34 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
             const code: string | undefined = err?.code;
             const friendly = code ? friendlyAuthMessage(code, mode) : null;
             const raw = err instanceof Error ? err.message : 'Authentication failed.';
-            setError(friendly || raw);
+            if (code) setErrorCode(code);
+            setError(friendly === 'mismatch' ? 'mismatch' : (friendly || raw));
         } finally {
             setLoading(false);
         }
     };
 
     const handleReset = async () => {
-        setError(null); setMessage(null);
+        setError(null); setErrorCode(null); setMessage(null);
         try {
             await resetPassword(email);
             setMessage('Password reset email sent. Please check your inbox (and Spam) for a reset link.');
         } catch (err: any) {
             const code: string | undefined = err?.code;
             const friendly = code ? friendlyAuthMessage(code, mode) : null;
-            setError(friendly || (err instanceof Error ? err.message : 'Failed to send reset email.'));
+            if (code) setErrorCode(code);
+            setError(friendly === 'mismatch' ? 'mismatch' : (friendly || (err instanceof Error ? err.message : 'Failed to send reset email.')));
         }
     };
 
     const handleResendVerification = async () => {
-        setError(null); setMessage(null);
+        setError(null); setErrorCode(null); setMessage(null);
         try { await resendVerification(); setMessage('Verification email sent again. Please check your inbox (and Spam) for the verification link.'); }
         catch (err: any) {
             const code: string | undefined = err?.code;
             const friendly = code ? friendlyAuthMessage(code, mode) : null;
-            setError(friendly || (err instanceof Error ? err.message : 'Failed to send verification email.'));
+            if (code) setErrorCode(code);
+            setError(friendly === 'mismatch' ? 'mismatch' : (friendly || (err instanceof Error ? err.message : 'Failed to send verification email.')));
         }
     };
 
@@ -109,28 +114,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 <p className="mt-2 text-lg text-platinum/60">Use your email and password. We’ll verify your email after signup.</p>
 
                                 {error && (
-                                    <div role="alert" className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-red-400/30 bg-gradient-to-br from-red-900/30 via-red-900/20 to-red-800/10 text-red-300 shadow-inner">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <div role="alert" className="mt-6 flex items-start gap-4 p-5 rounded-2xl border border-platinum/25 bg-gradient-to-br from-white/5 via-white/3 to-white/[0.02] text-platinum/90 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                                 <path fillRule="evenodd" d="M10.29 3.86a2 2 0 013.42 0l8.2 14.2A2 2 0 0120.2 21H3.8a2 2 0 01-1.71-2.94l8.2-14.2zM13 16a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v4a1 1 0 102 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
                                             </svg>
-                                            <div className="text-sm leading-relaxed">
-                                                {error}
-                                                {error.includes('Create an account') && mode === 'signin' && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setMode('signup')}
-                                                        className="block mt-2 text-xs font-medium underline text-red-200/80 hover:text-red-100"
-                                                    >Create an account now →</button>
-                                                )}
-                                                {error.includes('don\'t match') && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleReset}
-                                                        className="block mt-2 text-xs font-medium underline text-red-200/70 hover:text-red-100"
-                                                    >Forgot your password? Reset it →</button>
-                                                )}
-                                            </div>
                                         </div>
+                                        <div className="text-sm leading-relaxed space-y-2">
+                                            {error === 'mismatch' ? (
+                                                <>
+                                                    <p className="font-medium tracking-wide text-platinum">The email and password don't match.</p>
+                                                    <p className="text-platinum/70">
+                                                        <button type="button" onClick={() => handleSubmit(new Event('submit') as any)} className="underline underline-offset-4 decoration-platinum/30 hover:decoration-platinum hover:text-white transition">Retry</button>
+                                                        <span className="mx-1">or</span>
+                                                        <button type="button" onClick={handleReset} className="underline underline-offset-4 decoration-platinum/30 hover:decoration-platinum hover:text-white transition">reset your password</button>.
+                                                        {mode === 'signin' && (
+                                                            <>
+                                                                <span className="mx-1">Or</span>
+                                                                <button type="button" onClick={() => setMode('signup')} className="underline underline-offset-4 decoration-platinum/30 hover:decoration-platinum hover:text-white transition">create your account</button>.
+                                                            </>
+                                                        )}
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <p>{error}</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
                                 {message && (
                                     <div role="status" className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-platinum/30 bg-platinum/5 text-platinum">
