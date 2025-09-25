@@ -18,7 +18,7 @@ import { getStyleAdvice, trackEvent, initiateChatSession } from './services/gemi
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth } from './services/firebase';
-import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe } from './services/repository';
+import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getSupabaseAvatarPublicUrl } from './services/repository';
 
 interface HeaderProps {
   user: User | null;
@@ -487,15 +487,17 @@ const App: React.FC = () => {
     };
     if (profile.avatarDataUrl && profile.avatarDataUrl.startsWith('data:')) {
       try {
-        console.log('[onboarding-save] uploading avatar');
-        photoURL = await timeout(uploadAvatar(user.id, profile.avatarDataUrl), 20000, 'Avatar upload');
-        console.log('[onboarding-save] avatar uploaded');
+        console.log('[onboarding-save] uploading avatar (supabase)');
+        photoURL = await timeout(uploadAvatar(user.id, profile.avatarDataUrl), 20000, 'Avatar upload'); // returns storage path
+        console.log('[onboarding-save] avatar uploaded (path)', photoURL);
       } catch (e) {
-        console.warn('[onboarding-save] avatar upload failed, using inline data URL', e);
+        console.warn('[onboarding-save] avatar upload failed', e);
+        throw e instanceof Error ? e : new Error('Avatar upload failed');
       }
     }
-    const cloudProfile: StyleProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl, isOnboarded: true } as StyleProfile;
-    console.log('[onboarding-save] prepared profile with isOnboarded=true, saving to Firestore');
+    const cloudProfile: any = { ...profile, avatar_url: photoURL, isOnboarded: true };
+    delete cloudProfile.avatarDataUrl; // no longer persist raw data URL
+    console.log('[onboarding-save] prepared profile with isOnboarded=true, saving to Supabase');
     try {
       await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save');
       console.log('[onboarding-save] profile saved');
@@ -508,12 +510,13 @@ const App: React.FC = () => {
     try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
     setStyleProfile(cloudProfile);
     setBodyType(cloudProfile.bodyType || 'None');
-    if (photoURL || profile.avatarDataUrl) {
-      const newPic = photoURL || profile.avatarDataUrl!;
-      const updatedUser = { ...user, picture: newPic } as User;
+    if (photoURL) {
+      // Derive public URL
+      const publicUrl = getSupabaseAvatarPublicUrl(photoURL);
+      const updatedUser = { ...user, picture: publicUrl } as User;
       setUser(updatedUser);
       try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser)); } catch {}
-      updateUserProfile(updatedUser.name, newPic).catch(() => {});
+      updateUserProfile(updatedUser.name, publicUrl).catch(() => {});
     }
     setShowOnboarding(false);
     setOnboardingSuccessToast(true);

@@ -6,6 +6,7 @@ create table if not exists public.users (
   id text primary key,
   email text unique not null,
   display_name text,
+  avatar_url text,
   is_onboarded boolean default false not null,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
