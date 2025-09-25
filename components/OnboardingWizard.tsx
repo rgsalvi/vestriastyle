@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { signOut } from '../services/firebase';
+import { trackEvent } from '../services/geminiService';
 import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
@@ -216,9 +218,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                             >
                                 Next
                             </button>
-                        ) : (
-                                                         <button
-                                                             onClick={async () => {
+                                                ) : (
+                                                    <>
+                                                        <button
+                                                            onClick={async () => {
                                                                  if (isNextDisabled() || submitting) return;
                                                                  setSubmitting(true);
                                                                  setSubmitError(null);
@@ -249,12 +252,18 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                                                  } finally {
                                                                      setSubmitting(false);
                                                                  }
-                                                             }}
-                                                             disabled={isNextDisabled() || submitting}
-                                                             className="px-6 py-2 bg-platinum text-dark-blue border border-transparent rounded-full shadow-sm text-sm font-medium hover:scale-105 disabled:bg-platinum/50 disabled:cursor-not-allowed transition-transform"
-                                                         >
-                                                             {submitting ? 'Finishing…' : 'Finish'}
-                                                         </button>
+                                                            }}
+                                                            disabled={isNextDisabled() || submitting}
+                                                            className="px-6 py-2 bg-platinum text-dark-blue border border-transparent rounded-full shadow-sm text-sm font-medium hover:scale-105 disabled:bg-platinum/50 disabled:cursor-not-allowed transition-transform"
+                                                        >
+                                                            {submitting ? 'Finishing…' : 'Finish'}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => { try { trackEvent('onboarding_abort'); } catch {} await signOut(); }}
+                                                            className="ml-4 text-xs text-platinum/60 hover:text-white underline decoration-platinum/30 underline-offset-4"
+                                                        >Sign out</button>
+                                                    </>
                         )}
                     </div>
                     {submitError && (

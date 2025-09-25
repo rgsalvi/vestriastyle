@@ -255,14 +255,8 @@ const App: React.FC = () => {
     });
   }, []);
 
-  // Helper to determine if a profile is meaningfully complete
-  const isProfileComplete = (p: any | null) => {
-    if (!p) return false;
-    if (p.onboardingComplete) return true;
-    // Legacy heuristic: must have a non-'None' bodyType AND at least one styleArchetype
-    if (p.bodyType && p.bodyType !== 'None' && Array.isArray(p.styleArchetypes) && p.styleArchetypes.length > 0) return true;
-    return false;
-  };
+  // Completion now determined solely by explicit flag
+  const isProfileComplete = (p: any | null) => !!(p && p.isOnboarded === true);
 
   // Auth and User Data Logic
   useEffect(() => {
@@ -289,14 +283,7 @@ const App: React.FC = () => {
               if (!cloudProfile.avatarDataUrl && mapped.picture) {
                 cloudProfile.avatarDataUrl = mapped.picture;
               }
-              // Passive Phase 1 backfill: if missing onboardingComplete but profile looks complete, add it silently
-              if (!cloudProfile.onboardingComplete && cloudProfile.bodyType && cloudProfile.bodyType !== 'None') {
-                try {
-                  await saveUserProfile(mapped.id, { onboardingComplete: true });
-                  cloudProfile.onboardingComplete = true;
-                  console.log('[profile-backfill] added onboardingComplete flag (cloud)');
-                } catch (e) { console.warn('[profile-backfill] failed to add onboardingComplete flag (cloud)', e); }
-              }
+              // Ignore legacy onboardingComplete and heuristics per new spec; rely only on isOnboarded
               if (isProfileComplete(cloudProfile)) {
                 setStyleProfile(cloudProfile);
                 setBodyType(cloudProfile.bodyType || 'None');
@@ -320,13 +307,7 @@ const App: React.FC = () => {
                 if (!localProf.avatarDataUrl && mapped.picture) {
                   localProf.avatarDataUrl = mapped.picture;
                 }
-                if (!localProf.onboardingComplete && localProf.bodyType && localProf.bodyType !== 'None') {
-                  try {
-                    await saveUserProfile(mapped.id, { onboardingComplete: true });
-                    localProf.onboardingComplete = true;
-                    console.log('[profile-backfill] added onboardingComplete flag (local->cloud)');
-                  } catch (e) { console.warn('[profile-backfill] failed to add onboardingComplete flag (local->cloud)', e); }
-                }
+                // No heuristic backfill; will force onboarding if isOnboarded not true
                 if (isProfileComplete(localProf)) {
                   setStyleProfile(localProf);
                   setBodyType(localProf.bodyType || 'None');
@@ -354,13 +335,7 @@ const App: React.FC = () => {
                 console.log('[profile-load] source=local-fallback hasFlag=', !!localProf.onboardingComplete);
                 if (fbUser.emailVerified && !localProf.isPremium) localProf.isPremium = true;
                 if (!localProf.avatarDataUrl && mapped.picture) localProf.avatarDataUrl = mapped.picture;
-                if (!localProf.onboardingComplete && localProf.bodyType && localProf.bodyType !== 'None') {
-                  try {
-                    await saveUserProfile(mapped.id, { onboardingComplete: true });
-                    localProf.onboardingComplete = true;
-                    console.log('[profile-backfill] added onboardingComplete flag (fallback)');
-                  } catch (e2) { console.warn('[profile-backfill] failed to add onboardingComplete flag (fallback)', e2); }
-                }
+                // No heuristic backfill in fallback
                 if (isProfileComplete(localProf)) {
                   setStyleProfile(localProf);
                   setBodyType(localProf.bodyType || 'None');
@@ -417,6 +392,7 @@ const App: React.FC = () => {
       console.log('[onboarding-decision] immediate-new-user');
       immediateOnboardingRef.current = true;
       setShowOnboarding(true);
+      try { trackEvent('onboarding_start'); } catch {}
       try { sessionStorage.removeItem('newlySignedUpUid'); } catch {}
       // Background warm-up: optionally fetch profile after short delay (defensive; should not exist yet)
       setTimeout(() => {
@@ -512,13 +488,16 @@ const App: React.FC = () => {
         console.warn('[onboarding-save] avatar upload failed, using inline data URL', e);
       }
     }
-    const cloudProfile: StyleProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl, onboardingComplete: true } as StyleProfile;
-    console.log('[onboarding-save] prepared profile, saving to Firestore');
+    const cloudProfile: StyleProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl, isOnboarded: true } as StyleProfile;
+    console.log('[onboarding-save] prepared profile with isOnboarded=true, saving to Firestore');
     try {
       await saveUserProfile(user.id, cloudProfile);
       console.log('[onboarding-save] profile saved');
     } catch (e) {
-      console.warn('[onboarding-save] failed to save profile (will still cache locally)', e);
+      console.warn('[onboarding-save] failed to save full profile; NOT marking isOnboarded true', e);
+      // If save fails entirely, do not proceed with marking local state as onboarded
+      setOnboardingSuccessToast(false);
+      return;
     }
     try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
     setStyleProfile(cloudProfile);
@@ -551,6 +530,7 @@ const App: React.FC = () => {
       setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
       setTimeout(() => setProfileSavedBanner(null), 8000);
     }
+    try { trackEvent('onboarding_complete'); } catch {}
   };
 
   // Wardrobe Logic

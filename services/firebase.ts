@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCdw-72plQ9WDlSBn3c_dQopah6-FLNqAg",
@@ -13,15 +14,29 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+const db = getFirestore(app);
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
 export const signUp = (email: string, password: string, displayName?: string): Promise<UserCredential> =>
   createUserWithEmailAndPassword(auth, email, password).then(async (cred: UserCredential) => {
+    // Track signup_start (fire-and-forget; endpoint may ignore if unauth yet)
+    try {
+      fetch('/api/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'signup_start', meta: { email: cred.user.email } }) });
+    } catch {}
     if (displayName) {
       try { await updateProfile(cred.user, { displayName }); } catch {}
     }
     await sendEmailVerification(cred.user);
     try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
+    // Immediately create user doc with isOnboarded:false so sign-in logic can rely on flag
+    try {
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        isOnboarded: false,
+        createdAt: serverTimestamp(),
+        email: cred.user.email || email,
+        name: displayName || cred.user.displayName || cred.user.email || 'User'
+      }, { merge: true });
+    } catch (e) { console.warn('Failed to create initial user doc', e); }
     return cred;
   });
 export const signIn = (email: string, password: string) => signInWithEmailAndPassword(auth, email, password);

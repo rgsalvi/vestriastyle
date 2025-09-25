@@ -58,6 +58,7 @@ export interface StyleProfile {
   avatarDataUrl?: string;
   isPremium?: boolean;
   onboardingComplete?: boolean; // Phase 1 flag added to mark explicit completion of onboarding
+  isOnboarded?: boolean; // New explicit flag; true only after Finish successfully persists profile
 }
 
 export interface ChatMessage {
