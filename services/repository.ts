@@ -1,5 +1,3 @@
-// Legacy Firestore imports kept only for avatar upload fallback (soon removable)
-import { loadUserProfile as fsLoad, saveUserProfile as fsSave, listWardrobe as fsList, saveWardrobeItems as fsSaveWardrobe, uploadAvatar as fsUploadAvatar, deleteAllUserData as fsDeleteAll } from './db';
 import { getSupabaseClient } from './supabaseClient';
 import type { StyleProfile, PersistentWardrobeItem } from '../types';
 
