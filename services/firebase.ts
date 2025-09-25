@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
 import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel } from 'firebase/firestore';
+import { restPatchDocument } from './firestoreRest';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCdw-72plQ9WDlSBn3c_dQopah6-FLNqAg",
@@ -39,34 +40,40 @@ export const signUp = (email: string, password: string, displayName?: string): P
     }
     await sendEmailVerification(cred.user);
     try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
-    // Immediately create user doc with isOnboarded:false so sign-in logic can rely on flag
+    // Immediately create user doc (REST-first to bypass WebChannel 400 issues) with isOnboarded:false
+    const baseProfile = {
+      isOnboarded: false,
+      email: cred.user.email || email,
+      name: displayName || cred.user.displayName || cred.user.email || 'User'
+    };
     try {
-      console.log('[signup] creating initial user doc');
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        isOnboarded: false,
-        createdAt: serverTimestamp(),
-        email: cred.user.email || email,
-        name: displayName || cred.user.displayName || cred.user.email || 'User'
-      }, { merge: true });
-      console.log('[signup] initial user doc created');
-    } catch (e: any) {
-      const code = e?.code || e?.message?.match(/\b([A-Z_]{3,})\b/)?.[1];
-      console.warn('[signup] failed to create initial user doc', { code, message: e?.message });
-      // Fallback: attempt server-side profile creation via /api/profile PUT (admin SDK) if Firestore client write failed
+      console.log('[signup] creating initial user doc (rest-first)');
+      await restPatchDocument(`users/${cred.user.uid}`, { ...baseProfile, createdAt: new Date().toISOString(), createdVia: 'rest' });
+      console.log('[signup] initial user doc created (rest)');
+    } catch (restErr: any) {
+      console.warn('[signup] rest create failed, falling back to sdk', { message: restErr?.message });
       try {
-        const idToken = await cred.user.getIdToken();
-        const resp = await fetch('/api/profile', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
-          body: JSON.stringify({ profile: { isOnboarded: false, email: cred.user.email || email, name: displayName || cred.user.displayName || cred.user.email || 'User' } })
-        });
-        if (resp.ok) {
-          console.log('[signup] server fallback profile created');
-        } else {
-          console.warn('[signup] server fallback profile failed', await resp.text());
+        await setDoc(doc(db, 'users', cred.user.uid), { ...baseProfile, createdAt: serverTimestamp(), createdVia: 'sdk-fallback' }, { merge: true });
+        console.log('[signup] initial user doc created (sdk-fallback)');
+      } catch (sdkErr: any) {
+        const code = sdkErr?.code || sdkErr?.message?.match(/\b([A-Z_]{3,})\b/)?.[1];
+        console.warn('[signup] sdk fallback failed, attempting server admin fallback', { code, message: sdkErr?.message });
+        try {
+          const idToken = await cred.user.getIdToken();
+          const resp = await fetch('/api/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+            body: JSON.stringify({ profile: { ...baseProfile, createdVia: 'server-fallback' } })
+          });
+          if (resp.ok) {
+            console.log('[signup] server fallback profile created');
+          } else {
+            const txt = await resp.text();
+            console.warn('[signup] server fallback profile failed', txt);
+          }
+        } catch (srvErr) {
+          console.warn('[signup] server fallback profile exception', srvErr);
         }
-      } catch (srvErr) {
-        console.warn('[signup] server fallback profile exception', srvErr);
       }
     }
     return cred;
