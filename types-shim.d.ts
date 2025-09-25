@@ -71,3 +71,6 @@ declare module '@twilio/conversations' {
   }
   export interface Participant { identity?: string }
 }
+
+// Supabase client shim (should be removed if proper types resolve automatically)
+declare module '@supabase/supabase-js';
