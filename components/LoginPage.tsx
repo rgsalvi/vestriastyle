@@ -23,6 +23,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
     const [message, setMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
+    // Map Firebase auth error codes to user-friendly messages.
+    const friendlyAuthMessage = (code: string, mode: 'signin' | 'signup'): string | null => {
+        switch (code) {
+            case 'auth/invalid-credential':
+            case 'auth/wrong-password':
+                return 'That email and password don\'t match. Double‑check your password or reset it below.';
+            case 'auth/user-not-found':
+                return mode === 'signin'
+                    ? 'No account found with that email. Create an account instead.'
+                    : null;
+            case 'auth/too-many-requests':
+                return 'Too many attempts. Please wait a minute and try again.';
+            case 'auth/network-request-failed':
+                return 'Network issue. Check your connection and try again.';
+            case 'auth/email-already-in-use':
+                return 'That email is already in use. Try signing in instead.';
+            case 'auth/invalid-email':
+                return 'That doesn\'t look like a valid email address.';
+            case 'auth/weak-password':
+                return 'Please choose a stronger password (at least 6 characters).';
+            default:
+                return null;
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -36,9 +61,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 await signIn(email, password);
                 setMessage('Signed in successfully.');
             }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : 'Authentication failed.';
-            setError(msg);
+        } catch (err: any) {
+            // Prefer Firebase error code → friendly message; fall back to original message.
+            const code: string | undefined = err?.code;
+            const friendly = code ? friendlyAuthMessage(code, mode) : null;
+            const raw = err instanceof Error ? err.message : 'Authentication failed.';
+            setError(friendly || raw);
         } finally {
             setLoading(false);
         }
@@ -49,15 +77,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
         try {
             await resetPassword(email);
             setMessage('Password reset email sent. Please check your inbox (and Spam) for a reset link.');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to send reset email.');
+        } catch (err: any) {
+            const code: string | undefined = err?.code;
+            const friendly = code ? friendlyAuthMessage(code, mode) : null;
+            setError(friendly || (err instanceof Error ? err.message : 'Failed to send reset email.'));
         }
     };
 
     const handleResendVerification = async () => {
         setError(null); setMessage(null);
         try { await resendVerification(); setMessage('Verification email sent again. Please check your inbox (and Spam) for the verification link.'); }
-        catch (err) { setError(err instanceof Error ? err.message : 'Failed to send verification email.'); }
+        catch (err: any) {
+            const code: string | undefined = err?.code;
+            const friendly = code ? friendlyAuthMessage(code, mode) : null;
+            setError(friendly || (err instanceof Error ? err.message : 'Failed to send verification email.'));
+        }
     };
 
     return (
@@ -75,11 +109,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 <p className="mt-2 text-lg text-platinum/60">Use your email and password. We’ll verify your email after signup.</p>
 
                                 {error && (
-                                    <div role="alert" className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-red-400/30 bg-red-900/20 text-red-300">
+                                    <div role="alert" className="mt-6 flex items-start gap-3 p-4 rounded-xl border border-red-400/30 bg-gradient-to-br from-red-900/30 via-red-900/20 to-red-800/10 text-red-300 shadow-inner">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                                 <path fillRule="evenodd" d="M10.29 3.86a2 2 0 013.42 0l8.2 14.2A2 2 0 0120.2 21H3.8a2 2 0 01-1.71-2.94l8.2-14.2zM13 16a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v4a1 1 0 102 0V9a1 1 0 00-1-1z" clipRule="evenodd" />
                                             </svg>
-                                            <div className="text-sm leading-relaxed">{error}</div>
+                                            <div className="text-sm leading-relaxed">
+                                                {error}
+                                                {error.includes('Create an account') && mode === 'signin' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setMode('signup')}
+                                                        className="block mt-2 text-xs font-medium underline text-red-200/80 hover:text-red-100"
+                                                    >Create an account now →</button>
+                                                )}
+                                                {error.includes('don\'t match') && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleReset}
+                                                        className="block mt-2 text-xs font-medium underline text-red-200/70 hover:text-red-100"
+                                                    >Forgot your password? Reset it →</button>
+                                                )}
+                                            </div>
                                         </div>
                                 )}
                                 {message && (
