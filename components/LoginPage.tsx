@@ -23,6 +23,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
     const [errorCode, setErrorCode] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Map Firebase auth error codes to user-friendly messages.
     const friendlyAuthMessage = (code: string, mode: 'signin' | 'signup'): string | null => {
@@ -164,7 +165,42 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                     </div>
                     <div>
                         <label className="block text-sm text-platinum/70 mb-1">Password</label>
-                        <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="••••••••" required minLength={6} />
+                        <div className="relative group">
+                            <input
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                type={showPassword ? 'text' : 'password'}
+                                className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 pr-24 text-platinum tracking-wide focus:outline-none focus:ring-2 focus:ring-platinum/30 transition"
+                                placeholder={showPassword ? 'Enter your password' : '••••••••'}
+                                required
+                                minLength={6}
+                                aria-label="Password"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(s => !s)}
+                                className="absolute inset-y-0 right-2 my-1 inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 text-platinum/70 hover:text-platinum border border-white/10 backdrop-blur-sm transition"
+                                aria-pressed={showPassword}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showPassword ? (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223C5.885 5.167 9.194 3 12.75 3c4.064 0 7.515 2.492 9.27 6.094a1.8 1.8 0 010 1.812 17.37 17.37 0 01-1.278 2.092M9.53 9.53a3 3 0 004.243 4.243M6.1 6.1l11.8 11.8M9.546 16.222A8.7 8.7 0 0112.75 16.5c3.556 0 6.865-2.167 8.77-5.223M3 3l18 18" />
+                                        </svg>
+                                        Hide
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.423 7.51 7.676 4.5 12.75 4.5c5.073 0 9.326 3.01 10.713 7.178.07.207.07.437 0 .644-1.387 4.168-5.64 7.178-10.713 7.178-5.074 0-9.327-3.01-10.714-7.178z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Show
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait…' : (mode === 'signup' ? 'Sign Up' : 'Sign In')}</button>
                 </form>
