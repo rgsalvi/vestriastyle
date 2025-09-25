@@ -47,6 +47,9 @@ async function sbLoadUserProfile(uid: string): Promise<StyleProfile | null> {
 async function sbSaveUserProfile(uid: string, profile: Partial<StyleProfile>): Promise<void> {
   const sb = getSupabaseClient();
   const payload = mapProfileToRow(uid, profile);
+  // If caller passed through email/display_name (rare), include them to avoid null constraint issues on first write.
+  if ((profile as any).email) (payload as any).email = (profile as any).email;
+  if ((profile as any).display_name) (payload as any).display_name = (profile as any).display_name;
   const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
   if (error) { console.warn('[supabase] save profile error', error); throw error; }
 }
@@ -105,7 +108,8 @@ export function getSupabaseAvatarPublicUrl(path: string): string {
 
 export async function repositoryEnsureUserRow(uid: string, email: string, displayName: string) {
   const sb = getSupabaseClient();
-  const payload: any = { id: uid, email, display_name: displayName, created_at: new Date().toISOString() };
+  const safeEmail = email || `${uid}@placeholder.local`;
+  const payload: any = { id: uid, email: safeEmail, display_name: displayName || safeEmail, created_at: new Date().toISOString() };
   const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
   if (error) console.warn('[supabase] ensure user row error', error);
 }

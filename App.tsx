@@ -481,6 +481,12 @@ const App: React.FC = () => {
   const handleOnboardingComplete = async (profile: StyleProfile): Promise<void> => {
     if (!user) return;
     console.log('[onboarding-save] start');
+    // Ensure base user row (with email/display_name) exists before attempting style/profile upsert
+    try {
+      await ensureUserRow(user.id, user.email, user.name);
+    } catch (e) {
+      console.warn('[onboarding-save] ensureUserRow failed (will proceed anyway)', e);
+    }
     let photoURL: string | undefined = undefined;
     const timeout = async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
       return await new Promise<T>((resolve, reject) => {
@@ -504,11 +510,24 @@ const App: React.FC = () => {
     try {
       await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save');
       console.log('[onboarding-save] profile saved');
-    } catch (e) {
-      console.warn('[onboarding-save] failed to save full profile; NOT marking isOnboarded true', e);
-      setOnboardingSuccessToast(false);
-      // Surface error to wizard so it can show a message (re-throw)
-      throw e instanceof Error ? e : new Error('Failed to save profile');
+    } catch (e: any) {
+      // If we hit a NOT NULL on email (23502) it means ensureUserRow didn't persist; retry once after forcing it.
+      if (e && e.code === '23502') {
+        console.warn('[onboarding-save] first save failed (23502), retrying after ensureUserRow');
+        try { await ensureUserRow(user.id, user.email, user.name); } catch {}
+        try {
+          await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save retry');
+          console.log('[onboarding-save] profile saved on retry');
+        } catch (e2) {
+          console.warn('[onboarding-save] failed retry; NOT marking isOnboarded true', e2);
+          setOnboardingSuccessToast(false);
+          throw e2 instanceof Error ? e2 : new Error('Failed to save profile');
+        }
+      } else {
+        console.warn('[onboarding-save] failed to save full profile; NOT marking isOnboarded true', e);
+        setOnboardingSuccessToast(false);
+        throw e instanceof Error ? e : new Error('Failed to save profile');
+      }
     }
     try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
     setStyleProfile(cloudProfile);
