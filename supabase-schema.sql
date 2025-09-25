@@ -47,17 +47,37 @@ alter table public.style_profile enable row level security;
 -- Assuming we'll use Firebase UID presented via a JWT you validate server-side for now.
 -- If later using Supabase Auth, you can map auth.uid() directly.
 -- Placeholder policies (adjust once JWT integration decided):
-create policy "Users self access" on public.users
-  for select using (true) -- temporarily open for read; tighten later
-  with check (true);
+-- RLS policies (separate SELECT from INSERT/UPDATE to avoid WITH CHECK error on SELECT)
+-- Cleanup old policy names if a previous attempt partially applied
+drop policy if exists "Users self access" on public.users;
+drop policy if exists "Wardrobe self access" on public.wardrobe_items;
+drop policy if exists "Style profile self access" on public.style_profile;
 
-create policy "Wardrobe self access" on public.wardrobe_items
-  for select using (true)
-  with check (true);
+-- Users table policies (dev-open; tighten later)
+create policy "Users select" on public.users
+  for select using (true);
+create policy "Users insert" on public.users
+  for insert with check (true);
+create policy "Users update" on public.users
+  for update using (true) with check (true);
 
-create policy "Style profile self access" on public.style_profile
-  for select using (true)
-  with check (true);
+-- Wardrobe items policies
+create policy "Wardrobe select" on public.wardrobe_items
+  for select using (true);
+create policy "Wardrobe insert" on public.wardrobe_items
+  for insert with check (true);
+create policy "Wardrobe update" on public.wardrobe_items
+  for update using (true) with check (true);
+create policy "Wardrobe delete" on public.wardrobe_items
+  for delete using (true);
+
+-- Style profile policies
+create policy "Style profile select" on public.style_profile
+  for select using (true);
+create policy "Style profile insert" on public.style_profile
+  for insert with check (true);
+create policy "Style profile update" on public.style_profile
+  for update using (true) with check (true);
 
 -- TODO: Replace 'true' with user_id = auth.uid() after adopting Supabase Auth, or
 -- implement a Postgres JWT claim mapping if using Firebase tokens.
