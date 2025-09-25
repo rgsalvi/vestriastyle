@@ -1,10 +1,9 @@
-import { loadUserProfile as fsLoad, saveUserProfile as fsSave, listWardrobe as fsList, saveWardrobeItems as fsSaveWardrobe, uploadAvatar as fsUploadAvatar } from './db';
+import { loadUserProfile as fsLoad, saveUserProfile as fsSave, listWardrobe as fsList, saveWardrobeItems as fsSaveWardrobe, uploadAvatar as fsUploadAvatar, deleteAllUserData as fsDeleteAll } from './db';
 import { getSupabaseClient } from './supabaseClient';
 import type { StyleProfile, PersistentWardrobeItem } from '../types';
 
-const BACKEND = (import.meta.env.VITE_DATA_BACKEND || '').toLowerCase();
-
-function useSupabase() { return BACKEND === 'supabase'; }
+// Force Supabase for all data persistence (Firebase only for Auth retained)
+function useSupabase() { return true; }
 
 // Supabase helpers (minimal now)
 async function sbLoadUserProfile(uid: string): Promise<StyleProfile | null> {
@@ -41,8 +40,15 @@ async function sbSaveWardrobe(uid: string, items: PersistentWardrobeItem[]): Pro
   if (error) { console.warn('[supabase] save wardrobe error', error); throw error; }
 }
 
-export async function repositoryLoadUserProfile(uid: string) { return useSupabase() ? sbLoadUserProfile(uid) : fsLoad(uid); }
-export async function repositorySaveUserProfile(uid: string, profile: Partial<StyleProfile>) { return useSupabase() ? sbSaveUserProfile(uid, profile) : fsSave(uid, profile); }
-export async function repositoryListWardrobe(uid: string) { return useSupabase() ? sbListWardrobe(uid) : fsList(uid); }
-export async function repositorySaveWardrobeItems(uid: string, items: PersistentWardrobeItem[]) { return useSupabase() ? sbSaveWardrobe(uid, items) : fsSaveWardrobe(uid, items); }
-export async function repositoryUploadAvatar(uid: string, dataUrl: string) { return useSupabase() ? fsUploadAvatar(uid, dataUrl) /* still using existing storage */ : fsUploadAvatar(uid, dataUrl); }
+export async function repositoryLoadUserProfile(uid: string) { return sbLoadUserProfile(uid); }
+export async function repositorySaveUserProfile(uid: string, profile: Partial<StyleProfile>) { return sbSaveUserProfile(uid, profile); }
+export async function repositoryListWardrobe(uid: string) { return sbListWardrobe(uid); }
+export async function repositorySaveWardrobeItems(uid: string, items: PersistentWardrobeItem[]) { return sbSaveWardrobe(uid, items); }
+export async function repositoryUploadAvatar(uid: string, dataUrl: string) { return fsUploadAvatar(uid, dataUrl); }
+export async function repositoryDeleteAllUserData(uid: string) {
+  const sb = getSupabaseClient();
+  const { error: wErr } = await sb.from('wardrobe_items').delete().eq('user_id', uid);
+  if (wErr) console.warn('[supabase] delete wardrobe items error', wErr);
+  const { error: uErr } = await sb.from('users').delete().eq('id', uid);
+  if (uErr) console.warn('[supabase] delete user row error', uErr);
+}

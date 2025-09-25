@@ -3,7 +3,7 @@ import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
 import { auth, deleteCurrentUser } from '../services/firebase';
-import { deleteAllUserData } from '../services/db';
+import { repositoryDeleteAllUserData as deleteAllUserData } from '../services/repository';
 
 interface ProfilePageProps {
   user: User;
