@@ -57,6 +57,7 @@ export interface StyleProfile {
   bodyType: BodyType;
   avatarDataUrl?: string;
   isPremium?: boolean;
+  onboardingComplete?: boolean; // Phase 1 flag added to mark explicit completion of onboarding
 }
 
 export interface ChatMessage {

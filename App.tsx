@@ -296,12 +296,21 @@ const App: React.FC = () => {
             // Try cloud profile first
             const cloudProfile = await loadUserProfile(mapped.id);
             if (cloudProfile) {
+              console.log('[profile-load] source=cloud hasFlag=', !!cloudProfile.onboardingComplete);
               if (fbUser.emailVerified && !cloudProfile.isPremium) {
                 try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
               }
               // Ensure avatarDataUrl falls back to Firebase Auth photoURL if not present
               if (!cloudProfile.avatarDataUrl && mapped.picture) {
                 cloudProfile.avatarDataUrl = mapped.picture;
+              }
+              // Passive Phase 1 backfill: if missing onboardingComplete but profile looks complete, add it silently
+              if (!cloudProfile.onboardingComplete && cloudProfile.bodyType && cloudProfile.bodyType !== 'None') {
+                try {
+                  await saveUserProfile(mapped.id, { onboardingComplete: true });
+                  cloudProfile.onboardingComplete = true;
+                  console.log('[profile-backfill] added onboardingComplete flag (cloud)');
+                } catch (e) { console.warn('[profile-backfill] failed to add onboardingComplete flag (cloud)', e); }
               }
               setStyleProfile(cloudProfile);
               setBodyType(cloudProfile.bodyType || 'None');
@@ -312,12 +321,20 @@ const App: React.FC = () => {
               const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
               if (profileRaw) {
                 const localProf = JSON.parse(profileRaw);
+                console.log('[profile-load] source=local hasFlag=', !!localProf.onboardingComplete);
                 if (fbUser.emailVerified && !localProf.isPremium) {
                   localProf.isPremium = true;
                 }
                 // If local profile missing avatar, use auth picture
                 if (!localProf.avatarDataUrl && mapped.picture) {
                   localProf.avatarDataUrl = mapped.picture;
+                }
+                if (!localProf.onboardingComplete && localProf.bodyType && localProf.bodyType !== 'None') {
+                  try {
+                    await saveUserProfile(mapped.id, { onboardingComplete: true });
+                    localProf.onboardingComplete = true;
+                    console.log('[profile-backfill] added onboardingComplete flag (local->cloud)');
+                  } catch (e) { console.warn('[profile-backfill] failed to add onboardingComplete flag (local->cloud)', e); }
                 }
                 setStyleProfile(localProf);
                 setBodyType(localProf.bodyType || 'None');
@@ -335,8 +352,16 @@ const App: React.FC = () => {
               const profileRaw = localStorage.getItem(`${STYLE_PROFILE_KEY}-${mapped.id}`);
               if (profileRaw) {
                 const localProf = JSON.parse(profileRaw);
+                console.log('[profile-load] source=local-fallback hasFlag=', !!localProf.onboardingComplete);
                 if (fbUser.emailVerified && !localProf.isPremium) localProf.isPremium = true;
                 if (!localProf.avatarDataUrl && mapped.picture) localProf.avatarDataUrl = mapped.picture;
+                if (!localProf.onboardingComplete && localProf.bodyType && localProf.bodyType !== 'None') {
+                  try {
+                    await saveUserProfile(mapped.id, { onboardingComplete: true });
+                    localProf.onboardingComplete = true;
+                    console.log('[profile-backfill] added onboardingComplete flag (fallback)');
+                  } catch (e2) { console.warn('[profile-backfill] failed to add onboardingComplete flag (fallback)', e2); }
+                }
                 setStyleProfile(localProf);
                 setBodyType(localProf.bodyType || 'None');
                 setShowOnboarding(false);
@@ -451,7 +476,8 @@ const App: React.FC = () => {
             }
           } catch (e) { console.warn('Avatar upload failed, using data URL fallback', e); }
           // Do not force premium here; server will upgrade verified users as needed
-          const cloudProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl };
+          const cloudProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl, onboardingComplete: true };
+          console.log('[onboarding-complete] profile prepared with onboardingComplete flag');
           try { await saveUserProfile(user.id, cloudProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
           localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile));
           setStyleProfile(cloudProfile);
