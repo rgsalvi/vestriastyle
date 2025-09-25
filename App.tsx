@@ -18,7 +18,7 @@ import { getStyleAdvice, trackEvent, initiateChatSession } from './services/gemi
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth } from './services/firebase';
-import { loadUserProfile, saveUserProfile, uploadAvatar, listWardrobe } from './services/db';
+import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe } from './services/repository';
 
 interface HeaderProps {
   user: User | null;
