@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { lazy, Suspense } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { RecommendationDisplay } from './components/RecommendationDisplay';
@@ -244,6 +244,8 @@ const App: React.FC = () => {
   const [profileSavedBanner, setProfileSavedBanner] = useState<string | null>(null);
   const [onboardingGateBanner, setOnboardingGateBanner] = useState(false);
   const [pendingChatRetry, setPendingChatRetry] = useState<{ context: AiResponse; newItem: AnalysisItem | null } | null>(null);
+  // Track if we already triggered immediate onboarding to prevent duplicate flicker
+  const immediateOnboardingRef = useRef(false);
 
   // Utility: prevent indefinite hangs by timing out slow promises
   const withTimeout = useCallback(async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
@@ -336,16 +338,10 @@ const App: React.FC = () => {
                   setShowOnboarding(true);
                 }
               } else {
-                // No profile anywhere: start onboarding. Respect session flag if present for clarity.
-                let force = false;
-                try {
-                  const newly = sessionStorage.getItem('newlySignedUpUid');
-                  if (newly && newly === mapped.id) { force = true; }
-                } catch {}
-                console.log('[onboarding-decision] new-user-no-profile forceFlag=', force);
-                setShowOnboarding(true);
-                if (force) {
-                  try { sessionStorage.removeItem('newlySignedUpUid'); } catch {}
+                // No profile anywhere: if not already triggered immediately, show onboarding now.
+                if (!immediateOnboardingRef.current) {
+                  console.log('[onboarding-decision] deferred-new-user-no-profile');
+                  setShowOnboarding(true);
                 }
               }
             }
@@ -371,11 +367,13 @@ const App: React.FC = () => {
                   setShowOnboarding(false);
                 } else {
                   setStyleProfile(null);
-                  setShowOnboarding(true);
+                  if (!immediateOnboardingRef.current) setShowOnboarding(true);
                 }
               } else {
-                console.log('[onboarding-decision] fallback-no-profile');
-                setShowOnboarding(true);
+                if (!immediateOnboardingRef.current) {
+                  console.log('[onboarding-decision] fallback-no-profile');
+                  setShowOnboarding(true);
+                }
               }
             } catch {}
           }
@@ -406,6 +404,32 @@ const App: React.FC = () => {
     });
     return () => unsub();
   }, []);
+
+  // Immediate onboarding trigger right after signup (before profile fetch finishes)
+  useEffect(() => {
+    if (!user) return;
+    if (styleProfile) return; // existing profile means no onboarding needed
+    if (immediateOnboardingRef.current) return; // already triggered
+    let newly: string | null = null;
+    try { newly = sessionStorage.getItem('newlySignedUpUid'); } catch {}
+    const hasLocal = (() => { try { return !!localStorage.getItem(`${STYLE_PROFILE_KEY}-${user.id}`); } catch { return false; }})();
+    if (newly === user.id && !hasLocal) {
+      console.log('[onboarding-decision] immediate-new-user');
+      immediateOnboardingRef.current = true;
+      setShowOnboarding(true);
+      try { sessionStorage.removeItem('newlySignedUpUid'); } catch {}
+      // Background warm-up: optionally fetch profile after short delay (defensive; should not exist yet)
+      setTimeout(() => {
+        if (!styleProfile && user) {
+          loadUserProfile(user.id).then(p => {
+            if (p && p.onboardingComplete) {
+              console.log('[onboarding-decision] unexpected-profile-found-during-onboarding');
+            }
+          }).catch(() => {});
+        }
+      }, 600);
+    }
+  }, [user, styleProfile]);
   
   // When the user signs in successfully, close the login view and try to resume any pending action
   useEffect(() => {
