@@ -10,11 +10,131 @@ View your app in AI Studio: https://ai.studio/apps/drive/1KD9RaiPmc8ZuHrA6oNXrQ6
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+**Prerequisites:**
+- Node.js 18+
+- A Supabase project (Postgres + Storage)
+- Firebase project (Auth only) if you are deploying authentication yourself
 
+### 1. Install dependencies
+`npm install`
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 2. Environment variables
+Create a `.env.local` (not committed) with:
+
+```
+VITE_GEMINI_API_KEY=YOUR_GEMINI_KEY
+VITE_SUPABASE_URL=https://YOUR_PROJECT.ref.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+VITE_FIREBASE_API_KEY=...            # Firebase Auth
+VITE_FIREBASE_AUTH_DOMAIN=...        # yourapp.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+```
+
+Only Firebase Auth is used; all application data is stored in Supabase (see architecture below).
+
+### 3. Run the dev server
+`npm run dev`
+
+Open the printed localhost URL in your browser.
+
+---
+
+## Architecture Overview
+
+| Concern | Technology | Notes |
+|---------|------------|-------|
+| Authentication | Firebase Auth | Email/password & email verification only. No Firestore usage. |
+| Data (profiles, wardrobe, future chat, assets metadata) | Supabase Postgres | Central source of truth. `users` and `wardrobe_items` tables currently. |
+| Avatar images | Supabase Storage (public bucket `avatars`) | Only the storage path is persisted (`avatar_url`); UI derives public URL. |
+| AI / Style Advice | Gemini API | Via `services/geminiService.ts`. |
+
+### Firebase Auth Scope
+Firebase is now limited to:
+1. Account creation (email/password)
+2. Sign-in / sign-out
+3. Email verification status
+4. Retrieving ID tokens for any future server-side protected endpoints
+
+Everything else (user profile persistence, wardrobe, avatar storage) has been migrated to Supabase.
+
+### Supabase Schema (Current)
+`users` table columns (essential):
+- id (uuid / text, matches Firebase UID)
+- email (text)
+- display_name (text, optional)
+- styleArchetypes (text[])
+- colorPalettes (text[])
+- favoriteColors (text, nullable)
+- favoriteBrands (text, nullable)
+- bodyType (text)
+- avatar_url (text, storage path) 
+- isOnboarded (boolean)
+- isPremium (boolean)
+- created_at / updated_at (timestamps)
+
+`wardrobe_items` table columns (essential):
+- id (uuid or text primary key)
+- user_id (fk → users.id)
+- dataUrl (text) – (currently stores item image data URL; may change to storage path later)
+- description, category, color, fabric, season
+- created_at
+
+### Repository Pattern
+All Supabase access is funneled through `services/repository.ts`:
+- `repositoryLoadUserProfile`
+- `repositorySaveUserProfile`
+- `repositoryListWardrobe`
+- `repositorySaveWardrobeItems`
+- `repositoryUploadAvatar`
+- `repositoryEnsureUserRow`
+
+### Avatar Handling
+1. User selects an image (data URL in memory only).
+2. On save, data URL is uploaded to `avatars` bucket: `users/{uid}/avatar.{ext}`.
+3. Only the path is stored in `users.avatar_url`.
+4. UI derives a public URL via Supabase storage helper and assigns to `user.picture`.
+
+---
+
+## Migration Notes
+Firestore + Firebase Storage have been fully removed for data persistence:
+- Removed legacy Firestore CRUD (`services/db.ts`) and REST helper (`services/firestoreRest.ts`).
+- Replaced all profile & wardrobe operations with Supabase equivalents.
+- Added `repositoryEnsureUserRow` to guarantee the primary user row exists immediately after auth.
+
+If you have lingering local data from older builds, clear `localStorage` for a clean start.
+
+---
+
+## Supabase Sanity Test (Optional)
+There is a lightweight script `supabaseSanityTests.ts` you can run (manually) to verify basic CRUD:
+
+```
+npx ts-node supabaseSanityTests.ts
+```
+
+It upserts a test user, profile, and wardrobe items, then validates round-trips.
+
+---
+
+## Future Enhancements (Planned)
+- Chat history table (`chat_messages`)
+- Generated AI image metadata table (`ai_images`)
+- Migrate wardrobe item image storage from data URLs to Supabase Storage paths for size/perf
+- Add Vitest + CI test harness (convert sanity script to automated tests)
+
+---
+
+## Troubleshooting
+| Issue | Likely Cause | Fix |
+|-------|--------------|-----|
+| Avatar not updating | Public URL cached | Hard refresh or append cache-busting query param |
+| Profile not saving | Supabase RLS / missing anon key | Verify env vars & table policies |
+| Onboarding repeats | `isOnboarded` flag never persisted | Check network tab for `/users` upsert errors |
+
+---
+
+## License
+Proprietary / Internal (adjust as needed).
