@@ -76,3 +76,10 @@ export function getSupabaseAvatarPublicUrl(path: string): string {
   const { data } = sb.storage.from('avatars').getPublicUrl(path);
   return data.publicUrl;
 }
+
+export async function repositoryEnsureUserRow(uid: string, email: string, displayName: string) {
+  const sb = getSupabaseClient();
+  const payload: any = { id: uid, email, display_name: displayName, created_at: new Date().toISOString() };
+  const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
+  if (error) console.warn('[supabase] ensure user row error', error);
+}

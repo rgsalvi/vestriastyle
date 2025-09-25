@@ -18,7 +18,7 @@ import { getStyleAdvice, trackEvent, initiateChatSession } from './services/gemi
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth } from './services/firebase';
-import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getSupabaseAvatarPublicUrl } from './services/repository';
+import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getSupabaseAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow } from './services/repository';
 
 interface HeaderProps {
   user: User | null;
@@ -270,6 +270,7 @@ const App: React.FC = () => {
         };
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped));
         setUser(mapped);
+        ensureUserRow(mapped.id, mapped.email, mapped.name).catch(e => console.warn('ensureUserRow failed', e));
         (async () => {
           try {
             // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)
@@ -279,9 +280,9 @@ const App: React.FC = () => {
               if (fbUser.emailVerified && !cloudProfile.isPremium) {
                 try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
               }
-              // Ensure avatarDataUrl falls back to Firebase Auth photoURL if not present
-              if (!cloudProfile.avatarDataUrl && mapped.picture) {
-                cloudProfile.avatarDataUrl = mapped.picture;
+              // Map legacy avatar fields: derive picture from avatar_url if present
+              if ((cloudProfile as any).avatar_url) {
+                mapped.picture = getSupabaseAvatarPublicUrl((cloudProfile as any).avatar_url);
               }
               // Ignore legacy onboardingComplete and heuristics per new spec; rely only on isOnboarded
               if (isProfileComplete(cloudProfile)) {
@@ -304,8 +305,8 @@ const App: React.FC = () => {
                   localProf.isPremium = true;
                 }
                 // If local profile missing avatar, use auth picture
-                if (!localProf.avatarDataUrl && mapped.picture) {
-                  localProf.avatarDataUrl = mapped.picture;
+                if ((localProf as any).avatar_url) {
+                  mapped.picture = getSupabaseAvatarPublicUrl((localProf as any).avatar_url);
                 }
                 // No heuristic backfill; will force onboarding if isOnboarded not true
                 if (isProfileComplete(localProf)) {
@@ -334,7 +335,9 @@ const App: React.FC = () => {
                 const localProf = JSON.parse(profileRaw);
                 console.log('[profile-load] source=local-fallback hasFlag=', !!localProf.onboardingComplete);
                 if (fbUser.emailVerified && !localProf.isPremium) localProf.isPremium = true;
-                if (!localProf.avatarDataUrl && mapped.picture) localProf.avatarDataUrl = mapped.picture;
+                if ((localProf as any).avatar_url) {
+                  mapped.picture = getSupabaseAvatarPublicUrl((localProf as any).avatar_url);
+                }
                 // No heuristic backfill in fallback
                 if (isProfileComplete(localProf)) {
                   setStyleProfile(localProf);
@@ -485,18 +488,18 @@ const App: React.FC = () => {
         p.then(v => { clearTimeout(t); resolve(v); }).catch(e => { clearTimeout(t); reject(e); });
       });
     };
-    if (profile.avatarDataUrl && profile.avatarDataUrl.startsWith('data:')) {
+    // Upload avatar if provided as data URL (OnboardingWizard now sends avatar as data URL in a transient field avatar_url or similar preview -- adapt if needed)
+    if ((profile as any).avatar_url && (profile as any).avatar_url.startsWith && (profile as any).avatar_url.startsWith('data:')) {
       try {
         console.log('[onboarding-save] uploading avatar (supabase)');
-        photoURL = await timeout(uploadAvatar(user.id, profile.avatarDataUrl), 20000, 'Avatar upload'); // returns storage path
+        photoURL = await timeout(uploadAvatar(user.id, (profile as any).avatar_url), 20000, 'Avatar upload'); // returns storage path
         console.log('[onboarding-save] avatar uploaded (path)', photoURL);
       } catch (e) {
         console.warn('[onboarding-save] avatar upload failed', e);
         throw e instanceof Error ? e : new Error('Avatar upload failed');
       }
     }
-    const cloudProfile: any = { ...profile, avatar_url: photoURL, isOnboarded: true };
-    delete cloudProfile.avatarDataUrl; // no longer persist raw data URL
+    const cloudProfile: any = { ...profile, avatar_url: photoURL || (profile as any).avatar_url, isOnboarded: true };
     console.log('[onboarding-save] prepared profile with isOnboarded=true, saving to Supabase');
     try {
       await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save');
@@ -741,7 +744,17 @@ const App: React.FC = () => {
               setUser(mergedUser);
               try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser)); } catch {}
               if (updatedProfile) {
-                const updatedCloudProfile = { ...updatedProfile, avatarDataUrl: photoURL || updatedProfile.avatarDataUrl || user.picture };
+                // If a new data URL avatar is present inside updatedProfile.avatar_url (used temporarily by ProfilePage for preview), upload it
+                let newAvatarPath: string | undefined = undefined;
+                if ((updatedProfile as any).avatar_url && (updatedProfile as any).avatar_url.startsWith && (updatedProfile as any).avatar_url.startsWith('data:')) {
+                  try {
+                    newAvatarPath = await withTimeout(uploadAvatar(user.id, (updatedProfile as any).avatar_url), 15000, 'Avatar upload');
+                  } catch (e) { console.warn('Avatar re-upload failed', e); }
+                }
+                const updatedCloudProfile: any = { ...updatedProfile };
+                if (newAvatarPath) {
+                  updatedCloudProfile.avatar_url = newAvatarPath;
+                }
                 try { await withTimeout(saveUserProfile(mergedUser.id, updatedCloudProfile), 10000, 'Profile save'); } catch (e) { console.warn('Failed to save profile to cloud', e); }
                 setStyleProfile(updatedCloudProfile);
                 setBodyType(updatedCloudProfile.bodyType || 'None');
