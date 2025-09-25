@@ -1,6 +1,7 @@
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, deleteDoc, serverTimestamp, query, orderBy, writeBatch } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
 import { app, auth } from './firebase';
+import { restGetDocument, restPatchDocument } from './firestoreRest';
 import type { StyleProfile, PersistentWardrobeItem } from '../types';
 
 export const db = getFirestore(app);
@@ -12,27 +13,34 @@ export const profileDocRef = (uid: string) => doc(db, 'users', uid);
 export const wardrobeColRef = (uid: string) => collection(db, 'users', uid, 'wardrobe');
 
 export async function loadUserProfile(uid: string): Promise<StyleProfile | null> {
-  // Simplified: we no longer attempt a server /api/profile fetch because that endpoint
-  // does not exist in the codebase and was generating noisy 500 errors. All profile
-  // data is sourced directly from Firestore. If you later introduce a server-side
-  // profile aggregation endpoint, re-introduce it behind a feature flag.
+  try {
+    const rest = await restGetDocument(`users/${uid}`);
+    if (rest) return rest as StyleProfile;
+  } catch (e) {
+    console.warn('[profile-load] REST get failed, falling back to SDK', e);
+  }
   let snap = await getDoc(profileDocRef(uid));
   if (snap.exists()) return snap.data() as StyleProfile;
-  // Legacy path support (users/{uid}/meta/profile) retained for older data migrations.
   const legacy = await getDoc(doc(db, 'users', uid, 'meta', 'profile'));
   return legacy.exists() ? (legacy.data() as StyleProfile) : null;
 }
 
 export async function saveUserProfile(uid: string, profile: Partial<StyleProfile>): Promise<void> {
   const started = Date.now();
-  console.log('[profile-save] start', { uid, keys: Object.keys(profile || {}) });
-  // Direct-to-Firestore write (removed obsolete /api/profile proxy call which does not exist in repo)
+  console.log('[profile-save] start(rest-first)', { uid, keys: Object.keys(profile || {}) });
+  try {
+    await restPatchDocument(`users/${uid}`, { ...profile, updatedAt: new Date().toISOString() });
+    console.log('[profile-save] success(rest)', { uid, ms: Date.now() - started });
+    return;
+  } catch (re) {
+    console.warn('[profile-save] REST failed, trying SDK', re);
+  }
   try {
     await setDoc(profileDocRef(uid), { ...profile, updatedAt: serverTimestamp() }, { merge: true });
-    console.log('[profile-save] success', { uid, ms: Date.now() - started });
-  } catch (e) {
-    console.warn('[profile-save] failed', e);
-    throw e;
+    console.log('[profile-save] success(sdk-fallback)', { uid, ms: Date.now() - started });
+  } catch (sdkErr) {
+    console.warn('[profile-save] failed(both)', sdkErr);
+    throw sdkErr;
   }
 }
 
