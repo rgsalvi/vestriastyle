@@ -228,6 +228,7 @@ const App: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [onboardingSuccessToast, setOnboardingSuccessToast] = useState(false);
   
   // Pending-action flow: capture user's intended action when login is required and resume post-sign-in
   type PendingAction =
@@ -489,6 +490,8 @@ const App: React.FC = () => {
             updateUserProfile(updatedUser.name, newPic).catch(() => {});
           }
           setShowOnboarding(false);
+          setOnboardingSuccessToast(true);
+          setTimeout(() => setOnboardingSuccessToast(false), 5000);
           // Auto-retry pending chat if user completed onboarding after being blocked
           if (pendingChatRetry) {
             const retry = pendingChatRetry;
@@ -870,6 +873,15 @@ const App: React.FC = () => {
         />
       )}
       {showPremiumUpsell && <PremiumUpsellModal onClose={() => setShowPremiumUpsell(false)} />}
+      {onboardingSuccessToast && (
+        <div className="fixed bottom-4 right-4 z-40 animate-fade-in">
+          <div className="bg-green-500/20 border border-green-400/40 text-green-200 px-4 py-3 rounded-xl shadow-lg backdrop-blur-sm flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-green-300 animate-pulse" />
+            <span className="font-semibold">Style profile saved</span>
+            <button onClick={() => setOnboardingSuccessToast(false)} className="ml-2 text-green-200/70 hover:text-green-100 text-sm">Dismiss</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
