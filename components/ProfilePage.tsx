@@ -22,14 +22,14 @@ const colorPalettes = [
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, onBack, onSave }) => {
   const [name, setName] = useState(user.name);
-  const [avatar, setAvatar] = useState<string>(initialProfile?.avatarDataUrl || user.picture);
+  const [avatar, setAvatar] = useState<string>(initialProfile?.avatar_url ? initialProfile.avatar_url : user.picture);
   const [profile, setProfile] = useState<StyleProfile>(() => initialProfile || {
     styleArchetypes: [],
     colorPalettes: [],
     favoriteColors: '',
     favoriteBrands: '',
     bodyType: 'None',
-    avatarDataUrl: user.picture,
+    avatar_url: undefined,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -51,9 +51,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
       setProfile(prev => ({
         ...prev,
         ...initialProfile,
-        avatarDataUrl: initialProfile.avatarDataUrl || prev.avatarDataUrl || user.picture,
+        avatar_url: initialProfile.avatar_url || prev.avatar_url,
       }));
-      setAvatar(initialProfile.avatarDataUrl || user.picture);
+      setAvatar(initialProfile.avatar_url || user.picture);
     } else {
       // If no initial profile yet, ensure name/avatar reflect user
       setAvatar(user.picture);
@@ -70,7 +70,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
   const handleAvatarSelect = async (file: File) => {
     const dataUrl = await resizeImageToDataUrl(file, 512, 0.85);
     setAvatar(dataUrl);
-    setProfile(p => ({ ...p, avatarDataUrl: dataUrl }));
+  // avatar upload will occur in higher-level save; keep local only
   };
 
   return (

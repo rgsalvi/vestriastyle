@@ -55,7 +55,7 @@ export interface StyleProfile {
   favoriteColors?: string;
   favoriteBrands: string;
   bodyType: BodyType;
-  avatarDataUrl?: string;
+  avatar_url?: string; // Supabase storage path
   isPremium?: boolean;
   onboardingComplete?: boolean; // Phase 1 flag added to mark explicit completion of onboarding
   isOnboarded?: boolean; // New explicit flag; true only after Finish successfully persists profile

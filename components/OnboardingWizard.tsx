@@ -46,7 +46,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
         favoriteColors: '',
         favoriteBrands: '',
         bodyType: 'None',
-        avatarDataUrl: user.picture || undefined,
     });
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -97,7 +96,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                     if (f) {
                                         const dataUrl = await resizeImageToDataUrl(f, 512, 0.85);
                                         setAvatarPreview(dataUrl);
-                                        setProfile(p => ({ ...p, avatarDataUrl: dataUrl }));
+                                        // keep only in local preview; avatar is uploaded during completion
                                     }
                                 }} />
                                 <p className="mt-2 text-xs text-platinum/60">PNG/JPG, up to ~2MB</p>
@@ -233,7 +232,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                                                          favoriteColors: profile.favoriteColors || '',
                                                                          favoriteBrands: profile.favoriteBrands || '',
                                                                          bodyType: (profile.bodyType || 'None') as BodyType,
-                                                                         avatarDataUrl: profile.avatarDataUrl,
+                                                                         // avatarDataUrl: profile.avatarDataUrl,
                                                                      };
                                                                      if (finalProfile.bodyType === 'None' || finalProfile.styleArchetypes.length === 0) {
                                                                          setSubmitError('Please complete required fields.');
