@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
-import { getFirestore, doc, setDoc, serverTimestamp, setLogLevel } from 'firebase/firestore';
+import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCdw-72plQ9WDlSBn3c_dQopah6-FLNqAg",
@@ -13,6 +13,8 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
+// Force long polling to bypass WebChannel 400 issues (network/referrer quirks)
+export const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 // Optional debug logging: set localStorage FIRESTORE_DEBUG=true (dev only)
 try {
   if (typeof window !== 'undefined' && localStorage.getItem('FIRESTORE_DEBUG') === 'true') {
@@ -22,7 +24,6 @@ try {
   }
 } catch {}
 export const auth = getAuth(app);
-const db = getFirestore(app);
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
 export const signUp = (email: string, password: string, displayName?: string): Promise<UserCredential> =>
@@ -48,7 +49,23 @@ export const signUp = (email: string, password: string, displayName?: string): P
       console.log('[signup] initial user doc created');
     } catch (e: any) {
       const code = e?.code || e?.message?.match(/\b([A-Z_]{3,})\b/)?.[1];
-      console.warn('[signup] failed to create initial user doc', { code, message: e?.message, raw: e });
+      console.warn('[signup] failed to create initial user doc', { code, message: e?.message });
+      // Fallback: attempt server-side profile creation via /api/profile PUT (admin SDK) if Firestore client write failed
+      try {
+        const idToken = await cred.user.getIdToken();
+        const resp = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+          body: JSON.stringify({ profile: { isOnboarded: false, email: cred.user.email || email, name: displayName || cred.user.displayName || cred.user.email || 'User' } })
+        });
+        if (resp.ok) {
+          console.log('[signup] server fallback profile created');
+        } else {
+          console.warn('[signup] server fallback profile failed', await resp.text());
+        }
+      } catch (srvErr) {
+        console.warn('[signup] server fallback profile exception', srvErr);
+      }
     }
     return cred;
   });
