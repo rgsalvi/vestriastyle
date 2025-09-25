@@ -5,6 +5,34 @@ import type { StyleProfile, PersistentWardrobeItem } from '../types';
 function useSupabase() { return true; }
 
 // Supabase helpers (minimal now)
+function mapRowToProfile(row: any): StyleProfile {
+  if (!row) return row;
+  return {
+    styleArchetypes: row.style_archetypes || [],
+    colorPalettes: row.color_palettes || [],
+    favoriteColors: row.favorite_colors || '',
+    favoriteBrands: row.favorite_brands || '',
+    bodyType: row.body_type || 'None',
+    avatar_url: row.avatar_url || undefined,
+    isPremium: row.is_premium || false,
+    isOnboarded: row.is_onboarded || false,
+  };
+}
+
+function mapProfileToRow(uid: string, profile: Partial<StyleProfile>): Record<string, any> {
+  return {
+    id: uid,
+    style_archetypes: profile.styleArchetypes,
+    color_palettes: profile.colorPalettes,
+    favorite_colors: profile.favoriteColors,
+    favorite_brands: profile.favoriteBrands,
+    body_type: profile.bodyType,
+    avatar_url: profile.avatar_url,
+    is_premium: profile.isPremium,
+    is_onboarded: profile.isOnboarded,
+  };
+}
+
 async function sbLoadUserProfile(uid: string): Promise<StyleProfile | null> {
   const sb = getSupabaseClient();
   const { data, error } = await sb.from('users').select('*').eq('id', uid).single();
@@ -13,12 +41,12 @@ async function sbLoadUserProfile(uid: string): Promise<StyleProfile | null> {
     console.warn('[supabase] load profile error', error);
     throw error;
   }
-  return data as any;
+  return mapRowToProfile(data);
 }
 
 async function sbSaveUserProfile(uid: string, profile: Partial<StyleProfile>): Promise<void> {
   const sb = getSupabaseClient();
-  const payload = { id: uid, ...profile };
+  const payload = mapProfileToRow(uid, profile);
   const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
   if (error) { console.warn('[supabase] save profile error', error); throw error; }
 }

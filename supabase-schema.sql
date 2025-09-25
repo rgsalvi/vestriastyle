@@ -8,6 +8,12 @@ create table if not exists public.users (
   display_name text,
   avatar_url text,
   is_onboarded boolean default false not null,
+  is_premium boolean default false not null,
+  style_archetypes text[] default '{}'::text[] not null,
+  color_palettes text[] default '{}'::text[] not null,
+  favorite_colors text,
+  favorite_brands text,
+  body_type text,
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
@@ -65,6 +71,16 @@ end; $$ language plpgsql;
 
 create trigger touch_users before update on public.users
   for each row execute procedure public.touch_updated_at();
+
+-- Idempotent ALTERs (safe to re-run) in case table existed before without new columns
+alter table public.users add column if not exists is_premium boolean default false not null;
+alter table public.users add column if not exists style_archetypes text[] default '{}'::text[] not null;
+alter table public.users add column if not exists color_palettes text[] default '{}'::text[] not null;
+alter table public.users add column if not exists favorite_colors text;
+alter table public.users add column if not exists favorite_brands text;
+alter table public.users add column if not exists body_type text;
+alter table public.users add column if not exists avatar_url text;
+alter table public.users add column if not exists is_onboarded boolean default false not null;
 
 create trigger touch_wardrobe before update on public.wardrobe_items
   for each row execute procedure public.touch_updated_at();
