@@ -4,8 +4,8 @@ import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
 
 interface OnboardingWizardProps {
-  user: User;
-  onComplete: (profile: StyleProfile) => void;
+    user: User;
+    onComplete: (profile: StyleProfile) => Promise<void> | void;
 }
 
 const steps = ['Profile Photo', 'Style Vibe', 'Color Palette', 'Favorite Colors', 'Favorite Brands', 'Body Type'];
@@ -217,39 +217,44 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                 Next
                             </button>
                         ) : (
-                             <button
-                                onClick={async () => {
-                                    if (isNextDisabled() || submitting) return;
-                                    setSubmitting(true);
-                                    setSubmitError(null);
-                                    try {
-                                        const finalProfile: StyleProfile = {
-                                            styleArchetypes: profile.styleArchetypes || [],
-                                            colorPalettes: profile.colorPalettes || [],
-                                            favoriteColors: profile.favoriteColors || '',
-                                            favoriteBrands: profile.favoriteBrands || '',
-                                            bodyType: (profile.bodyType || 'None') as BodyType,
-                                            avatarDataUrl: profile.avatarDataUrl,
-                                        };
-                                        if (finalProfile.bodyType === 'None' || finalProfile.styleArchetypes.length === 0) {
-                                            setSubmitError('Please complete required fields.');
-                                            setSubmitting(false);
-                                            return;
-                                        }
-                                        console.log('[onboarding-finish-click]', finalProfile);
-                                        onComplete(finalProfile);
-                                    } catch (e: any) {
-                                        console.error('[onboarding-finish-error]', e);
-                                        setSubmitError(e?.message || 'Failed to finish onboarding.');
-                                    } finally {
-                                        setSubmitting(false);
-                                    }
-                                }}
-                                disabled={isNextDisabled() || submitting}
-                                className="px-6 py-2 bg-platinum text-dark-blue border border-transparent rounded-full shadow-sm text-sm font-medium hover:scale-105 disabled:bg-platinum/50 disabled:cursor-not-allowed transition-transform"
-                             >
-                                {submitting ? 'Finishing…' : 'Finish'}
-                             </button>
+                                                         <button
+                                                             onClick={async () => {
+                                                                 if (isNextDisabled() || submitting) return;
+                                                                 setSubmitting(true);
+                                                                 setSubmitError(null);
+                                                                 const started = Date.now();
+                                                                 try {
+                                                                     const finalProfile: StyleProfile = {
+                                                                         styleArchetypes: profile.styleArchetypes || [],
+                                                                         colorPalettes: profile.colorPalettes || [],
+                                                                         favoriteColors: profile.favoriteColors || '',
+                                                                         favoriteBrands: profile.favoriteBrands || '',
+                                                                         bodyType: (profile.bodyType || 'None') as BodyType,
+                                                                         avatarDataUrl: profile.avatarDataUrl,
+                                                                     };
+                                                                     if (finalProfile.bodyType === 'None' || finalProfile.styleArchetypes.length === 0) {
+                                                                         setSubmitError('Please complete required fields.');
+                                                                         setSubmitting(false);
+                                                                         return;
+                                                                     }
+                                                                     console.log('[onboarding-finish-click]', finalProfile);
+                                                                     const maybePromise = onComplete(finalProfile);
+                                                                     if (maybePromise && typeof (maybePromise as any).then === 'function') {
+                                                                         await maybePromise;
+                                                                     }
+                                                                     console.log('[onboarding-finish-complete] elapsedMs=', Date.now() - started);
+                                                                 } catch (e: any) {
+                                                                     console.error('[onboarding-finish-error]', e);
+                                                                     setSubmitError(e?.message || 'Failed to finish onboarding.');
+                                                                 } finally {
+                                                                     setSubmitting(false);
+                                                                 }
+                                                             }}
+                                                             disabled={isNextDisabled() || submitting}
+                                                             className="px-6 py-2 bg-platinum text-dark-blue border border-transparent rounded-full shadow-sm text-sm font-medium hover:scale-105 disabled:bg-platinum/50 disabled:cursor-not-allowed transition-transform"
+                                                         >
+                                                             {submitting ? 'Finishing…' : 'Finish'}
+                                                         </button>
                         )}
                     </div>
                     {submitError && (

@@ -475,53 +475,57 @@ const App: React.FC = () => {
     localStorage.removeItem(USER_STORAGE_KEY);
   };
 
-  const handleOnboardingComplete = (profile: StyleProfile) => {
-    if (user) {
-        (async () => {
-          let photoURL: string | undefined = undefined;
-          try {
-            if (profile.avatarDataUrl && profile.avatarDataUrl.startsWith('data:')) {
-              photoURL = await uploadAvatar(user.id, profile.avatarDataUrl);
-            }
-          } catch (e) { console.warn('Avatar upload failed, using data URL fallback', e); }
-          // Do not force premium here; server will upgrade verified users as needed
-          const cloudProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl, onboardingComplete: true };
-          console.log('[onboarding-complete] profile prepared with onboardingComplete flag');
-          try { await saveUserProfile(user.id, cloudProfile); } catch (e) { console.warn('Failed to save profile to cloud', e); }
-          localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile));
-          setStyleProfile(cloudProfile);
-          setBodyType(cloudProfile.bodyType || 'None');
-          if (photoURL || profile.avatarDataUrl) {
-            const newPic = photoURL || profile.avatarDataUrl!;
-            const updatedUser = { ...user, picture: newPic } as User;
-            setUser(updatedUser);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-            updateUserProfile(updatedUser.name, newPic).catch(() => {});
-          }
-          setShowOnboarding(false);
-          setOnboardingSuccessToast(true);
-          setTimeout(() => setOnboardingSuccessToast(false), 5000);
-          // Auto-retry pending chat if user completed onboarding after being blocked
-          if (pendingChatRetry) {
-            const retry = pendingChatRetry;
-            setTimeout(async () => {
-              try {
-                trackEvent('chat_retry_after_onboarding');
-                const session = await initiateChatSession(retry.context, retry.newItem, user as any, true);
-                setChatContext(retry.context);
-                setChatNewItem(retry.newItem);
-                setIsChatOpen(true);
-                setPendingChatRetry(null);
-                setOnboardingGateBanner(false);
-              } catch (e) { console.warn('Chat retry failed post-onboarding', e); }
-            }, 400);
-          }
-          // If user not yet verified, we could show a transient banner (handled via profileSavedBanner)
-          if (user && !auth.currentUser?.emailVerified) {
-            setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
-            setTimeout(() => setProfileSavedBanner(null), 8000);
-          }
-        })();
+  const handleOnboardingComplete = async (profile: StyleProfile): Promise<void> => {
+    if (!user) return;
+    console.log('[onboarding-save] start');
+    let photoURL: string | undefined = undefined;
+    if (profile.avatarDataUrl && profile.avatarDataUrl.startsWith('data:')) {
+      try {
+        console.log('[onboarding-save] uploading avatar');
+        photoURL = await uploadAvatar(user.id, profile.avatarDataUrl);
+        console.log('[onboarding-save] avatar uploaded');
+      } catch (e) {
+        console.warn('[onboarding-save] avatar upload failed, using inline data URL', e);
+      }
+    }
+    const cloudProfile: StyleProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl, onboardingComplete: true } as StyleProfile;
+    console.log('[onboarding-save] prepared profile, saving to Firestore');
+    try {
+      await saveUserProfile(user.id, cloudProfile);
+      console.log('[onboarding-save] profile saved');
+    } catch (e) {
+      console.warn('[onboarding-save] failed to save profile (will still cache locally)', e);
+    }
+    try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
+    setStyleProfile(cloudProfile);
+    setBodyType(cloudProfile.bodyType || 'None');
+    if (photoURL || profile.avatarDataUrl) {
+      const newPic = photoURL || profile.avatarDataUrl!;
+      const updatedUser = { ...user, picture: newPic } as User;
+      setUser(updatedUser);
+      try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser)); } catch {}
+      updateUserProfile(updatedUser.name, newPic).catch(() => {});
+    }
+    setShowOnboarding(false);
+    setOnboardingSuccessToast(true);
+    setTimeout(() => setOnboardingSuccessToast(false), 5000);
+    if (pendingChatRetry) {
+      const retry = pendingChatRetry;
+      setTimeout(async () => {
+        try {
+          trackEvent('chat_retry_after_onboarding');
+          await initiateChatSession(retry.context, retry.newItem, user as any, true);
+          setChatContext(retry.context);
+          setChatNewItem(retry.newItem);
+          setIsChatOpen(true);
+          setPendingChatRetry(null);
+          setOnboardingGateBanner(false);
+        } catch (e) { console.warn('[onboarding-save] chat retry failed', e); }
+      }, 400);
+    }
+    if (user && !auth.currentUser?.emailVerified) {
+      setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
+      setTimeout(() => setProfileSavedBanner(null), 8000);
     }
   };
 
