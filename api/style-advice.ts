@@ -111,7 +111,9 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
 
         const contents = [{ parts: [{ text: prompt }, ...imageParts] }];
 
-        const textResponse = await ai.models.generateContent({
+        // Add a manual timeout guard around the model call so the client isn't left spinning forever.
+        const modelTimeoutMs = 40000;
+        const modelCall = ai.models.generateContent({
             model: model,
             contents: contents,
             config: {
@@ -119,9 +121,30 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
                 responseSchema: responseSchema,
             },
         });
+        let timedOut = false;
+        const timer = setTimeout(() => { timedOut = true; }, modelTimeoutMs);
+        const textResponse = await Promise.race([
+          modelCall,
+          (async () => { await new Promise(r => setTimeout(r, modelTimeoutMs)); return null as any; })()
+        ]);
+        clearTimeout(timer);
+        if (!textResponse || timedOut) {
+            return res.status(504).json({ message: 'AI generation timed out. Please try again.' });
+        }
     
-        const jsonText = textResponse.text.trim();
-        const parsedJson = JSON.parse(jsonText);
+        let jsonText = '';
+        try {
+            jsonText = textResponse.text.trim();
+        } catch (e) {
+            return res.status(500).json({ message: 'AI response missing text output.' });
+        }
+        let parsedJson: any;
+        try {
+            parsedJson = JSON.parse(jsonText);
+        } catch (parseErr) {
+            console.error('Failed to parse AI JSON:', { jsonText: jsonText.slice(0, 300) });
+            return res.status(500).json({ message: 'Failed to parse AI response.' });
+        }
         
         if (parsedJson.outfits && parsedJson.outfits.length > 0) {
             const imagePromises = parsedJson.outfits.map(async (outfit: { items: string[] }) => {
@@ -141,10 +164,11 @@ Your response MUST be a valid JSON object that adheres to the provided schema. D
                             responseModalities: [Modality.IMAGE, Modality.TEXT],
                         },
                     });
-                    
-                    for (const part of imageResponse.candidates[0].content.parts) {
-                        if (part.inlineData) {
-                            return part.inlineData.data;
+                    const firstCandidate = imageResponse?.candidates?.[0];
+                    const parts = firstCandidate?.content?.parts || [];
+                    for (const part of parts) {
+                        if ((part as any).inlineData) {
+                            return (part as any).inlineData.data;
                         }
                     }
                     return null;
