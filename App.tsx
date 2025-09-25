@@ -17,7 +17,7 @@ import ProfilePage from './components/ProfilePage';
 import { getStyleAdvice } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
-import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser } from './services/firebase';
+import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth } from './services/firebase';
 import { loadUserProfile, saveUserProfile, uploadAvatar, listWardrobe } from './services/db';
 
 interface HeaderProps {
@@ -277,6 +277,15 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Helper to determine if a profile is meaningfully complete
+  const isProfileComplete = (p: any | null) => {
+    if (!p) return false;
+    if (p.onboardingComplete) return true;
+    // Legacy heuristic: must have a non-'None' bodyType AND at least one styleArchetype
+    if (p.bodyType && p.bodyType !== 'None' && Array.isArray(p.styleArchetypes) && p.styleArchetypes.length > 0) return true;
+    return false;
+  };
+
   // Auth and User Data Logic
   useEffect(() => {
     const unsub = observeAuth((fbUser) => {
@@ -291,9 +300,7 @@ const App: React.FC = () => {
         setUser(mapped);
         (async () => {
           try {
-            // Ensure a minimal user doc exists immediately (creates users/{uid} with updatedAt)
-            try { await saveUserProfile(mapped.id, {}); } catch (e) { console.warn('ensure user doc exists failed (non-fatal)', e); }
-            // Try cloud profile first
+            // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)
             const cloudProfile = await loadUserProfile(mapped.id);
             if (cloudProfile) {
               console.log('[profile-load] source=cloud hasFlag=', !!cloudProfile.onboardingComplete);
@@ -312,9 +319,15 @@ const App: React.FC = () => {
                   console.log('[profile-backfill] added onboardingComplete flag (cloud)');
                 } catch (e) { console.warn('[profile-backfill] failed to add onboardingComplete flag (cloud)', e); }
               }
-              setStyleProfile(cloudProfile);
-              setBodyType(cloudProfile.bodyType || 'None');
-              setShowOnboarding(false);
+              if (isProfileComplete(cloudProfile)) {
+                setStyleProfile(cloudProfile);
+                setBodyType(cloudProfile.bodyType || 'None');
+                setShowOnboarding(false);
+              } else {
+                // Incomplete / blank profile doc -> trigger onboarding
+                setStyleProfile(null);
+                setShowOnboarding(true);
+              }
               try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mapped.id}`, JSON.stringify(cloudProfile)); } catch {}
             } else {
               // Fallback to local and decide onboarding
@@ -336,13 +349,18 @@ const App: React.FC = () => {
                     console.log('[profile-backfill] added onboardingComplete flag (local->cloud)');
                   } catch (e) { console.warn('[profile-backfill] failed to add onboardingComplete flag (local->cloud)', e); }
                 }
-                setStyleProfile(localProf);
-                setBodyType(localProf.bodyType || 'None');
-                setShowOnboarding(false);
-                // lazy migrate to cloud
-                try { await saveUserProfile(mapped.id, localProf); } catch (e) { console.warn('Failed to migrate local profile to cloud', e); }
+                if (isProfileComplete(localProf)) {
+                  setStyleProfile(localProf);
+                  setBodyType(localProf.bodyType || 'None');
+                  setShowOnboarding(false);
+                  // lazy migrate to cloud
+                  try { await saveUserProfile(mapped.id, localProf); } catch (e) { console.warn('Failed to migrate local profile to cloud', e); }
+                } else {
+                  setStyleProfile(null);
+                  setShowOnboarding(true);
+                }
               } else {
-                // No profile anywhere: start onboarding regardless of email verification
+                // No profile anywhere: start onboarding immediately (regardless of verification)
                 setShowOnboarding(true);
               }
             }
@@ -362,9 +380,14 @@ const App: React.FC = () => {
                     console.log('[profile-backfill] added onboardingComplete flag (fallback)');
                   } catch (e2) { console.warn('[profile-backfill] failed to add onboardingComplete flag (fallback)', e2); }
                 }
-                setStyleProfile(localProf);
-                setBodyType(localProf.bodyType || 'None');
-                setShowOnboarding(false);
+                if (isProfileComplete(localProf)) {
+                  setStyleProfile(localProf);
+                  setBodyType(localProf.bodyType || 'None');
+                  setShowOnboarding(false);
+                } else {
+                  setStyleProfile(null);
+                  setShowOnboarding(true);
+                }
               } else {
                 // Could not load any profile: show onboarding
                 setShowOnboarding(true);
@@ -401,10 +424,11 @@ const App: React.FC = () => {
   
   // When the user signs in successfully, close the login view and try to resume any pending action
   useEffect(() => {
-    if (user) {
-      if (showLogin) setShowLogin(false);
+    if (user && showLogin) {
+      // Only close login if onboarding is not needed
+      if (!showOnboarding) setShowLogin(false);
     }
-  }, [user, showLogin]);
+  }, [user, showLogin, showOnboarding]);
 
   const resumePendingAction = useCallback(async () => {
     if (!user || !pendingAction) return;
@@ -490,6 +514,11 @@ const App: React.FC = () => {
             updateUserProfile(updatedUser.name, newPic).catch(() => {});
           }
           setShowOnboarding(false);
+          // If user not yet verified, we could show a transient banner (handled via profileSavedBanner)
+          if (user && !auth.currentUser?.emailVerified) {
+            setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
+            setTimeout(() => setProfileSavedBanner(null), 8000);
+          }
         })();
     }
   };
