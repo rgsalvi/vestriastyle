@@ -336,8 +336,17 @@ const App: React.FC = () => {
                   setShowOnboarding(true);
                 }
               } else {
-                // No profile anywhere: start onboarding immediately (regardless of verification)
+                // No profile anywhere: start onboarding. Respect session flag if present for clarity.
+                let force = false;
+                try {
+                  const newly = sessionStorage.getItem('newlySignedUpUid');
+                  if (newly && newly === mapped.id) { force = true; }
+                } catch {}
+                console.log('[onboarding-decision] new-user-no-profile forceFlag=', force);
                 setShowOnboarding(true);
+                if (force) {
+                  try { sessionStorage.removeItem('newlySignedUpUid'); } catch {}
+                }
               }
             }
           } catch (e) {
@@ -365,7 +374,7 @@ const App: React.FC = () => {
                   setShowOnboarding(true);
                 }
               } else {
-                // Could not load any profile: show onboarding
+                console.log('[onboarding-decision] fallback-no-profile');
                 setShowOnboarding(true);
               }
             } catch {}

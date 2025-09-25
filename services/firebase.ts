@@ -21,6 +21,7 @@ export const signUp = (email: string, password: string, displayName?: string): P
       try { await updateProfile(cred.user, { displayName }); } catch {}
     }
     await sendEmailVerification(cred.user);
+    try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
     return cred;
   });
 export const signIn = (email: string, password: string) => signInWithEmailAndPassword(auth, email, password);
