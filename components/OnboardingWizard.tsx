@@ -46,6 +46,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
         bodyType: 'None',
         avatarDataUrl: user.picture || undefined,
     });
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string>(user.picture || '');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -215,15 +217,44 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                 Next
                             </button>
                         ) : (
-                             <button 
-                                onClick={() => onComplete(profile as StyleProfile)}
-                                disabled={isNextDisabled()}
+                             <button
+                                onClick={async () => {
+                                    if (isNextDisabled() || submitting) return;
+                                    setSubmitting(true);
+                                    setSubmitError(null);
+                                    try {
+                                        const finalProfile: StyleProfile = {
+                                            styleArchetypes: profile.styleArchetypes || [],
+                                            colorPalettes: profile.colorPalettes || [],
+                                            favoriteColors: profile.favoriteColors || '',
+                                            favoriteBrands: profile.favoriteBrands || '',
+                                            bodyType: (profile.bodyType || 'None') as BodyType,
+                                            avatarDataUrl: profile.avatarDataUrl,
+                                        };
+                                        if (finalProfile.bodyType === 'None' || finalProfile.styleArchetypes.length === 0) {
+                                            setSubmitError('Please complete required fields.');
+                                            setSubmitting(false);
+                                            return;
+                                        }
+                                        console.log('[onboarding-finish-click]', finalProfile);
+                                        onComplete(finalProfile);
+                                    } catch (e: any) {
+                                        console.error('[onboarding-finish-error]', e);
+                                        setSubmitError(e?.message || 'Failed to finish onboarding.');
+                                    } finally {
+                                        setSubmitting(false);
+                                    }
+                                }}
+                                disabled={isNextDisabled() || submitting}
                                 className="px-6 py-2 bg-platinum text-dark-blue border border-transparent rounded-full shadow-sm text-sm font-medium hover:scale-105 disabled:bg-platinum/50 disabled:cursor-not-allowed transition-transform"
-                            >
-                                Finish
-                            </button>
+                             >
+                                {submitting ? 'Finishing…' : 'Finish'}
+                             </button>
                         )}
                     </div>
+                    {submitError && (
+                        <div className="px-6 pb-4 -mt-2 text-sm text-red-400">{submitError}</div>
+                    )}
                 </div>
             </div>
         </div>
