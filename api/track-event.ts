@@ -1,36 +1,52 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { adminAuth, adminDb } from './_firebaseAdmin';
 
-// Minimal event tracking endpoint. Stores events in Firestore under analytic_events/{date}/events/{auto-id}
-// Event shape: { type, uid (optional), createdAt, meta }
+// Lazy admin import so missing env vars do not cause a hard 500 for analytics.
+let adminReady = false;
+let adminAuth: any = null;
+let adminDb: any = null;
+async function ensureAdmin() {
+  if (adminReady) return adminReady;
+  try {
+    const { adminAuth: aAuth, adminDb: aDb } = await import('./_firebaseAdmin');
+    adminAuth = aAuth; adminDb = aDb; adminReady = true; return true;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('[track-event] admin not initialized (env missing?) – falling back to no-op');
+    adminReady = false; return false;
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
+  let body: any = {};
+  try { body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}); } catch {}
+  const { type, meta } = body;
+  if (!type || typeof type !== 'string') return res.status(400).json({ error: 'INVALID_EVENT_TYPE' });
+
+  const ok = await ensureAdmin();
+  if (!ok) {
+    // Best-effort swallow: still return success so client isn't noisy.
+    return res.status(204).end();
+  }
   try {
-    const authHeader = req.headers.authorization;
     let uid: string | undefined;
+    const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring('Bearer '.length);
-      try {
-        const decoded = await adminAuth.verifyIdToken(token);
-        uid = decoded.uid;
-      } catch (e) {
-        // ignore invalid tokens; event can still be stored anonymously
-      }
+      try { const decoded = await adminAuth.verifyIdToken(token); uid = decoded.uid; } catch {}
     }
-    const { type, meta } = req.body || {};
-    if (!type || typeof type !== 'string') return res.status(400).json({ error: 'INVALID_EVENT_TYPE' });
     const now = new Date();
-    const dateKey = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const dateKey = now.toISOString().slice(0, 10);
     await adminDb.collection('analytic_events').doc(dateKey).collection('events').add({
       type,
       uid: uid || null,
       meta: meta || null,
-      createdAt: new Date(),
+      createdAt: now,
       userAgent: req.headers['user-agent'] || null,
     });
     return res.status(200).json({ ok: true });
-  } catch (e: any) {
-    console.error('[track-event] failed', e);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  } catch (e) {
+    console.warn('[track-event] store failed – returning 204 fallback');
+    return res.status(204).end();
   }
 }

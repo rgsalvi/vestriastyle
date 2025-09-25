@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
-import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, serverTimestamp, setLogLevel } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCdw-72plQ9WDlSBn3c_dQopah6-FLNqAg",
@@ -13,6 +13,14 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
+// Optional debug logging: set localStorage FIRESTORE_DEBUG=true (dev only)
+try {
+  if (typeof window !== 'undefined' && localStorage.getItem('FIRESTORE_DEBUG') === 'true') {
+    setLogLevel('debug');
+    // eslint-disable-next-line no-console
+    console.log('[firestore] debug log level enabled');
+  }
+} catch {}
 export const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -38,7 +46,10 @@ export const signUp = (email: string, password: string, displayName?: string): P
         name: displayName || cred.user.displayName || cred.user.email || 'User'
       }, { merge: true });
       console.log('[signup] initial user doc created');
-    } catch (e) { console.warn('[signup] failed to create initial user doc', e); }
+    } catch (e: any) {
+      const code = e?.code || e?.message?.match(/\b([A-Z_]{3,})\b/)?.[1];
+      console.warn('[signup] failed to create initial user doc', { code, message: e?.message, raw: e });
+    }
     return cred;
   });
 export const signIn = (email: string, password: string) => signInWithEmailAndPassword(auth, email, password);
