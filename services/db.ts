@@ -30,15 +30,16 @@ export async function loadUserProfile(uid: string): Promise<StyleProfile | null>
 }
 
 export async function saveUserProfile(uid: string, profile: Partial<StyleProfile>): Promise<void> {
+  const started = Date.now();
+  console.log('[profile-save] start', { uid, keys: Object.keys(profile || {}) });
+  // Direct-to-Firestore write (removed obsolete /api/profile proxy call which does not exist in repo)
   try {
-    const idToken = await auth.currentUser?.getIdToken();
-    if (idToken) {
-      const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ profile }) });
-      if (res.ok) return;
-      try { const data = await res.json(); console.warn('Server profile PUT failed:', data); } catch {}
-    }
-  } catch {}
-  await setDoc(profileDocRef(uid), { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(profileDocRef(uid), { ...profile, updatedAt: serverTimestamp() }, { merge: true });
+    console.log('[profile-save] success', { uid, ms: Date.now() - started });
+  } catch (e) {
+    console.warn('[profile-save] failed', e);
+    throw e;
+  }
 }
 
 export async function uploadAvatar(uid: string, dataUrl: string): Promise<string> {

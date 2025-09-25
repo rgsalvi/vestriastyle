@@ -479,10 +479,16 @@ const App: React.FC = () => {
     if (!user) return;
     console.log('[onboarding-save] start');
     let photoURL: string | undefined = undefined;
+    const timeout = async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+      return await new Promise<T>((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+        p.then(v => { clearTimeout(t); resolve(v); }).catch(e => { clearTimeout(t); reject(e); });
+      });
+    };
     if (profile.avatarDataUrl && profile.avatarDataUrl.startsWith('data:')) {
       try {
         console.log('[onboarding-save] uploading avatar');
-        photoURL = await uploadAvatar(user.id, profile.avatarDataUrl);
+        photoURL = await timeout(uploadAvatar(user.id, profile.avatarDataUrl), 20000, 'Avatar upload');
         console.log('[onboarding-save] avatar uploaded');
       } catch (e) {
         console.warn('[onboarding-save] avatar upload failed, using inline data URL', e);
@@ -491,13 +497,13 @@ const App: React.FC = () => {
     const cloudProfile: StyleProfile = { ...profile, avatarDataUrl: photoURL || profile.avatarDataUrl, isOnboarded: true } as StyleProfile;
     console.log('[onboarding-save] prepared profile with isOnboarded=true, saving to Firestore');
     try {
-      await saveUserProfile(user.id, cloudProfile);
+      await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save');
       console.log('[onboarding-save] profile saved');
     } catch (e) {
       console.warn('[onboarding-save] failed to save full profile; NOT marking isOnboarded true', e);
-      // If save fails entirely, do not proceed with marking local state as onboarded
       setOnboardingSuccessToast(false);
-      return;
+      // Surface error to wizard so it can show a message (re-throw)
+      throw e instanceof Error ? e : new Error('Failed to save profile');
     }
     try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
     setStyleProfile(cloudProfile);

@@ -30,13 +30,15 @@ export const signUp = (email: string, password: string, displayName?: string): P
     try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
     // Immediately create user doc with isOnboarded:false so sign-in logic can rely on flag
     try {
+      console.log('[signup] creating initial user doc');
       await setDoc(doc(db, 'users', cred.user.uid), {
         isOnboarded: false,
         createdAt: serverTimestamp(),
         email: cred.user.email || email,
         name: displayName || cred.user.displayName || cred.user.email || 'User'
       }, { merge: true });
-    } catch (e) { console.warn('Failed to create initial user doc', e); }
+      console.log('[signup] initial user doc created');
+    } catch (e) { console.warn('[signup] failed to create initial user doc', e); }
     return cred;
   });
 export const signIn = (email: string, password: string) => signInWithEmailAndPassword(auth, email, password);
