@@ -12,19 +12,13 @@ export const profileDocRef = (uid: string) => doc(db, 'users', uid);
 export const wardrobeColRef = (uid: string) => collection(db, 'users', uid, 'wardrobe');
 
 export async function loadUserProfile(uid: string): Promise<StyleProfile | null> {
-  try {
-    const idToken = await auth.currentUser?.getIdToken();
-    if (idToken) {
-      const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${idToken}` } });
-      const data = await res.json();
-      if (res.ok && data?.success) return data.profile as StyleProfile | null;
-      console.warn('Server profile GET failed:', data);
-    }
-  } catch {}
-  // Fallback to client SDK
+  // Simplified: we no longer attempt a server /api/profile fetch because that endpoint
+  // does not exist in the codebase and was generating noisy 500 errors. All profile
+  // data is sourced directly from Firestore. If you later introduce a server-side
+  // profile aggregation endpoint, re-introduce it behind a feature flag.
   let snap = await getDoc(profileDocRef(uid));
   if (snap.exists()) return snap.data() as StyleProfile;
-  // Fallback to legacy location users/{uid}/meta/profile
+  // Legacy path support (users/{uid}/meta/profile) retained for older data migrations.
   const legacy = await getDoc(doc(db, 'users', uid, 'meta', 'profile'));
   return legacy.exists() ? (legacy.data() as StyleProfile) : null;
 }
