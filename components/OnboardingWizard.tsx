@@ -235,7 +235,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                                                          favoriteColors: profile.favoriteColors || '',
                                                                          favoriteBrands: profile.favoriteBrands || '',
                                                                          bodyType: (profile.bodyType || 'None') as BodyType,
-                                                                         // avatarDataUrl: profile.avatarDataUrl,
+                                                                         // Include avatar preview only if it's a data URL; onboarding save will upload and replace with storage path
+                                                                         avatar_url: (avatarPreview && avatarPreview.startsWith('data:')) ? avatarPreview : undefined,
                                                                      };
                                                                      if (finalProfile.bodyType === 'None' || finalProfile.styleArchetypes.length === 0) {
                                                                          setSubmitError('Please complete required fields.');
