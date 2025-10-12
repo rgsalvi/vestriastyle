@@ -92,19 +92,19 @@ const EditProfileModal: React.FC<{
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
               <img src={preview} alt={user.name} className="h-28 w-28 rounded-full border-2 border-platinum/30 object-cover" />
-              <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-platinum text-dark-blue text-xs font-semibold px-2 py-1 rounded-full shadow hover:opacity-90">Change</button>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+              <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 bg-platinum text-dark-blue text-xs font-semibold px-2 py-1 rounded-full shadow hover:opacity-90" type="button" aria-controls="edit-profile-avatar-input" aria-label="Change profile photo">Change</button>
+              <input id="edit-profile-avatar-input" ref={fileInputRef} type="file" accept="image/*" className="hidden" title="Upload profile photo" aria-label="Upload profile photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
             </div>
             <p className="text-xs text-platinum/60">PNG/JPG, up to ~2MB</p>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-platinum/70 mb-1">Name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" />
+              <label htmlFor="edit-profile-name" className="block text-sm text-platinum/70 mb-1">Name</label>
+              <input id="edit-profile-name" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" />
             </div>
             <div>
-              <label className="block text-sm text-platinum/70 mb-1">Email</label>
-              <input value={user.email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
+              <label htmlFor="edit-profile-email" className="block text-sm text-platinum/70 mb-1">Email</label>
+              <input id="edit-profile-email" value={user.email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
               <p className="mt-1 text-xs text-platinum/50">Email changes are not supported. Please contact support to modify your email address.</p>
             </div>
           </div>
@@ -159,12 +159,13 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
             onMouseEnter={() => setMenuOpen(true)}
             className="relative"
             aria-haspopup="menu"
-            aria-expanded={menuOpen}
+            aria-controls="user-menu"
           >
             <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30" />
           </button>
           {menuOpen && (
             <div
+              id="user-menu"
               className="absolute top-full right-0 mt-2 w-56 bg-[#1F2937] rounded-xl shadow-lg p-2 border border-platinum/20"
               role="menu"
               onMouseEnter={() => setMenuOpen(true)}
