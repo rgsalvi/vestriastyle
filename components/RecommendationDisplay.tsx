@@ -48,18 +48,7 @@ const InitialState: React.FC = () => (
 const Stardust: React.FC = () => (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {Array.from({ length: 50 }).map((_, i) => (
-            <div
-                key={i}
-                className="absolute bg-platinum/70 rounded-full"
-                style={{
-                    width: `${Math.random() * 2 + 1}px`,
-                    height: `${Math.random() * 2 + 1}px`,
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
-                    animation: `stardust-float ${Math.random() * 3 + 4}s ease-in-out infinite`,
-                    animationDelay: `${Math.random() * 4}s`,
-                }}
-            />
+            <div key={i} className="absolute bg-platinum/70 rounded-full animate-pulse-gentle w-[2px] h-[2px]" />
         ))}
     </div>
 );
@@ -158,10 +147,10 @@ const OutfitCarousel: React.FC<OutfitCarouselProps> = ({ outfits, images, onImag
               </div>
               {images.length > 1 && (
                   <>
-                      <button onClick={goToPrevious} className="absolute left-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
+                      <button onClick={goToPrevious} title="Previous outfit" aria-label="Previous outfit" className="absolute left-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                       </button>
-                      <button onClick={goToNext} className="absolute right-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
+                      <button onClick={goToNext} title="Next outfit" aria-label="Next outfit" className="absolute right-3 top-1/2 -translate-y-1/2 bg-dark-blue/70 backdrop-blur-sm rounded-full p-2 hover:bg-dark-blue transition-all shadow-md hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-platinum" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                       </button>
                   </>

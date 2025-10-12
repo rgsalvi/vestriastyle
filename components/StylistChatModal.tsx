@@ -905,10 +905,10 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                 
                 {status === 'connected' && (
                     <div className="flex-shrink-0 flex flex-row items-center h-16 rounded-b-xl bg-dark-blue w-full px-4 ring-1 ring-inset ring-platinum/20">
-                        <button onClick={attachFile} className="flex items-center justify-center text-platinum/70 hover:text-white">
+                        <button onClick={attachFile} className="flex items-center justify-center text-platinum/70 hover:text-white" aria-label="Attach a file" title="Attach a file">
                             <AttachIcon />
                         </button>
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" title="Attach file" aria-label="Attach file" />
                         <div className="flex-grow ml-4">
                             <div className="relative w-full">
                                 <input
@@ -922,7 +922,7 @@ export const StylistChatModal: React.FC<StylistChatModalProps> = ({ isOpen, onCl
                             </div>
                         </div>
                         <div className="ml-4">
-                            <button onClick={sendMessage} className="flex items-center justify-center bg-platinum hover:bg-platinum/90 rounded-full text-dark-blue h-10 w-10 flex-shrink-0 transition-colors">
+                            <button onClick={sendMessage} className="flex items-center justify-center bg-platinum hover:bg-platinum/90 rounded-full text-dark-blue h-10 w-10 flex-shrink-0 transition-colors" aria-label="Send message" title="Send message">
                                 <SendIcon />
                             </button>
                         </div>

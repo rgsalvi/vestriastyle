@@ -86,17 +86,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
           <div className="flex flex-col items-center gap-3">
             <img src={avatar} alt={user.name} className="h-32 w-32 rounded-full border-2 border-platinum/30 object-cover" />
             <button onClick={() => fileInputRef.current?.click()} className="bg-platinum text-dark-blue text-sm font-semibold px-3 py-1.5 rounded-full hover:opacity-90">Change Photo</button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f); }} />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" title="Upload profile photo" aria-label="Upload profile photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f); }} />
             <p className="text-xs text-platinum/60">PNG/JPG, up to ~2MB</p>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-platinum/70 mb-1">Name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" />
+              <label htmlFor="profile-name" className="block text-sm text-platinum/70 mb-1">Name</label>
+              <input id="profile-name" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" />
             </div>
             <div>
-              <label className="block text-sm text-platinum/70 mb-1">Email</label>
-              <input value={user.email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
+              <label htmlFor="profile-email" className="block text-sm text-platinum/70 mb-1">Email</label>
+              <input id="profile-email" value={user.email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
               <p className="mt-1 text-xs text-platinum/50">Email cannot be changed. Contact support to modify your email address.</p>
             </div>
           </div>

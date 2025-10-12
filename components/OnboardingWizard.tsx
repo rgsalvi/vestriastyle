@@ -33,7 +33,8 @@ const colorPalettes = [
 const ProgressBar: React.FC<{ currentStep: number }> = ({ currentStep }) => (
     <div className="flex items-center space-x-2">
         {steps.map((step, index) => (
-            <div key={step} className="flex-1 h-1.5 rounded-full transition-colors duration-300" style={{ backgroundColor: index <= currentStep ? '#C2BEBA' : 'rgba(194, 190, 186, 0.3)' }}></div>
+            // eslint-disable-next-line react/style-prop-object
+            <div key={step} className={`flex-1 h-1.5 rounded-full transition-colors duration-300 ${index <= currentStep ? 'bg-platinum' : 'bg-[rgba(194,190,186,0.3)]'}`}></div>
         ))}
     </div>
 );
@@ -90,8 +91,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         <div className="mt-6 flex items-center gap-6">
                             <img src={avatarPreview || user.picture} alt={user.name} className="h-28 w-28 rounded-full border-2 border-platinum/30 object-cover" />
                             <div>
-                                <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold hover:opacity-90">Upload Photo</button>
-                                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                                <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold hover:opacity-90" type="button" aria-controls="onboarding-avatar-input" aria-label="Upload profile photo">Upload Photo</button>
+                                <input id="onboarding-avatar-input" ref={fileInputRef} type="file" accept="image/*" className="hidden" title="Upload profile photo" aria-label="Upload profile photo" onChange={async (e) => {
                                     const f = e.target.files?.[0];
                                     if (f) {
                                         const dataUrl = await resizeImageToDataUrl(f, 512, 0.85);
@@ -133,7 +134,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                return (
                                    <button key={name} onClick={() => handlePaletteToggle(name)} className={`p-4 rounded-2xl text-left transition-all duration-200 ${isSelected ? 'bg-platinum/10 ring-2 ring-platinum' : 'bg-black/20 ring-1 ring-platinum/20 hover:ring-platinum/40'}`}>
                                        <div className="flex space-x-1.5">
-                                           {colors.map(color => <div key={color} className="w-6 h-6 rounded-full border border-black/20" style={{ backgroundColor: color }} />)}
+                                                                                                                                                                             {colors.map(color => (
+                                                                                                                                                                                 <div key={color} className="w-6 h-6 rounded-full border border-black/20 bg-platinum/40" title={color} aria-label={color} />
+                                                                                                                                                                             ))}
                                        </div>
                                        <h3 className={`font-semibold mt-3 ${isSelected ? 'text-platinum' : 'text-platinum/80'}`}>{name}</h3>
                                    </button>

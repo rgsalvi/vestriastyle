@@ -73,6 +73,7 @@ const LoginPage: React.FC<{ onLogin: (identity: string) => Promise<void> }> = ({
                         onChange={(e) => setSelectedStylist(e.target.value)}
                         className="block w-full text-lg bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3 disabled:opacity-60"
                         disabled={loading}
+                        title="Select your stylist"
                     >
                         <option value="">Select your name</option>
                         {STYLISTS.map(stylist => (
@@ -534,11 +535,17 @@ export const StylistDashboard: React.FC = () => {
                                 </div>
                             </div>
                         )}
-                        {bannerMessage && (
-                            <div className={`sticky top-0 z-10 ${videoCallRequestSid === activeConversation.sid && !videoRoom ? '' : 'mb-3'}`} role={bannerType === 'error' ? 'alert' : 'status'} aria-live="polite">
-                                <div className={`px-3 py-2 rounded-xl text-sm border ${bannerType === 'error' ? 'bg-red-900/20 text-red-300 border-red-400/30' : bannerType === 'success' ? 'bg-platinum/5 text-platinum border-platinum/30' : 'bg-black/30 text-platinum/70 border-platinum/20'}`}>{bannerMessage}</div>
-                            </div>
-                        )}
+                                                {bannerMessage && (
+                                                    bannerType === 'error' ? (
+                                                        <div className={`sticky top-0 z-10 ${videoCallRequestSid === activeConversation.sid && !videoRoom ? '' : 'mb-3'}`} role="alert" aria-live="polite">
+                                                            <div className={`px-3 py-2 rounded-xl text-sm border ${'bg-red-900/20 text-red-300 border-red-400/30'}`}>{bannerMessage}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className={`sticky top-0 z-10 ${videoCallRequestSid === activeConversation.sid && !videoRoom ? '' : 'mb-3'}`} role="status" aria-live="polite">
+                                                            <div className={`px-3 py-2 rounded-xl text-sm border ${bannerType === 'success' ? 'bg-platinum/5 text-platinum border-platinum/30' : 'bg-black/30 text-platinum/70 border-platinum/20'}`}>{bannerMessage}</div>
+                                                        </div>
+                                                    )
+                                                )}
                         {videoRoom && (
                              <div className="relative flex-shrink-0 mb-4 bg-dark-blue rounded-xl p-2 border border-platinum/20">
                                 <div className="grid grid-cols-1 gap-2">
@@ -553,7 +560,7 @@ export const StylistDashboard: React.FC = () => {
                                 <div className="mt-2 flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
                                         <label className="text-xs text-platinum/60">Mic</label>
-                                        <select value={selectedMicId} onChange={e => switchMic(e.target.value)} className="bg-black/40 border border-platinum/20 text-xs rounded px-2 py-1">
+                                        <select value={selectedMicId} onChange={e => switchMic(e.target.value)} className="bg-black/40 border border-platinum/20 text-xs rounded px-2 py-1" title="Select microphone">
                                             {mics.map(d => (<option key={d.deviceId} value={d.deviceId}>{d.label || 'Microphone'}</option>))}
                                         </select>
                                     </div>
@@ -561,7 +568,7 @@ export const StylistDashboard: React.FC = () => {
                                         <button onClick={toggleMute} className={`p-2 rounded-full transition-colors ${isMuted ? 'bg-red-500 text-white' : 'bg-platinum/20 text-platinum'}`}>
                                             {isMuted ? <MicOffIcon /> : <MicOnIcon />}
                                         </button>
-                                        <button onClick={endVideoCall} className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors">
+                                        <button onClick={endVideoCall} className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors" aria-label="End call" title="End call">
                                             <EndCallIcon />
                                         </button>
                                     </div>
@@ -646,10 +653,10 @@ export const StylistDashboard: React.FC = () => {
                             <div ref={messageEndRef} />
                         </div>
                         <div className="flex flex-row items-end min-h-16 rounded-xl bg-dark-blue w-full px-4 py-3 ring-1 ring-platinum/20">
-                            <button onClick={attachFile} aria-label="Attach file" className="flex items-center justify-center text-platinum/70 hover:text-white">
+                            <button onClick={attachFile} aria-label="Attach file" title="Attach file" className="flex items-center justify-center text-platinum/70 hover:text-white">
                                 <AttachIcon />
                             </button>
-                            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" title="Attach image" aria-label="Attach image" />
                             <div className="flex-grow ml-4">
                                 <textarea
                                     ref={composerRef}
