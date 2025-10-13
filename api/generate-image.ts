@@ -29,12 +29,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             },
         });
 
-        if (response.generatedImages && response.generatedImages.length > 0) {
-            const base64Image = response.generatedImages[0].image.imageBytes;
+        const images = (response as any)?.generatedImages as Array<any> | undefined;
+        if (Array.isArray(images) && images.length > 0 && images[0]?.image?.imageBytes) {
+            const base64Image = images[0].image.imageBytes as string;
             return res.status(200).json({ base64Image });
-        } else {
-            throw new Error("Image generation failed to produce an image.");
         }
+        throw new Error("Image generation failed to produce an image.");
     } catch (error) {
         console.error("Error calling Gemini Image Generation API:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";

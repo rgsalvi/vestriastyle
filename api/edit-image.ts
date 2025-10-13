@@ -35,9 +35,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             },
         });
 
-        for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
-                return res.status(200).json({ base64Image: part.inlineData.data });
+        const candidates = (response as any)?.candidates as Array<any> | undefined;
+        const parts = candidates?.[0]?.content?.parts as Array<any> | undefined;
+        if (Array.isArray(parts)) {
+            for (const part of parts) {
+                if (part?.inlineData?.data) {
+                    return res.status(200).json({ base64Image: part.inlineData.data as string });
+                }
             }
         }
 

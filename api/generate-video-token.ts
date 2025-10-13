@@ -24,7 +24,8 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ success: false, message: 'Identity and roomName are required.' });
         }
         
-        const token = new AccessToken(twilioAccountSid, twilioApiKey, twilioApiSecret, {
+        // Non-null assertion is safe here because we throw above if any are missing
+        const token = new AccessToken(twilioAccountSid!, twilioApiKey!, twilioApiSecret!, {
             identity: identity,
             ttl: 3600 // 1 hour
         });
