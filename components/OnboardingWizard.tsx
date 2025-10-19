@@ -177,13 +177,22 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         <h2 className="text-2xl font-bold text-platinum">Any favorite brands? (Optional)</h2>
                         <p className="mt-2 text-platinum/60">Listing brands you admire helps us nail down your style. Separate them with commas.</p>
                         <div className="mt-6">
-                            <input
-                                type="text"
-                                value={profile.favoriteBrands}
-                                onChange={(e) => setProfile(p => ({...p, favoriteBrands: e.target.value}))}
-                                placeholder="e.g., Everlane, Zara, Patagonia"
-                                className="block w-full shadow-sm sm:text-lg bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3"
-                            />
+                            <label htmlFor="favorite-brands-input" className="block text-sm text-platinum/70 mb-2">Add favorite brands (comma-separated, optional)</label>
+                            <div className="relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-platinum/60" aria-hidden="true">
+                                    <path d="M3 7.5A1.5 1.5 0 014.5 6h15A1.5 1.5 0 0121 7.5V9a3 3 0 01-3 3h-3l.447 4.023A2 2 0 0113.463 18H10.54a2 2 0 01-1.985-1.977L9 12H6a3 3 0 01-3-3V7.5z" />
+                                </svg>
+                                <input
+                                    id="favorite-brands-input"
+                                    type="text"
+                                    value={profile.favoriteBrands}
+                                    onChange={(e) => setProfile(p => ({...p, favoriteBrands: e.target.value}))}
+                                    placeholder="e.g., Everlane, Zara, Patagonia"
+                                    aria-describedby="favorite-brands-hint"
+                                    className="block w-full shadow-sm sm:text-lg bg-black/25 border border-platinum/40 rounded-full focus:ring-2 focus:ring-platinum/40 focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3 pl-12"
+                                />
+                            </div>
+                            <p id="favorite-brands-hint" className="mt-2 text-xs text-platinum/60">Tip: Separate with commas, for example: Everlane, Zara, Patagonia.</p>
                         </div>
                     </div>
                 );
