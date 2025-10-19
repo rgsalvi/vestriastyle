@@ -107,3 +107,7 @@ create trigger touch_wardrobe before update on public.wardrobe_items
 
 create trigger touch_style_profile before update on public.style_profile
   for each row execute procedure public.touch_updated_at();
+
+-- Storage: ensure you have a bucket named 'avatars' created in Supabase Storage.
+-- For development or public avatars, set the bucket to public or add a policy allowing read.
+-- Uploads use the anon key and rely on Storage bucket permissions.

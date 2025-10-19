@@ -496,6 +496,7 @@ const App: React.FC = () => {
       });
     };
     // Upload avatar if provided as data URL (OnboardingWizard now sends avatar as data URL in a transient field avatar_url or similar preview -- adapt if needed)
+    let avatarUploadWarning: string | null = null;
     if ((profile as any).avatar_url && (profile as any).avatar_url.startsWith && (profile as any).avatar_url.startsWith('data:')) {
       try {
         console.log('[onboarding-save] uploading avatar (supabase)');
@@ -503,7 +504,7 @@ const App: React.FC = () => {
         console.log('[onboarding-save] avatar uploaded (path)', photoURL);
       } catch (e) {
         console.warn('[onboarding-save] avatar upload failed', e);
-        throw e instanceof Error ? e : new Error('Avatar upload failed');
+        avatarUploadWarning = 'We were unable to upload your photo. You can add one later in Profile.';
       }
     }
     const cloudProfile: any = { ...profile, avatar_url: photoURL || (profile as any).avatar_url, isOnboarded: true };
@@ -544,6 +545,10 @@ const App: React.FC = () => {
     setShowOnboarding(false);
     setOnboardingSuccessToast(true);
     setTimeout(() => setOnboardingSuccessToast(false), 5000);
+    if (avatarUploadWarning) {
+      setProfileSavedBanner(avatarUploadWarning);
+      setTimeout(() => setProfileSavedBanner(null), 7000);
+    }
     if (pendingChatRetry) {
       const retry = pendingChatRetry;
       setTimeout(async () => {

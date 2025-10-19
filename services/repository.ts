@@ -72,17 +72,26 @@ async function sbSaveWardrobe(uid: string, items: PersistentWardrobeItem[]): Pro
 
 async function sbUploadAvatar(uid: string, dataUrl: string): Promise<string> {
   // Expect dataUrl like data:image/jpeg;base64,...
-  if (!dataUrl.startsWith('data:image/')) throw new Error('Unsupported avatar format');
-  const mime = dataUrl.substring(5, dataUrl.indexOf(';')); // image/jpeg
-  const base64 = dataUrl.split(',')[1];
-  if (!base64) throw new Error('Invalid image data');
-  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  if (!dataUrl.startsWith('data:')) throw new Error('Unsupported avatar format');
+  let blob: Blob;
+  try {
+    // Use fetch to decode the data URL into a Blob for best compatibility
+    const resp = await fetch(dataUrl);
+    blob = await resp.blob();
+  } catch (e) {
+    console.warn('[supabase] failed to convert data URL to blob', e);
+    throw new Error('Avatar upload failed: invalid image data');
+  }
+  const mime = (blob && (blob as any).type) || 'image/jpeg';
   const ext = mime.split('/')[1] || 'jpg';
   const path = `users/${uid}/avatar.${ext}`;
   const sb = getSupabaseClient();
   // Upload (upsert)
-  const { error } = await sb.storage.from('avatars').upload(path, bytes, { contentType: mime, upsert: true });
-  if (error) { console.warn('[supabase] avatar upload error', error); throw new Error('Avatar upload failed'); }
+  const { error } = await sb.storage.from('avatars').upload(path, blob, { contentType: mime, upsert: true });
+  if (error) {
+    console.warn('[supabase] avatar upload error', error);
+    throw new Error(`Avatar upload failed`);
+  }
   return path; // store path only
 }
 
