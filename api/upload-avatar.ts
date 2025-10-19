@@ -2,15 +2,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { adminAuth } from './_firebaseAdmin';
 import { createClient } from '@supabase/supabase-js';
 
-// Server-side: prefer SUPABASE_URL if provided, otherwise fall back to VITE_SUPABASE_URL
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+// Force Node.js runtime (not Edge) to ensure Buffer/Blob and firebase-admin support
+export const config = { runtime: 'nodejs18.x' };
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  throw new Error('Missing Supabase server env vars: SUPABASE_URL/VITE_SUPABASE_URL and SUPABASE_SERVICE_KEY must be set.');
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const UPLOAD_DEBUG = (process.env.UPLOAD_DEBUG || '').toLowerCase() === 'true';
 
 function parseDataUrl(dataUrl: string): { mime: string; buffer: Buffer; ext: string } {
@@ -31,6 +25,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Read server env at request time; avoid crashing at module load
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      return res.status(500).json({ success: false, message: 'Server misconfiguration: SUPABASE_URL and SUPABASE_SERVICE_KEY are required.', debug: UPLOAD_DEBUG ? { SUPABASE_URL_present: !!SUPABASE_URL, SERVICE_KEY_present: !!SUPABASE_SERVICE_KEY } : undefined });
+    }
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
     // Verify Firebase ID token
     const authHeader = (req.headers.authorization || req.headers.Authorization) as string | undefined;
     const idToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
@@ -52,6 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const path = `users/${uid}/avatar.${ext}`;
     // Convert Node Buffer to ArrayBuffer for best compatibility with supabase-js storage upload in Node runtimes
+    // Convert Buffer -> ArrayBuffer for supabase-js storage upload
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
     const { error } = await supabase.storage.from('avatars').upload(path, arrayBuffer, {
       contentType: mime,
@@ -59,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     if (error) {
       console.warn('[api/upload-avatar] supabase upload error', error);
-      return res.status(500).json({ success: false, message: 'Upload failed.', ...(UPLOAD_DEBUG ? { error: error.message || String(error) } : {}) });
+      return res.status(500).json({ success: false, message: 'Upload failed.', ...(UPLOAD_DEBUG ? { error: error.message || String(error), path, mime, size: buffer.byteLength } : {}) });
     }
 
     return res.status(200).json({ success: true, path });
