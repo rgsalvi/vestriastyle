@@ -17,7 +17,7 @@ import ProfilePage from './components/ProfilePage';
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
-import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth } from './services/firebase';
+import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth, resendVerification } from './services/firebase';
 import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getSupabaseAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow } from './services/repository';
 
 interface HeaderProps {
@@ -256,6 +256,7 @@ const App: React.FC = () => {
   // Profile page controlled via currentPage === 'profile'
   const [profileSavedBanner, setProfileSavedBanner] = useState<string | null>(null);
   const [onboardingGateBanner, setOnboardingGateBanner] = useState(false);
+  const [showVerifyEmailBanner, setShowVerifyEmailBanner] = useState(false);
   const [pendingChatRetry, setPendingChatRetry] = useState<{ context: AiResponse; newItem: AnalysisItem | null } | null>(null);
   // Track if we already triggered immediate onboarding to prevent duplicate flicker
   const immediateOnboardingRef = useRef(false);
@@ -585,8 +586,7 @@ const App: React.FC = () => {
       }, 400);
     }
     if (user && !auth.currentUser?.emailVerified) {
-      setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
-      setTimeout(() => setProfileSavedBanner(null), 8000);
+      setShowVerifyEmailBanner(true);
     }
     try { trackEvent('onboarding_complete'); } catch {}
   };
@@ -899,12 +899,42 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-dark-blue flex flex-col">
       <div className="flex-grow">
-        {(profileSavedBanner || onboardingGateBanner) && (
+        {(profileSavedBanner || onboardingGateBanner || showVerifyEmailBanner) && (
           <div className="sticky top-0 z-30 space-y-2">
             {profileSavedBanner && (
               <div className="mx-auto max-w-3xl mt-3 px-4">
                 <div role="status" className="px-3 py-2 rounded-xl text-sm border border-platinum/30 bg-platinum/5 text-platinum shadow">
                   {profileSavedBanner}
+                </div>
+              </div>
+            )}
+            {showVerifyEmailBanner && (
+              <div className="mx-auto max-w-4xl mt-3 px-4">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between px-4 py-3 rounded-xl text-sm border border-platinum/30 bg-dark-blue/60 text-platinum shadow">
+                  <span>
+                    Please verify your email to unlock premium features. We've sent a link to {user?.email || 'your email'}.
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => { try { await resendVerification(); } catch (e) { console.warn('resend verification failed', e); } }}
+                      className="px-3 py-1 rounded-full bg-platinum text-dark-blue font-semibold text-xs hover:opacity-90"
+                    >Resend email</button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await auth.currentUser?.reload();
+                          if (auth.currentUser?.emailVerified) {
+                            setShowVerifyEmailBanner(false);
+                          }
+                        } catch (e) { console.warn('check verification failed', e); }
+                      }}
+                      className="px-3 py-1 rounded-full bg-dark-blue/40 border border-platinum/40 text-platinum font-medium text-xs hover:bg-dark-blue/60"
+                    >Check again</button>
+                    <button
+                      onClick={() => setShowVerifyEmailBanner(false)}
+                      className="px-3 py-1 rounded-full bg-transparent border border-platinum/30 text-platinum/70 font-medium text-xs hover:text-platinum"
+                    >Dismiss</button>
+                  </div>
                 </div>
               </div>
             )}
