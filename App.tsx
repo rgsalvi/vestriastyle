@@ -521,7 +521,8 @@ const App: React.FC = () => {
     }
     const cloudProfile: any = {
       ...profile,
-      avatar_url: photoURL || (profile as any).avatar_url,
+      // Only store storage path if upload succeeded; never store data URLs or absolute URLs
+      avatar_url: photoURL || undefined,
       isOnboarded: true,
       // Include identity fields to satisfy potential NOT NULL/unique constraints on first write
       email: user.email,
@@ -807,6 +808,12 @@ const App: React.FC = () => {
                   const userWithNewAvatar = { ...mergedUser, picture: publicUrl } as User;
                   setUser(userWithNewAvatar);
                   try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userWithNewAvatar)); } catch {}
+                } else if (updatedCloudProfile.avatar_url && typeof updatedCloudProfile.avatar_url === 'string') {
+                  const val = updatedCloudProfile.avatar_url as string;
+                  if (val.startsWith('data:') || val.startsWith('http://') || val.startsWith('https://')) {
+                    // Do not persist data URLs or absolute URLs in DB
+                    delete updatedCloudProfile.avatar_url;
+                  }
                 }
                 try { await withTimeout(saveUserProfile(mergedUser.id, updatedCloudProfile), 10000, 'Profile save'); } catch (e) { console.warn('Failed to save profile to cloud', e); }
                 setStyleProfile(updatedCloudProfile);

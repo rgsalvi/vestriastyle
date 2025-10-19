@@ -109,15 +109,14 @@ export async function repositoryDeleteAllUserData(uid: string) {
 }
 
 export function getSupabaseAvatarPublicUrl(path: string): string {
-  // Stable construction of public URL for a public bucket
-  // path like users/{uid}/avatar.jpg
-  const base = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
   if (!path) return `https://ui-avatars.com/api/?name=User`;
+  // If already a URL or data URL, return as-is
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  const base = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
   if (!base) {
-    console.warn('[supabase] VITE_SUPABASE_URL missing; falling back to path-only');
+    console.warn('[supabase] VITE_SUPABASE_URL missing; using ui-avatars fallback');
     return `https://ui-avatars.com/api/?name=User`;
   }
-  // Do not encode slashes; Supabase expects the raw path under the bucket
   return `${base}/storage/v1/object/public/avatars/${path}`;
 }
 
