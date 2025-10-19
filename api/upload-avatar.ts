@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { adminAuth } from './_firebaseAdmin';
 import { createClient } from '@supabase/supabase-js';
 
 // Force Node.js runtime (not Edge) to ensure Buffer/Blob and firebase-admin support
@@ -33,10 +32,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    // Verify Firebase ID token
+    // Verify Firebase ID token (dynamic import to be ESM-friendly on Vercel)
     const authHeader = (req.headers.authorization || req.headers.Authorization) as string | undefined;
     const idToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
     if (!idToken) return res.status(401).json({ success: false, message: 'Missing Authorization token.' });
+    let adminAuth: any;
+    try {
+      // Vercel compiles to .js; try that first
+      const mod = await import('./_firebaseAdmin.js');
+      adminAuth = (mod as any).adminAuth;
+    } catch {
+      const mod = await import('./_firebaseAdmin');
+      adminAuth = (mod as any).adminAuth;
+    }
+    if (!adminAuth) {
+      return res.status(500).json({ success: false, message: 'Server misconfiguration: Firebase Admin not available.' });
+    }
     const decoded = await adminAuth.verifyIdToken(idToken);
     const uid = decoded.uid;
 
