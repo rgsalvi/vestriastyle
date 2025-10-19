@@ -133,9 +133,16 @@ export function getSupabaseAvatarPublicUrl(path: string): string {
 export async function repositoryEnsureUserRow(uid: string, email: string, displayName: string) {
   const sb = getSupabaseClient();
   const safeEmail = email || `${uid}@placeholder.local`;
+  try {
+    const { data, error: selErr } = await sb.from('users').select('id').eq('id', uid).single();
+    if (selErr && (selErr as any).code !== 'PGRST116') {
+      console.warn('[supabase] ensure user row: select failed', selErr);
+    }
+    if (data?.id) return; // already exists; do not overwrite existing identity fields
+  } catch {}
   const payload: any = { id: uid, email: safeEmail, display_name: displayName || safeEmail, created_at: new Date().toISOString() };
-  const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
-  if (error) console.warn('[supabase] ensure user row error', error);
+  const { error } = await sb.from('users').insert(payload);
+  if (error) console.warn('[supabase] ensure user row insert error', error);
 }
 
 export async function repositoryLoadUserIdentity(uid: string): Promise<{ display_name: string | null; date_of_birth: string | null }> {

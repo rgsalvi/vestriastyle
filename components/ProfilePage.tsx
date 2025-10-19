@@ -21,7 +21,15 @@ const colorPalettes = [
 ];
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, onBack, onSave }) => {
-  const [name, setName] = useState(user.name);
+  const cachedName = (() => {
+    try {
+      const raw = localStorage.getItem(`identity-cache-${user.id}`);
+      const parsed = raw ? JSON.parse(raw) : null;
+      const dn = parsed?.display_name as string | undefined;
+      return (dn && dn.trim()) ? dn : null;
+    } catch { return null; }
+  })();
+  const [name, setName] = useState(cachedName || user.name);
   const [dob, setDob] = useState<string>('');
   // Initialize with a stable public URL if a storage path exists to avoid image flicker
   const [avatar, setAvatar] = useState<string>(
@@ -79,8 +87,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
     (async () => {
       try {
         const identity = await repositoryLoadUserIdentity(user.id);
-        if (!cancelled && identity?.date_of_birth) {
-          setDob(identity.date_of_birth);
+        if (!cancelled) {
+          if (identity?.date_of_birth) setDob(identity.date_of_birth);
+          if (identity?.display_name && identity.display_name.trim()) setName(identity.display_name);
         }
       } catch (e) {
         // Non-fatal; keep DOB empty if not available
