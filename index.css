@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Palette dot color classes (explicit to avoid inline styles and ensure safelisting) */
+.palette-dot-BDB7AB { background-color: #BDB7AB; }
+.palette-dot-8A7B66 { background-color: #8A7B66; }
+.palette-dot-4A4031 { background-color: #4A4031; }
+.palette-dot-F1ECE2 { background-color: #F1ECE2; }
+.palette-dot-E63946 { background-color: #E63946; }
+.palette-dot-F4A261 { background-color: #F4A261; }
+.palette-dot-2A9D8F { background-color: #2A9D8F; }
+.palette-dot-264653 { background-color: #264653; }
+.palette-dot-000000 { background-color: #000000; }
+.palette-dot-555555 { background-color: #555555; }
+.palette-dot-AAAAAA { background-color: #AAAAAA; }
+.palette-dot-FFFFFF { background-color: #FFFFFF; }
+.palette-dot-A8DADC { background-color: #A8DADC; }
+.palette-dot-F1FAEE { background-color: #F1FAEE; }
+.palette-dot-FFDDC1 { background-color: #FFDDC1; }
+.palette-dot-E0BBE4 { background-color: #E0BBE4; }
+.palette-dot-800020 { background-color: #800020; }
+.palette-dot-000080 { background-color: #000080; }
+.palette-dot-006400 { background-color: #006400; }
+.palette-dot-4B0082 { background-color: #4B0082; }
+
 .prose h1 {
     @apply text-3xl font-bold text-platinum tracking-tight mb-4;
 }

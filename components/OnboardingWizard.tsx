@@ -40,6 +40,7 @@ const ProgressBar: React.FC<{ currentStep: number }> = ({ currentStep }) => (
 );
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComplete }) => {
+    const colorClassFromHex = (hex: string) => `palette-dot-${hex.replace('#', '').toUpperCase()}`;
     const [currentStep, setCurrentStep] = useState(0);
     const [profile, setProfile] = useState<Partial<StyleProfile>>({
         styleArchetypes: [],
@@ -134,9 +135,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                return (
                                    <button key={name} onClick={() => handlePaletteToggle(name)} className={`p-4 rounded-2xl text-left transition-all duration-200 ${isSelected ? 'bg-platinum/10 ring-2 ring-platinum' : 'bg-black/20 ring-1 ring-platinum/20 hover:ring-platinum/40'}`}>
                                        <div className="flex space-x-1.5">
-                                                                                                                                                                             {colors.map(color => (
-                                                                                                                                                                                 <div key={color} className="w-6 h-6 rounded-full border border-black/20 bg-platinum/40" title={color} aria-label={color} />
-                                                                                                                                                                             ))}
+                                                                                                                                                                            {colors.map(color => (
+                                                                                                                                                                                <div key={color} className={`w-6 h-6 rounded-full border border-black/20 ${colorClassFromHex(color)}`} title={color} aria-label={color} />
+                                                                                                                                                                            ))}
                                        </div>
                                        <h3 className={`font-semibold mt-3 ${isSelected ? 'text-platinum' : 'text-platinum/80'}`}>{name}</h3>
                                    </button>
