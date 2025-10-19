@@ -3,7 +3,7 @@ import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
 import { auth, deleteCurrentUser } from '../services/firebase';
-import { repositoryDeleteAllUserData as deleteAllUserData, getSupabaseAvatarPublicUrl, repositoryUpdateIdentity } from '../services/repository';
+import { repositoryDeleteAllUserData as deleteAllUserData, getSupabaseAvatarPublicUrl, repositoryUpdateIdentity, repositoryLoadUserIdentity } from '../services/repository';
 
 interface ProfilePageProps {
   user: User;
@@ -72,6 +72,23 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
     }
     setName(user.name);
   }, [initialProfile, user.name, user.picture]);
+
+  // Prefill DOB from Supabase identity if available
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const identity = await repositoryLoadUserIdentity(user.id);
+        if (!cancelled && identity?.date_of_birth) {
+          setDob(identity.date_of_birth);
+        }
+      } catch (e) {
+        // Non-fatal; keep DOB empty if not available
+        // console.warn('Failed to load identity', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user.id]);
 
   const toggleInArray = (list: string[], value: string, limit?: number) => {
     let next = list.includes(value) ? list.filter(v => v !== value) : [...list, value];
