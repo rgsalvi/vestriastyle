@@ -507,28 +507,37 @@ const App: React.FC = () => {
         avatarUploadWarning = 'We were unable to upload your photo. You can add one later in Profile.';
       }
     }
-    const cloudProfile: any = { ...profile, avatar_url: photoURL || (profile as any).avatar_url, isOnboarded: true };
+    const cloudProfile: any = {
+      ...profile,
+      avatar_url: photoURL || (profile as any).avatar_url,
+      isOnboarded: true,
+      // Include identity fields to satisfy potential NOT NULL/unique constraints on first write
+      email: user.email,
+      display_name: user.name,
+    };
     console.log('[onboarding-save] prepared profile with isOnboarded=true, saving to Supabase');
     try {
       await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save');
       console.log('[onboarding-save] profile saved');
     } catch (e: any) {
       // If we hit a NOT NULL on email (23502) it means ensureUserRow didn't persist; retry once after forcing it.
-      if (e && e.code === '23502') {
+      if (e && (e.code === '23502' || e.code === 'PGRST204' || e.code === '23505')) {
         console.warn('[onboarding-save] first save failed (23502), retrying after ensureUserRow');
         try { await ensureUserRow(user.id, user.email, user.name); } catch {}
         try {
           await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save retry');
           console.log('[onboarding-save] profile saved on retry');
-        } catch (e2) {
+        } catch (e2: any) {
           console.warn('[onboarding-save] failed retry; NOT marking isOnboarded true', e2);
           setOnboardingSuccessToast(false);
-          throw e2 instanceof Error ? e2 : new Error('Failed to save profile');
+          const msg = (e2?.message || (e2?.error && e2?.error.message) || (typeof e2 === 'string' ? e2 : 'Failed to save profile'));
+          throw new Error(msg);
         }
       } else {
         console.warn('[onboarding-save] failed to save full profile; NOT marking isOnboarded true', e);
         setOnboardingSuccessToast(false);
-        throw e instanceof Error ? e : new Error('Failed to save profile');
+        const msg = (e?.message || (e?.error && e?.error.message) || (typeof e === 'string' ? e : 'Failed to save profile'));
+        throw new Error(msg);
       }
     }
     try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
