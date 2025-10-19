@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { signUp, signIn, resetPassword, resendVerification } from '../services/firebase';
+import { repositoryUpdateIdentity } from '../services/repository';
 
 interface LoginPageProps {
     onBack: () => void;
@@ -18,7 +19,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
     const [mode, setMode] = useState<'signin' | 'signup'>('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [dob, setDob] = useState(''); // YYYY-MM-DD
     const [error, setError] = useState<string | null>(null);
     const [errorCode, setErrorCode] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -58,7 +61,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
         setLoading(true);
         try {
             if (mode === 'signup') {
-                await signUp(email, password, name.trim() || undefined);
+                // Basic validation
+                const fn = firstName.trim();
+                const ln = lastName.trim();
+                const date = dob.trim();
+                if (!fn || !ln) throw new Error('Please enter your first and last name.');
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Please enter your date of birth (YYYY-MM-DD).');
+                const dt = new Date(date);
+                const today = new Date();
+                if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
+
+                await signUp(email, password, `${fn} ${ln}`);
+                try {
+                    await repositoryUpdateIdentity(fn, ln, date);
+                } catch (idErr: any) {
+                    // Show a clear message but don’t block the account creation
+                    console.warn('Failed to persist identity to Supabase', idErr);
+                }
                 setMessage('Account created. Please check your email (including the Spam folder) for a link to verify your address before trying to sign in.');
             } else {
                 await signIn(email, password);
@@ -152,13 +171,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                                         </div>
                                 )}
 
-                <form onSubmit={handleSubmit} className="mt-8 space-y-4 text-left">
-                    {mode === 'signup' && (
-                        <div>
-                            <label className="block text-sm text-platinum/70 mb-1">Full name</label>
-                            <input value={name} onChange={(e) => setName(e.target.value)} type="text" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="Jane Doe" />
-                        </div>
-                    )}
+                                <form onSubmit={handleSubmit} className="mt-8 space-y-4 text-left">
+                                        {mode === 'signup' && (
+                                                <>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-sm text-platinum/70 mb-1">First name</label>
+                                                            <input value={firstName} onChange={(e) => setFirstName(e.target.value)} type="text" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="Jane" required />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm text-platinum/70 mb-1">Last name</label>
+                                                            <input value={lastName} onChange={(e) => setLastName(e.target.value)} type="text" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="Doe" required />
+                                                        </div>
+                                                    </div>
+                                                                                <div>
+                                                                                    <label htmlFor="signup-dob" className="block text-sm text-platinum/70 mb-1">Date of birth</label>
+                                                                                    <input id="signup-dob" value={dob} onChange={(e) => setDob(e.target.value)} type="date" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" required aria-describedby="signup-dob-hint" />
+                                                                                    <p id="signup-dob-hint" className="mt-1 text-xs text-platinum/60">We use this to tailor your experience.</p>
+                                                                                </div>
+                                                </>
+                                        )}
                     <div>
                         <label className="block text-sm text-platinum/70 mb-1">Email</label>
                         <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="you@example.com" required />

@@ -137,3 +137,21 @@ export async function repositoryEnsureUserRow(uid: string, email: string, displa
   const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
   if (error) console.warn('[supabase] ensure user row error', error);
 }
+
+export async function repositoryUpdateIdentity(firstName: string, lastName: string, dateOfBirth: string): Promise<void> {
+  let idToken: string | undefined;
+  try {
+    const mod = await import('../services/firebase');
+    const auth = (mod as any).auth as any;
+    if (auth?.currentUser) idToken = await auth.currentUser.getIdToken();
+  } catch {}
+  const resp = await fetch('/api/update-identity', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}) },
+    body: JSON.stringify({ firstName, lastName, dateOfBirth }),
+  });
+  if (!resp.ok) {
+    const t = await resp.json().catch(() => ({} as any));
+    throw new Error(t?.message || `Failed to update identity (${resp.status})`);
+  }
+}
