@@ -973,11 +973,21 @@ const App: React.FC = () => {
       )}
       {showPremiumUpsell && <PremiumUpsellModal onClose={() => setShowPremiumUpsell(false)} />}
       {onboardingSuccessToast && (
-        <div className="fixed bottom-4 right-4 z-40 animate-fade-in">
-          <div className="bg-green-500/20 border border-green-400/40 text-green-200 px-4 py-3 rounded-xl shadow-lg backdrop-blur-sm flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-300 animate-pulse" />
-            <span className="font-semibold">Style profile saved</span>
-            <button onClick={() => setOnboardingSuccessToast(false)} className="ml-2 text-green-200/70 hover:text-green-100 text-sm">Dismiss</button>
+        <div className="fixed inset-x-0 top-4 z-40 flex justify-center px-4 animate-fade-in">
+          <div
+            role="status"
+            aria-live="polite"
+            className="max-w-xl w-full md:w-auto px-5 py-3 rounded-2xl border bg-dark-blue/70 border-platinum/30 text-platinum shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-md flex items-center gap-3"
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-platinum/70 shadow-[0_0_12px_rgba(255,255,255,0.35)]" />
+            <span className="font-semibold tracking-wide">Your style profile has been saved</span>
+            <button
+              onClick={() => setOnboardingSuccessToast(false)}
+              className="ml-auto text-platinum/70 hover:text-platinum transition-colors text-sm"
+              aria-label="Dismiss notification"
+            >
+              Dismiss
+            </button>
           </div>
         </div>
       )}
