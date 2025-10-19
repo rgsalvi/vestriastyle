@@ -74,6 +74,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 await signUp(email, password, `${fn} ${ln}`);
                 try {
                     await repositoryUpdateIdentity({ firstName: fn, lastName: ln, dateOfBirth: date });
+                    // Best-effort: write identity cache so post-auth name uses Supabase value immediately
+                    try {
+                        const raw = localStorage.getItem('ai-wardrobe-user');
+                        const u = raw ? JSON.parse(raw) : null;
+                        const uid = u?.id as string | undefined;
+                        if (uid) {
+                            localStorage.setItem(`identity-cache-${uid}`, JSON.stringify({ display_name: `${fn} ${ln}`, date_of_birth: date }));
+                        }
+                    } catch {}
                 } catch (idErr: any) {
                     // Show a clear message but don’t block the account creation
                     console.warn('Failed to persist identity to Supabase', idErr);

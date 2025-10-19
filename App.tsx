@@ -276,11 +276,22 @@ const App: React.FC = () => {
   useEffect(() => {
     const unsub = observeAuth((fbUser) => {
       if (fbUser) {
+        // Read cached Supabase identity to avoid name flicker
+        let cachedName: string | null = null;
+        try {
+          const raw = localStorage.getItem(`identity-cache-${fbUser.uid}`);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed.display_name === 'string' && parsed.display_name.trim()) {
+              cachedName = parsed.display_name;
+            }
+          }
+        } catch {}
         const mapped: User = {
           id: fbUser.uid,
-          name: fbUser.displayName || fbUser.email || 'User',
+          name: cachedName || fbUser.displayName || fbUser.email || 'User',
           email: fbUser.email || '',
-          picture: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(fbUser.displayName || fbUser.email || 'User')}`,
+          picture: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent((cachedName || fbUser.displayName || fbUser.email || 'User'))}`,
         };
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped));
         setUser(mapped);
@@ -294,6 +305,7 @@ const App: React.FC = () => {
                 const updated = { ...mapped, name: identity.display_name } as User;
                 setUser(updated);
                 try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated)); } catch {}
+                try { localStorage.setItem(`identity-cache-${mapped.id}`, JSON.stringify({ display_name: identity.display_name, date_of_birth: identity.date_of_birth ?? null })); } catch {}
               }
             } catch (e) { /* non-fatal */ }
             // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)
@@ -853,6 +865,8 @@ const App: React.FC = () => {
                 if (first || last) {
                   const { repositoryUpdateIdentity } = await import('./services/repository');
                   await repositoryUpdateIdentity({ firstName: first || undefined, lastName: last || undefined });
+                  // Update identity cache to prevent name flicker on next load
+                  try { localStorage.setItem(`identity-cache-${mergedUser.id}`, JSON.stringify({ display_name: mergedUser.name || '', date_of_birth: null })); } catch {}
                 }
               } catch (e) { console.warn('Failed to sync display_name to Supabase', e); }
               // If ProfilePage captured DOB, it would be in a form-local state; since onSave signature doesn't include it, we cannot read it here without lifting state.
