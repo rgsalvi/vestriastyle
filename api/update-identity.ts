@@ -32,15 +32,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const uid = decoded.uid as string;
 
     const { firstName, lastName, dateOfBirth } = req.body || {};
-    if (!firstName || !lastName || !dateOfBirth) {
-      return res.status(400).json({ success: false, message: 'firstName, lastName and dateOfBirth are required.' });
+    if (!firstName && !lastName && !dateOfBirth) {
+      return res.status(400).json({ success: false, message: 'At least one of firstName, lastName or dateOfBirth must be provided.' });
     }
-    // Basic date validation (YYYY-MM-DD)
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
-      return res.status(400).json({ success: false, message: 'dateOfBirth must be YYYY-MM-DD.' });
+    let display_name: string | undefined = undefined;
+    if (firstName || lastName) {
+      const fn = (firstName ?? '').toString().trim();
+      const ln = (lastName ?? '').toString().trim();
+      display_name = `${fn} ${ln}`.trim();
     }
-    const display_name = `${String(firstName).trim()} ${String(lastName).trim()}`.trim();
-    const payload: any = { id: uid, display_name, date_of_birth: dateOfBirth };
+    if (dateOfBirth) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
+        return res.status(400).json({ success: false, message: 'dateOfBirth must be YYYY-MM-DD.' });
+      }
+      const dt = new Date(dateOfBirth);
+      const now = new Date();
+      if (Number.isNaN(dt.getTime()) || dt > now) {
+        return res.status(400).json({ success: false, message: 'dateOfBirth must be a valid date in the past.' });
+      }
+    }
+    const payload: any = { id: uid };
+    if (display_name) payload.display_name = display_name;
+    if (dateOfBirth) payload.date_of_birth = dateOfBirth;
     const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
     if (error) return res.status(500).json({ success: false, message: error.message || 'Failed to update identity.' });
 

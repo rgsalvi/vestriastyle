@@ -837,6 +837,17 @@ const App: React.FC = () => {
                 try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mergedUser.id}`, JSON.stringify(updatedCloudProfile)); } catch {}
               }
               updateUserProfile(mergedUser.name, mergedUser.picture).catch(() => {});
+              // Keep Supabase display_name in sync as well
+              try {
+                const [first, ...rest] = (mergedUser.name || '').split(' ').filter(Boolean);
+                const last = rest.join(' ');
+                if (first || last) {
+                  const { repositoryUpdateIdentity } = await import('./services/repository');
+                  await repositoryUpdateIdentity({ firstName: first || undefined, lastName: last || undefined });
+                }
+              } catch (e) { console.warn('Failed to sync display_name to Supabase', e); }
+              // If ProfilePage captured DOB, it would be in a form-local state; since onSave signature doesn't include it, we cannot read it here without lifting state.
+              // Optional follow-up: wire ProfilePage to send DOB via a context or extend onSave signature.
               setCurrentPage('main');
               setProfileSavedBanner('Profile updated');
               setTimeout(() => setProfileSavedBanner(null), 3000);

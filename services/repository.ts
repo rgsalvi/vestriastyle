@@ -138,7 +138,18 @@ export async function repositoryEnsureUserRow(uid: string, email: string, displa
   if (error) console.warn('[supabase] ensure user row error', error);
 }
 
-export async function repositoryUpdateIdentity(firstName: string, lastName: string, dateOfBirth: string): Promise<void> {
+export async function repositoryLoadUserIdentity(uid: string): Promise<{ display_name: string | null; date_of_birth: string | null }> {
+  const sb = getSupabaseClient();
+  const { data, error } = await sb.from('users').select('display_name,date_of_birth').eq('id', uid).single();
+  if (error) {
+    if ((error as any).code === 'PGRST116') return { display_name: null, date_of_birth: null };
+    console.warn('[supabase] load identity error', error);
+    throw error;
+  }
+  return { display_name: (data as any)?.display_name ?? null, date_of_birth: (data as any)?.date_of_birth ?? null };
+}
+
+export async function repositoryUpdateIdentity(args: { firstName?: string; lastName?: string; dateOfBirth?: string }): Promise<void> {
   let idToken: string | undefined;
   try {
     const mod = await import('../services/firebase');
@@ -148,7 +159,7 @@ export async function repositoryUpdateIdentity(firstName: string, lastName: stri
   const resp = await fetch('/api/update-identity', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}) },
-    body: JSON.stringify({ firstName, lastName, dateOfBirth }),
+    body: JSON.stringify(args),
   });
   if (!resp.ok) {
     const t = await resp.json().catch(() => ({} as any));

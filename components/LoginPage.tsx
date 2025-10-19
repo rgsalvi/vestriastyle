@@ -73,7 +73,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
 
                 await signUp(email, password, `${fn} ${ln}`);
                 try {
-                    await repositoryUpdateIdentity(fn, ln, date);
+                    await repositoryUpdateIdentity({ firstName: fn, lastName: ln, dateOfBirth: date });
                 } catch (idErr: any) {
                     // Show a clear message but don’t block the account creation
                     console.warn('Failed to persist identity to Supabase', idErr);

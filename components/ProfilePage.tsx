@@ -3,7 +3,7 @@ import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
 import { auth, deleteCurrentUser } from '../services/firebase';
-import { repositoryDeleteAllUserData as deleteAllUserData, getSupabaseAvatarPublicUrl } from '../services/repository';
+import { repositoryDeleteAllUserData as deleteAllUserData, getSupabaseAvatarPublicUrl, repositoryUpdateIdentity } from '../services/repository';
 
 interface ProfilePageProps {
   user: User;
@@ -22,6 +22,7 @@ const colorPalettes = [
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, onBack, onSave }) => {
   const [name, setName] = useState(user.name);
+  const [dob, setDob] = useState<string>('');
   // Initialize with a stable public URL if a storage path exists to avoid image flicker
   const [avatar, setAvatar] = useState<string>(
     initialProfile?.avatar_url ? getSupabaseAvatarPublicUrl(initialProfile.avatar_url) : user.picture
@@ -115,6 +116,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
               <input id="profile-name" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" />
             </div>
             <div>
+              <label htmlFor="profile-dob" className="block text-sm text-platinum/70 mb-1">Date of birth</label>
+              <input id="profile-dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" />
+              <p className="mt-1 text-xs text-platinum/60">This stays private and is used to tailor your experience.</p>
+            </div>
+            <div>
               <label htmlFor="profile-email" className="block text-sm text-platinum/70 mb-1">Email</label>
               <input id="profile-email" value={user.email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
               <p className="mt-1 text-xs text-platinum/50">Email cannot be changed. Contact support to modify your email address.</p>
@@ -183,6 +189,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
               setSaveError(null);
               setSaving(true);
               try {
+                // If DOB provided, persist it securely via serverless endpoint
+                if (dob && /^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+                  try { await repositoryUpdateIdentity({ dateOfBirth: dob }); } catch (e) { console.warn('Failed to update DOB', e); }
+                }
                 await onSave({ name: name.trim() || user.name, picture: avatar }, profile);
               } catch (e) {
                 setSaveError(e instanceof Error ? e.message : 'Failed to save changes.');
