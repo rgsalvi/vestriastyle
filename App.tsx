@@ -946,6 +946,23 @@ const App: React.FC = () => {
   };
 
   const activeUserForChat = user; // chat requires authenticated user now
+  const firstName = React.useMemo(() => {
+    if (!user) return null;
+    try {
+      const raw = localStorage.getItem(`identity-cache-${user.id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const fn = (parsed?.first_name as string | undefined)?.trim();
+        if (fn) return fn;
+        const dn = (parsed?.display_name as string | undefined)?.trim();
+        if (dn) return dn.split(' ').filter(Boolean)[0] || null;
+      }
+    } catch {}
+    const n = (user.name || '').trim();
+    if (!n || n.includes('@')) return null;
+    const fn = n.split(' ').filter(Boolean)[0];
+    return fn || null;
+  }, [user?.id, user?.name]);
 
   return (
     <div className="min-h-screen bg-dark-blue flex flex-col">
@@ -963,7 +980,11 @@ const App: React.FC = () => {
               <div className="mx-auto max-w-4xl mt-3 px-4">
                 <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between px-4 py-3 rounded-xl text-sm border border-platinum/30 bg-dark-blue/60 text-platinum shadow">
                   <span>
-                    Please verify your email to unlock premium features. We've sent a link to {user?.email || 'your email'}.
+                    {firstName ? (
+                      <>Please verify your email, {firstName}. We've sent a link to {user?.email || 'your email'}.</>
+                    ) : (
+                      <>Please verify your email to unlock premium features. We've sent a link to {user?.email || 'your email'}.</>
+                    )}
                   </span>
                   <div className="flex gap-2">
                     <button
@@ -1060,7 +1081,7 @@ const App: React.FC = () => {
             className="max-w-xl w-full md:w-auto px-5 py-3 rounded-2xl border bg-dark-blue/70 border-platinum/30 text-platinum shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-md flex items-center gap-3"
           >
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-platinum/70 shadow-[0_0_12px_rgba(255,255,255,0.35)]" />
-            <span className="font-semibold tracking-wide">Your style profile has been saved</span>
+            <span className="font-semibold tracking-wide">{firstName ? `All set, ${firstName}. Your style profile is saved.` : 'Your style profile has been saved'}</span>
             <button
               onClick={() => setOnboardingSuccessToast(false)}
               className="ml-auto text-platinum/70 hover:text-platinum transition-colors text-sm"
