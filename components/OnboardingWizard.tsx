@@ -152,13 +152,22 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                         <h2 className="text-2xl font-bold text-platinum">Any favorite colors? (Optional)</h2>
                         <p className="mt-2 text-platinum/60">Tell us about specific colors or palettes you love. This adds another layer of personalization.</p>
                         <div className="mt-6">
-                            <input
-                                type="text"
-                                value={profile.favoriteColors}
-                                onChange={(e) => setProfile(p => ({...p, favoriteColors: e.target.value}))}
-                                placeholder="e.g., forest green, lavender, terracotta"
-                                className="block w-full shadow-sm sm:text-lg bg-dark-blue border-platinum/30 rounded-full focus:ring-platinum focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3"
-                            />
+                            <label htmlFor="favorite-colors-input" className="block text-sm text-platinum/70 mb-2">Add colors you love (comma-separated, optional)</label>
+                            <div className="relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-platinum/60" aria-hidden="true">
+                                    <path d="M19.5 12c0 1.657-1.843 3-4.118 3-.513 0-1.003-.085-1.45-.24a4.5 4.5 0 11-6.692-5.64A4.5 4.5 0 1115.382 9c2.275 0 4.118 1.343 4.118 3z" />
+                                </svg>
+                                <input
+                                    id="favorite-colors-input"
+                                    type="text"
+                                    value={profile.favoriteColors}
+                                    onChange={(e) => setProfile(p => ({...p, favoriteColors: e.target.value}))}
+                                    placeholder="e.g., forest green, lavender, terracotta"
+                                    aria-describedby="favorite-colors-hint"
+                                    className="block w-full shadow-sm sm:text-lg bg-black/25 border border-platinum/40 rounded-full focus:ring-2 focus:ring-platinum/40 focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3 pl-12"
+                                />
+                            </div>
+                            <p id="favorite-colors-hint" className="mt-2 text-xs text-platinum/60">Tip: Separate with commas, for example: forest green, lavender, terracotta.</p>
                         </div>
                     </div>
                 );
