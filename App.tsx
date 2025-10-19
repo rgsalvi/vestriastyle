@@ -586,7 +586,8 @@ const App: React.FC = () => {
       }, 400);
     }
     if (user && !auth.currentUser?.emailVerified) {
-      setShowVerifyEmailBanner(true);
+      setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
+      setTimeout(() => setProfileSavedBanner(null), 8000);
     }
     try { trackEvent('onboarding_complete'); } catch {}
   };
