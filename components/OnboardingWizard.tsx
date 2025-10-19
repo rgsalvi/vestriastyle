@@ -50,6 +50,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
         bodyType: 'None',
     });
     const [submitting, setSubmitting] = useState(false);
+    // Normalize comma-separated inputs: trim whitespace, remove empties, rejoin with a single comma+space
+    const normalizeCommaList = (s: string) =>
+        s
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean)
+          .join(', ');
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string>(user.picture || '');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -162,6 +169,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                     type="text"
                                     value={profile.favoriteColors}
                                     onChange={(e) => setProfile(p => ({...p, favoriteColors: e.target.value}))}
+                                        onBlur={(e) => setProfile(p => ({ ...p, favoriteColors: normalizeCommaList(e.target.value || '') }))}
                                     placeholder="e.g., forest green, lavender, terracotta"
                                     aria-describedby="favorite-colors-hint"
                                     className="block w-full shadow-sm sm:text-lg bg-black/25 border border-platinum/40 rounded-full focus:ring-2 focus:ring-platinum/40 focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3 pl-12"
@@ -187,6 +195,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
                                     type="text"
                                     value={profile.favoriteBrands}
                                     onChange={(e) => setProfile(p => ({...p, favoriteBrands: e.target.value}))}
+                                        onBlur={(e) => setProfile(p => ({ ...p, favoriteBrands: normalizeCommaList(e.target.value || '') }))}
                                     placeholder="e.g., Everlane, Zara, Patagonia"
                                     aria-describedby="favorite-brands-hint"
                                     className="block w-full shadow-sm sm:text-lg bg-black/25 border border-platinum/40 rounded-full focus:ring-2 focus:ring-platinum/40 focus:border-platinum transition-colors text-platinum placeholder-platinum/50 px-6 py-3 pl-12"
