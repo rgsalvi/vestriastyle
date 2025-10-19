@@ -3,7 +3,7 @@ import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
 import { auth, deleteCurrentUser } from '../services/firebase';
-import { repositoryDeleteAllUserData as deleteAllUserData } from '../services/repository';
+import { repositoryDeleteAllUserData as deleteAllUserData, getSupabaseAvatarPublicUrl } from '../services/repository';
 
 interface ProfilePageProps {
   user: User;
@@ -53,7 +53,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
         ...initialProfile,
         avatar_url: initialProfile.avatar_url || prev.avatar_url,
       }));
-      setAvatar(initialProfile.avatar_url || user.picture);
+      if (initialProfile.avatar_url) {
+        try {
+          setAvatar(getSupabaseAvatarPublicUrl(initialProfile.avatar_url));
+        } catch {
+          setAvatar(user.picture);
+        }
+      } else {
+        setAvatar(user.picture);
+      }
     } else {
       // If no initial profile yet, ensure name/avatar reflect user
       setAvatar(user.picture);

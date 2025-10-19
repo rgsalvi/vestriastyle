@@ -768,13 +768,15 @@ const App: React.FC = () => {
             initialProfile={styleProfile}
             onBack={() => setCurrentPage('main')}
             onSave={async (updatedUser, updatedProfile) => {
-              let photoURL = updatedUser.picture;
+              let uploadedPath: string | undefined = undefined;
+              let finalPictureUrl: string | undefined = undefined;
               try {
                 if (updatedUser.picture && updatedUser.picture.startsWith('data:')) {
-                  photoURL = await withTimeout(uploadAvatar(user.id, updatedUser.picture), 15000, 'Avatar upload');
+                  uploadedPath = await withTimeout(uploadAvatar(user.id, updatedUser.picture), 15000, 'Avatar upload');
+                  finalPictureUrl = getSupabaseAvatarPublicUrl(uploadedPath);
                 }
               } catch (e) { console.warn('Avatar upload failed', e); }
-              const mergedUser = { ...user, ...updatedUser, picture: photoURL || updatedUser.picture || user.picture } as User;
+              const mergedUser = { ...user, ...updatedUser, picture: finalPictureUrl || updatedUser.picture || user.picture } as User;
               setUser(mergedUser);
               try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mergedUser)); } catch {}
               if (updatedProfile) {
@@ -788,6 +790,11 @@ const App: React.FC = () => {
                 const updatedCloudProfile: any = { ...updatedProfile };
                 if (newAvatarPath) {
                   updatedCloudProfile.avatar_url = newAvatarPath;
+                  // Keep header picture in sync if profile avatar was provided this way
+                  const publicUrl = getSupabaseAvatarPublicUrl(newAvatarPath);
+                  const userWithNewAvatar = { ...mergedUser, picture: publicUrl } as User;
+                  setUser(userWithNewAvatar);
+                  try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userWithNewAvatar)); } catch {}
                 }
                 try { await withTimeout(saveUserProfile(mergedUser.id, updatedCloudProfile), 10000, 'Profile save'); } catch (e) { console.warn('Failed to save profile to cloud', e); }
                 setStyleProfile(updatedCloudProfile);
