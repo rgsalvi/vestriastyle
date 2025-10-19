@@ -305,7 +305,7 @@ const App: React.FC = () => {
                 const updated = { ...mapped, name: identity.display_name } as User;
                 setUser(updated);
                 try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated)); } catch {}
-                try { localStorage.setItem(`identity-cache-${mapped.id}`, JSON.stringify({ display_name: identity.display_name, date_of_birth: identity.date_of_birth ?? null })); } catch {}
+                try { localStorage.setItem(`identity-cache-${mapped.id}`, JSON.stringify({ display_name: identity.display_name, date_of_birth: identity.date_of_birth ?? null, first_name: identity.first_name ?? null, last_name: identity.last_name ?? null })); } catch {}
               }
             } catch (e) { /* non-fatal */ }
             // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)

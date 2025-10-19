@@ -145,15 +145,20 @@ export async function repositoryEnsureUserRow(uid: string, email: string, displa
   if (error) console.warn('[supabase] ensure user row insert error', error);
 }
 
-export async function repositoryLoadUserIdentity(uid: string): Promise<{ display_name: string | null; date_of_birth: string | null }> {
+export async function repositoryLoadUserIdentity(uid: string): Promise<{ display_name: string | null; date_of_birth: string | null; first_name?: string | null; last_name?: string | null }> {
   const sb = getSupabaseClient();
-  const { data, error } = await sb.from('users').select('display_name,date_of_birth').eq('id', uid).single();
+  const { data, error } = await sb.from('users').select('display_name,date_of_birth,first_name,last_name').eq('id', uid).single();
   if (error) {
     if ((error as any).code === 'PGRST116') return { display_name: null, date_of_birth: null };
     console.warn('[supabase] load identity error', error);
     throw error;
   }
-  return { display_name: (data as any)?.display_name ?? null, date_of_birth: (data as any)?.date_of_birth ?? null };
+  return {
+    display_name: (data as any)?.display_name ?? null,
+    date_of_birth: (data as any)?.date_of_birth ?? null,
+    first_name: (data as any)?.first_name ?? null,
+    last_name: (data as any)?.last_name ?? null,
+  };
 }
 
 export async function repositoryUpdateIdentity(args: { firstName?: string; lastName?: string; dateOfBirth?: string }): Promise<void> {

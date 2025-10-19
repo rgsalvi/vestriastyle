@@ -31,14 +31,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const decoded = await adminAuth.verifyIdToken(idToken);
     const uid = decoded.uid as string;
 
-    const { firstName, lastName, dateOfBirth } = req.body || {};
+  const { firstName, lastName, dateOfBirth } = req.body || {};
     if (!firstName && !lastName && !dateOfBirth) {
       return res.status(400).json({ success: false, message: 'At least one of firstName, lastName or dateOfBirth must be provided.' });
     }
     let display_name: string | undefined = undefined;
+    let first_name: string | undefined = undefined;
+    let last_name: string | undefined = undefined;
     if (firstName || lastName) {
       const fn = (firstName ?? '').toString().trim();
       const ln = (lastName ?? '').toString().trim();
+      first_name = fn || undefined;
+      last_name = ln || undefined;
       display_name = `${fn} ${ln}`.trim();
     }
     if (dateOfBirth) {
@@ -53,8 +57,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const payload: any = { id: uid };
     if (display_name) payload.display_name = display_name;
+    if (first_name) payload.first_name = first_name;
+    if (last_name) payload.last_name = last_name;
     if (dateOfBirth) payload.date_of_birth = dateOfBirth;
-    const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
+    let { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
+    if (error && typeof error.message === 'string' && (error.message.includes('first_name') || error.message.includes('last_name'))) {
+      // Fallback for deployments where columns aren't created yet: retry without first/last
+      const fallback: any = { id: uid };
+      if (display_name) fallback.display_name = display_name;
+      if (dateOfBirth) fallback.date_of_birth = dateOfBirth;
+      const retry = await sb.from('users').upsert(fallback, { onConflict: 'id' });
+      error = retry.error as any;
+    }
     if (error) return res.status(500).json({ success: false, message: error.message || 'Failed to update identity.' });
 
     return res.status(200).json({ success: true });

@@ -80,7 +80,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                         const u = raw ? JSON.parse(raw) : null;
                         const uid = u?.id as string | undefined;
                         if (uid) {
-                            localStorage.setItem(`identity-cache-${uid}`, JSON.stringify({ display_name: `${fn} ${ln}`, date_of_birth: date }));
+                            localStorage.setItem(`identity-cache-${uid}`, JSON.stringify({ display_name: `${fn} ${ln}`, first_name: fn, last_name: ln, date_of_birth: date }));
                         }
                     } catch {}
                 } catch (idErr: any) {
