@@ -50,6 +50,10 @@ async function sbSaveUserProfile(uid: string, profile: Partial<StyleProfile>): P
   // If caller passed through email/display_name (rare), include them to avoid null constraint issues on first write.
   if ((profile as any).email) (payload as any).email = (profile as any).email;
   if ((profile as any).display_name) (payload as any).display_name = (profile as any).display_name;
+  // Strip undefined keys so we don't null-out existing columns on upsert
+  Object.keys(payload).forEach((k) => {
+    if ((payload as any)[k] === undefined) delete (payload as any)[k];
+  });
   const { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
   if (error) { console.warn('[supabase] save profile error', error); throw error; }
 }
