@@ -616,6 +616,22 @@ const App: React.FC = () => {
     }
   }, [managedWardrobe, user]);
 
+  // Persistently surface email verification reminder on subsequent app loads until verified
+  useEffect(() => {
+    try {
+      const current = auth.currentUser;
+      if (user && current) {
+        if (!current.emailVerified) {
+          setShowVerifyEmailBanner(true);
+        } else {
+          setShowVerifyEmailBanner(false);
+        }
+      } else {
+        setShowVerifyEmailBanner(false);
+      }
+    } catch {}
+  }, [user]);
+
 
   const handleNewItemSelect = async (items: WardrobeItem[]) => {
     if (items.length === 0) {
