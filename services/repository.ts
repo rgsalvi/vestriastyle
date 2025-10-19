@@ -111,8 +111,14 @@ export async function repositoryDeleteAllUserData(uid: string) {
 export function getSupabaseAvatarPublicUrl(path: string): string {
   // path like users/{uid}/avatar.jpg
   const sb = getSupabaseClient();
-  const { data } = sb.storage.from('avatars').getPublicUrl(path);
-  return data.publicUrl;
+  try {
+    const { data } = sb.storage.from('avatars').getPublicUrl(path);
+    if (data && data.publicUrl) return data.publicUrl;
+  } catch (e) {
+    console.warn('[supabase] getPublicUrl failed', e);
+  }
+  // Return the raw path as last resort (may 404 if bucket isn’t public). Caller often has an <img onError> fallback.
+  return path;
 }
 
 export async function repositoryEnsureUserRow(uid: string, email: string, displayName: string) {

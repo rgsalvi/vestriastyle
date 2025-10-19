@@ -92,7 +92,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
 
         <div className="mt-6 grid gap-6 md:grid-cols-[160px,1fr] items-start">
           <div className="flex flex-col items-center gap-3">
-            <img src={avatar} alt={user.name} className="h-32 w-32 rounded-full border-2 border-platinum/30 object-cover" />
+            <img
+              src={avatar}
+              alt={user.name}
+              className="h-32 w-32 rounded-full border-2 border-platinum/30 object-cover"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.onerror = null;
+                target.src = user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`;
+              }}
+            />
             <button onClick={() => fileInputRef.current?.click()} className="bg-platinum text-dark-blue text-sm font-semibold px-3 py-1.5 rounded-full hover:opacity-90">Change Photo</button>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" title="Upload profile photo" aria-label="Upload profile photo" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f); }} />
             <p className="text-xs text-platinum/60">JPG/PNG/WebP accepted (we convert to JPEG), up to ~2MB</p>

@@ -161,7 +161,18 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
             aria-haspopup="menu"
             aria-controls="user-menu"
           >
-            <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30" />
+            <img
+              src={user.picture}
+              alt={user.name}
+              className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                // prevent infinite loop
+                target.onerror = null;
+                const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`;
+                target.src = fallback;
+              }}
+            />
           </button>
           {menuOpen && (
             <div
