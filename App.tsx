@@ -18,7 +18,7 @@ import { getStyleAdvice, trackEvent, initiateChatSession } from './services/gemi
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth, resendVerification } from './services/firebase';
-import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getSupabaseAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow } from './services/repository';
+import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getSupabaseAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow, repositoryLoadUserIdentity } from './services/repository';
 
 interface HeaderProps {
   user: User | null;
@@ -287,6 +287,15 @@ const App: React.FC = () => {
         ensureUserRow(mapped.id, mapped.email, mapped.name).catch(e => console.warn('ensureUserRow failed', e));
         (async () => {
           try {
+            // Prefer Supabase identity for display name
+            try {
+              const identity = await repositoryLoadUserIdentity(mapped.id);
+              if (identity?.display_name) {
+                const updated = { ...mapped, name: identity.display_name } as User;
+                setUser(updated);
+                try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated)); } catch {}
+              }
+            } catch (e) { /* non-fatal */ }
             // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)
             const cloudProfile = await loadUserProfile(mapped.id);
             if (cloudProfile) {
