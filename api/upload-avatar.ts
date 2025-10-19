@@ -3,7 +3,7 @@ import { adminAuth } from './_firebaseAdmin';
 import { createClient } from '@supabase/supabase-js';
 
 // Force Node.js runtime (not Edge) to ensure Buffer/Blob and firebase-admin support
-export const config = { runtime: 'nodejs18.x' };
+export const config = { runtime: 'nodejs' };
 
 const UPLOAD_DEBUG = (process.env.UPLOAD_DEBUG || '').toLowerCase() === 'true';
 
