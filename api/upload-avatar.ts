@@ -11,6 +11,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const UPLOAD_DEBUG = (process.env.UPLOAD_DEBUG || '').toLowerCase() === 'true';
 
 function parseDataUrl(dataUrl: string): { mime: string; buffer: Buffer; ext: string } {
   // data:[<mime>];base64,<data>
@@ -50,19 +51,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const path = `users/${uid}/avatar.${ext}`;
-    const { error } = await supabase.storage.from('avatars').upload(path, buffer, {
+    // Convert Node Buffer to ArrayBuffer for best compatibility with supabase-js storage upload in Node runtimes
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    const { error } = await supabase.storage.from('avatars').upload(path, arrayBuffer, {
       contentType: mime,
       upsert: true,
     });
     if (error) {
       console.warn('[api/upload-avatar] supabase upload error', error);
-      return res.status(500).json({ success: false, message: 'Upload failed.' });
+      return res.status(500).json({ success: false, message: 'Upload failed.', ...(UPLOAD_DEBUG ? { error: error.message || String(error) } : {}) });
     }
 
     return res.status(200).json({ success: true, path });
   } catch (e: any) {
     console.error('[api/upload-avatar] error', e);
     const msg = e?.message || 'Unexpected error';
-    return res.status(500).json({ success: false, message: msg });
+    return res.status(500).json({ success: false, message: msg, ...(UPLOAD_DEBUG ? { error: e?.stack || String(e) } : {}) });
   }
 }
