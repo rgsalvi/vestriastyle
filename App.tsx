@@ -564,9 +564,8 @@ const App: React.FC = () => {
       try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser)); } catch {}
       updateUserProfile(updatedUser.name, publicUrl).catch(() => {});
     }
-    setShowOnboarding(false);
-    setOnboardingSuccessToast(true);
-    setTimeout(() => setOnboardingSuccessToast(false), 5000);
+  setShowOnboarding(false);
+  setOnboardingSuccessToast(true);
     if (avatarUploadWarning) {
       setProfileSavedBanner(avatarUploadWarning);
       setTimeout(() => setProfileSavedBanner(null), 7000);
