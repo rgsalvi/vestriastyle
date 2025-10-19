@@ -1,0 +1,68 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { adminAuth } from './_firebaseAdmin';
+import { createClient } from '@supabase/supabase-js';
+
+// Server-side: prefer SUPABASE_URL if provided, otherwise fall back to VITE_SUPABASE_URL
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  throw new Error('Missing Supabase server env vars: SUPABASE_URL/VITE_SUPABASE_URL and SUPABASE_SERVICE_KEY must be set.');
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+function parseDataUrl(dataUrl: string): { mime: string; buffer: Buffer; ext: string } {
+  // data:[<mime>];base64,<data>
+  const match = /^data:([^;]+);base64,(.+)$/.exec(dataUrl);
+  if (!match) throw new Error('Invalid data URL');
+  const mime = match[1];
+  const b64 = match[2];
+  const buffer = Buffer.from(b64, 'base64');
+  const ext = (mime.split('/')[1] || 'jpg').toLowerCase();
+  return { mime, buffer, ext };
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+
+  try {
+    // Verify Firebase ID token
+    const authHeader = (req.headers.authorization || req.headers.Authorization) as string | undefined;
+    const idToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+    if (!idToken) return res.status(401).json({ success: false, message: 'Missing Authorization token.' });
+    const decoded = await adminAuth.verifyIdToken(idToken);
+    const uid = decoded.uid;
+
+    // Parse body
+    const { dataUrl } = req.body || {};
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
+      return res.status(400).json({ success: false, message: 'Invalid or missing dataUrl.' });
+    }
+
+    const { mime, buffer, ext } = parseDataUrl(dataUrl);
+    // Basic size guard (~3MB)
+    if (buffer.byteLength > 3 * 1024 * 1024) {
+      return res.status(413).json({ success: false, message: 'Image too large. Please upload an image under 3MB.' });
+    }
+
+    const path = `users/${uid}/avatar.${ext}`;
+    const { error } = await supabase.storage.from('avatars').upload(path, buffer, {
+      contentType: mime,
+      upsert: true,
+    });
+    if (error) {
+      console.warn('[api/upload-avatar] supabase upload error', error);
+      return res.status(500).json({ success: false, message: 'Upload failed.' });
+    }
+
+    return res.status(200).json({ success: true, path });
+  } catch (e: any) {
+    console.error('[api/upload-avatar] error', e);
+    const msg = e?.message || 'Unexpected error';
+    return res.status(500).json({ success: false, message: msg });
+  }
+}

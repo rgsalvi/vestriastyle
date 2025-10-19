@@ -75,28 +75,34 @@ async function sbSaveWardrobe(uid: string, items: PersistentWardrobeItem[]): Pro
 }
 
 async function sbUploadAvatar(uid: string, dataUrl: string): Promise<string> {
-  // Expect dataUrl like data:image/jpeg;base64,...
+  // Serverless upload via Vercel function using Supabase Service Key (bypasses RLS), authenticated by Firebase ID token
   if (!dataUrl.startsWith('data:')) throw new Error('Unsupported avatar format');
-  let blob: Blob;
+  // Obtain Firebase ID token from current auth session if available (optional enhancement):
+  // Since this is a repository layer shared by UI, we'll fetch token from window.firebase if present; otherwise rely on caller to be authenticated and cookie-based auth if configured.
+  let idToken: string | undefined;
   try {
-    // Use fetch to decode the data URL into a Blob for best compatibility
-    const resp = await fetch(dataUrl);
-    blob = await resp.blob();
-  } catch (e) {
-    console.warn('[supabase] failed to convert data URL to blob', e);
-    throw new Error('Avatar upload failed: invalid image data');
+    // dynamic import to avoid coupling
+    const mod = await import('../services/firebase');
+    const auth = (mod as any).auth as any;
+    if (auth?.currentUser) {
+      idToken = await auth.currentUser.getIdToken();
+    }
+  } catch {}
+  const resp = await fetch('/api/upload-avatar', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+    },
+    body: JSON.stringify({ dataUrl }),
+  });
+  if (!resp.ok) {
+    const t = await resp.json().catch(() => ({} as any));
+    const msg = t?.message || `Upload failed (${resp.status})`;
+    throw new Error(msg);
   }
-  const mime = (blob && (blob as any).type) || 'image/jpeg';
-  const ext = mime.split('/')[1] || 'jpg';
-  const path = `users/${uid}/avatar.${ext}`;
-  const sb = getSupabaseClient();
-  // Upload (upsert)
-  const { error } = await sb.storage.from('avatars').upload(path, blob, { contentType: mime, upsert: true });
-  if (error) {
-    console.warn('[supabase] avatar upload error', error);
-    throw new Error(`Avatar upload failed`);
-  }
-  return path; // store path only
+  const json = await resp.json();
+  return json.path as string;
 }
 
 export async function repositoryLoadUserProfile(uid: string) { return sbLoadUserProfile(uid); }
