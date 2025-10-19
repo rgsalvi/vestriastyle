@@ -109,16 +109,16 @@ export async function repositoryDeleteAllUserData(uid: string) {
 }
 
 export function getSupabaseAvatarPublicUrl(path: string): string {
+  // Stable construction of public URL for a public bucket
   // path like users/{uid}/avatar.jpg
-  const sb = getSupabaseClient();
-  try {
-    const { data } = sb.storage.from('avatars').getPublicUrl(path);
-    if (data && data.publicUrl) return data.publicUrl;
-  } catch (e) {
-    console.warn('[supabase] getPublicUrl failed', e);
+  const base = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+  if (!path) return `https://ui-avatars.com/api/?name=User`;
+  if (!base) {
+    console.warn('[supabase] VITE_SUPABASE_URL missing; falling back to path-only');
+    return `https://ui-avatars.com/api/?name=User`;
   }
-  // Return the raw path as last resort (may 404 if bucket isn’t public). Caller often has an <img onError> fallback.
-  return path;
+  // Do not encode slashes; Supabase expects the raw path under the bucket
+  return `${base}/storage/v1/object/public/avatars/${path}`;
 }
 
 export async function repositoryEnsureUserRow(uid: string, email: string, displayName: string) {

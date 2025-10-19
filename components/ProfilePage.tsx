@@ -22,7 +22,10 @@ const colorPalettes = [
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, onBack, onSave }) => {
   const [name, setName] = useState(user.name);
-  const [avatar, setAvatar] = useState<string>(initialProfile?.avatar_url ? initialProfile.avatar_url : user.picture);
+  // Initialize with a stable public URL if a storage path exists to avoid image flicker
+  const [avatar, setAvatar] = useState<string>(
+    initialProfile?.avatar_url ? getSupabaseAvatarPublicUrl(initialProfile.avatar_url) : user.picture
+  );
   const [profile, setProfile] = useState<StyleProfile>(() => initialProfile || {
     styleArchetypes: [],
     colorPalettes: [],

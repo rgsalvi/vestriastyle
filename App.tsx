@@ -169,8 +169,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
                 const target = e.currentTarget as HTMLImageElement;
                 // prevent infinite loop
                 target.onerror = null;
+                if (!user || !user.name) return;
                 const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`;
-                target.src = fallback;
+                if (target.src !== fallback) target.src = fallback;
               }}
             />
           </button>
@@ -292,7 +293,7 @@ const App: React.FC = () => {
               if (fbUser.emailVerified && !cloudProfile.isPremium) {
                 try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
               }
-              // Map legacy avatar fields: derive picture from avatar_url if present
+              // Derive header picture from storage path if present
               if ((cloudProfile as any).avatar_url) {
                 mapped.picture = getSupabaseAvatarPublicUrl((cloudProfile as any).avatar_url);
               }
@@ -316,7 +317,7 @@ const App: React.FC = () => {
                 if (fbUser.emailVerified && !localProf.isPremium) {
                   localProf.isPremium = true;
                 }
-                // If local profile missing avatar, use auth picture
+                // Map local storage path to public URL for header
                 if ((localProf as any).avatar_url) {
                   mapped.picture = getSupabaseAvatarPublicUrl((localProf as any).avatar_url);
                 }
