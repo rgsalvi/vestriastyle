@@ -217,11 +217,27 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ user, onComp
     }
 
 
+    const greetingFirstName = React.useMemo(() => {
+        try {
+            const raw = localStorage.getItem(`identity-cache-${user.id}`);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                const fn = (parsed?.first_name as string | undefined)?.trim();
+                if (fn) return fn;
+                const dn = (parsed?.display_name as string | undefined)?.trim();
+                if (dn) return dn.split(' ').filter(Boolean)[0] || null;
+            }
+        } catch {}
+        const n = (user.name || '').trim();
+        if (!n || n.includes('@')) return null;
+        return n.split(' ').filter(Boolean)[0] || null;
+    }, [user.id, user.name]);
+
     return (
         <div className="min-h-screen bg-dark-blue flex flex-col items-center justify-center p-4 animate-fade-in">
             <div className="w-full max-w-4xl">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold text-platinum tracking-tight">Welcome, {user.name.split(' ')[0]}!</h1>
+                    <h1 className="text-3xl font-bold text-platinum tracking-tight">{greetingFirstName ? `Welcome, ${greetingFirstName}!` : 'Welcome!'}</h1>
                     <p className="mt-1 text-lg text-platinum/60">Let's set up your Style Profile.</p>
                 </div>
                 

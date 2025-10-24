@@ -123,6 +123,23 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
 
+  const greetingFirstName = React.useMemo(() => {
+    if (!user) return null;
+    try {
+      const raw = localStorage.getItem(`identity-cache-${user.id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const fn = (parsed?.first_name as string | undefined)?.trim();
+        if (fn) return fn;
+        const dn = (parsed?.display_name as string | undefined)?.trim();
+        if (dn) return dn.split(' ').filter(Boolean)[0] || null;
+      }
+    } catch {}
+    const n = (user.name || '').trim();
+    if (!n || n.includes('@')) return null;
+    return n.split(' ').filter(Boolean)[0] || null;
+  }, [user?.id, user?.name]);
+
   React.useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -183,6 +200,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
               onMouseEnter={() => setMenuOpen(true)}
               onMouseLeave={() => setMenuOpen(false)}
             >
+              {greetingFirstName && (
+                <p className="text-xs px-3 pb-1 text-platinum/70">Welcome back, <span className="font-semibold text-platinum">{greetingFirstName}</span></p>
+              )}
               <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
               <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
               <div className="h-px bg-platinum/20 my-1"></div>
