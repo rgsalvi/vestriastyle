@@ -21,6 +21,7 @@ import AboutUs from './components/AboutUs';
 import PartnerPage from './components/PartnerPage';
 import ProfilePage from './components/ProfilePage';
 import VirtualTryOn from './components/VirtualTryOn';
+import { Squares2X2Icon, SparklesIcon } from '@heroicons/react/24/outline';
 const FounderBioModal = React.lazy(() => import('./components/FounderBioModal'));
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
@@ -1168,25 +1169,31 @@ const App: React.FC = () => {
                     <p className="mt-2 text-platinum/70 text-sm md:text-base">Choose a path below to get started.</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                  <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
-                    <div>
-                      <h2 className="text-2xl font-extrabold tracking-tight">Wardrobe Check</h2>
-                      <p className="mt-2 text-platinum/80">See how a new item pairs with what you already own.</p>
+                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
+                      <div>
+                        <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
+                          <Squares2X2Icon className="h-6 w-6" aria-hidden="true" />
+                        </div>
+                        <h2 className="text-2xl font-extrabold tracking-tight">Wardrobe Check</h2>
+                        <p className="mt-2 text-platinum/80">See how a new item pairs with what you already own.</p>
+                      </div>
+                      <div className="mt-6">
+                        <button onClick={() => setLandingMode('wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
+                      </div>
                     </div>
-                    <div className="mt-6">
-                      <button onClick={() => setLandingMode('wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
+                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
+                      <div>
+                        <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
+                          <SparklesIcon className="h-6 w-6" aria-hidden="true" />
+                        </div>
+                        <h2 className="text-2xl font-extrabold tracking-tight">Fit Check</h2>
+                        <p className="mt-2 text-platinum/80">Try it on your photo—preview fit, proportion, and vibe.</p>
+                      </div>
+                      <div className="mt-6">
+                        <button onClick={() => setCurrentPage('tryon')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Fit Check</button>
+                      </div>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
-                    <div>
-                      <h2 className="text-2xl font-extrabold tracking-tight">Fit Check</h2>
-                      <p className="mt-2 text-platinum/80">Try it on your photo—preview fit, proportion, and vibe.</p>
-                    </div>
-                    <div className="mt-6">
-                      <button onClick={() => setCurrentPage('tryon')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Fit Check</button>
-                    </div>
-                  </div>
-                </div>
                 </>
               ) : (
                 <div className="space-y-12">

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.19.0",
+    "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.58.0",
     "@tensorflow-models/face-detection": "^1.0.2",
     "@tensorflow/tfjs": "^4.20.0",
