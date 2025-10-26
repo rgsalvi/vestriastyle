@@ -1,4 +1,8 @@
 import { FounderData } from './FounderBioModal';
+// Import images so Vite bundles and fingerprints them correctly
+import TanviImg from '../tanvi.jpg';
+import MuskaanImg from '../muskaan.jpg';
+import RiddhiImg from '../riddhi.jpg';
 
 export type FounderId = 'tanvi' | 'muskaan' | 'riddhi';
 
@@ -7,7 +11,7 @@ export const foundersMap: Record<FounderId, FounderData> = {
     id: 'tanvi',
     name: 'Tanvi Sankhe',
     title: 'Lead Stylist',
-    headshot: '/tanvi.jpg',
+  headshot: TanviImg,
     bio: 'I am a BMS graduate and later pursued a diploma in Fashion Designing from INIFD. Throughout my career, I’ve had the opportunity to freelance for various ads, a web series, jewelry shoots, campaigns, and catalogs. Worked with celebrities. I’ve also styled streetwear brands, jewelry brands, ethnic wear brands and I have done editorial shoots too while also working with influencers to create unique content. Additionally, I’ve worked as an E-commerce catalogue and campaign stylist. My personal style is simple, clothes that feel super comfortable. Personally, I love having colours in my wardrobe, but I always lean towards timeless classics over trends.I believe that once you discover your own unique style, you’ll feel confident and good in anything you wear.',
     signatureAesthetic: 'Modern classics with clean lines, elevated basics, and subtle color play—effortless but impeccably finished.',
     highlights: [
@@ -22,7 +26,7 @@ export const foundersMap: Record<FounderId, FounderData> = {
     id: 'muskaan',
     name: 'Muskaan Datt',
     title: 'Senior Stylist',
-    headshot: '/muskaan.jpg',
+  headshot: MuskaanImg,
     bio: 'I studied Fashion Communication & Styling at ISDI School of Design & Innovation Parsons, building a strong foundation in fashion storytelling, styling, and creative direction. Over the past few years, I’ve styled everything from celebrity looks and brand campaigns to editorials, catalogues, and even short films—combining creative vision with practical execution. From trend forecasting and shoot coordination to content curation, I bring versatility and attention to detail. My experience spans across streetwear, jewellery, wedding styling, evening wear, and much more. My personal style is about making “less is more” feel powerful. I love pieces that are effortless yet polished. Blending laid-back ease with timeless classics, my style is all about creating looks that look great, confident, and easy to live in because great style should feel as good as it looks.',
     signatureAesthetic: 'Minimalist elegance—clean silhouettes, luxurious textures, and refined neutrals for high-impact simplicity.',
     highlights: [
@@ -37,7 +41,7 @@ export const foundersMap: Record<FounderId, FounderData> = {
     id: 'riddhi',
     name: 'Riddhi Jogani',
     title: 'Stylist',
-    headshot: '/riddhi.jpg',
+  headshot: RiddhiImg,
     bio: 'I hold a BA in Psychology and a Diploma in Fashion Designing from the International Institute of Fashion Design. As a Fashion Stylist, I planned and executed catalogue and campaign shoots, My experience also includes a year as a Fashion Styling Intern and Assistant Stylist, where I collaborated with artists for reality shows and live events. My personal style is versatile and relaxed, which is a key part of my professional approach—I believe in creating looks that are effortlessly chic and authentic to the individual.',
     signatureAesthetic: 'Relaxed sophistication—versatile pieces styled for ease, authenticity, and effortless chic.',
     highlights: [
