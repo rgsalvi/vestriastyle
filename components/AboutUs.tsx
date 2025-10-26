@@ -38,7 +38,7 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
         </section>
 
         <section className="mt-10 md:mt-14">
-          <h2 className="text-sm tracking-widest uppercase text-platinum/60">For Individuals</h2>
+          <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">For Individuals</h2>
           <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
             <p className="leading-relaxed text-platinum/85">
               As professional stylists, we’ve met countless people who love fashion but still feel overwhelmed by it—full closets, yet nothing feels quite right. We set out to bridge that gap with a solution that understands both data and emotion.
@@ -50,7 +50,7 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
         </section>
 
         <section className="mt-10 md:mt-14">
-          <h2 className="text-sm tracking-widest uppercase text-platinum/60">For Brands & Partners</h2>
+          <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">For Brands & Partners</h2>
           <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
             <p className="leading-relaxed text-platinum/85">
               For fashion businesses, Vestria Style represents the future of meaningful engagement. Our technology enables brands and retailers to offer more than products—it empowers them to offer expertise.
@@ -70,7 +70,7 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
         </section>
 
         <section className="mt-10 md:mt-14">
-          <h2 className="text-sm tracking-widest uppercase text-platinum/60">A Note From The Founders</h2>
+          <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">A Note From The Founders</h2>
           <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
             <p className="leading-relaxed text-platinum/85">
               Style is personal. It’s the first impression you make without saying a word. We’re not here to change who you are. We’re here to help you see yourself a little more clearly, and to build a wardrobe that actually fits the life you’re living. We’ll bring the know-how; you bring your story. Together, we’ll create something that feels easy, natural, and unmistakably you.
@@ -81,21 +81,21 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
               <div className="h-px w-20 md:w-28 bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
             </div>
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center gap-3">
                 <img src={TanviImg} alt="Tanvi Sankhe" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
                 <div>
                   <div className="font-semibold">Tanvi Sankhe</div>
                   <div className="text-xs text-platinum/60">Co‑founder</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center gap-3">
                 <img src={MuskaanImg} alt="Muskaan Datt" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
                 <div>
                   <div className="font-semibold">Muskaan Datt</div>
                   <div className="text-xs text-platinum/60">Co‑founder</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center gap-3">
                 <img src={RiddhiImg} alt="Riddhi Jogani" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
                 <div>
                   <div className="font-semibold">Riddhi Jogani</div>
