@@ -19,7 +19,7 @@ export const foundersMap: Record<FounderId, FounderData> = {
       'Editorial direction for streetwear + jewelry collaborations',
       'Celebrity styling for ads and web series'
     ],
-    socials: { Instagram: 'https://instagram.com/', Pinterest: 'https://pinterest.com/' },
+  socials: { Instagram: 'https://www.instagram.com/tanvi_sankhe/', Pinterest: 'https://pinterest.com/' },
     galleryPaths: ['/founders/tanvi/work-01.jpg','/founders/tanvi/work-02.jpg','/founders/tanvi/work-03.jpg']
   },
   muskaan: {
@@ -34,7 +34,7 @@ export const foundersMap: Record<FounderId, FounderData> = {
       'Editorials and lookbooks with narrative styling',
       'Short-film costume and on-set coordination'
     ],
-    socials: { Instagram: 'https://instagram.com/', Pinterest: 'https://pinterest.com/' },
+  socials: { Instagram: 'https://www.instagram.com/_muskaandatt_/', Pinterest: 'https://pinterest.com/' },
     galleryPaths: ['/founders/muskaan/work-01.jpg','/founders/muskaan/work-02.jpg','/founders/muskaan/work-03.jpg']
   },
   riddhi: {
@@ -49,7 +49,7 @@ export const foundersMap: Record<FounderId, FounderData> = {
       'Reality-show and live-event artist collaborations',
       'Assistant stylist experience across diverse formats'
     ],
-    socials: { Instagram: 'https://instagram.com/', Pinterest: 'https://pinterest.com/' },
+  socials: { Instagram: 'https://www.instagram.com/riddhi_jogani_/', Pinterest: 'https://pinterest.com/' },
     galleryPaths: ['/founders/riddhi/work-01.jpg','/founders/riddhi/work-02.jpg','/founders/riddhi/work-03.jpg']
   }
 };

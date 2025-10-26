@@ -39,7 +39,8 @@ export const FounderBioModal: React.FC<FounderBioModalProps> = ({ isOpen, onClos
 
   if (!isOpen || !founder) return null;
 
-  const { name, title, bio, signatureAesthetic, highlights, socials, headshot, galleryPaths } = founder;
+  const { name, /* title, */ bio, signatureAesthetic, highlights, socials, headshot, galleryPaths } = founder;
+  const instagramUrl = socials?.Instagram;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="founder-bio-title">
@@ -56,7 +57,16 @@ export const FounderBioModal: React.FC<FounderBioModalProps> = ({ isOpen, onClos
                 </div>
                 <div>
                   <h3 id="founder-bio-title" className="text-2xl font-extrabold tracking-tight text-platinum">{name}</h3>
-                  <div className="mt-0.5 text-sm tracking-wide uppercase text-platinum/60">{title}</div>
+                  {instagramUrl && (
+                    <a
+                      href={instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex items-center gap-2 text-sm text-platinum/80 hover:text-white underline decoration-platinum/30 underline-offset-4"
+                    >
+                      Me On The Gram
+                    </a>
+                  )}
                 </div>
               </div>
               <div className="mx-auto mt-3 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
@@ -81,18 +91,7 @@ export const FounderBioModal: React.FC<FounderBioModalProps> = ({ isOpen, onClos
                   </ul>
                 </section>
               )}
-              {socials && Object.keys(socials).length > 0 && (
-                <section className="mb-6">
-                  <h4 className="text-xs tracking-widest uppercase text-platinum/50 mb-2">Links</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(socials).map(([label, url]) => (
-                      <a key={label} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:border-platinum/60 transition">
-                        <span className="capitalize">{label}</span>
-                      </a>
-                    ))}
-                  </div>
-                </section>
-              )}
+              {/* Socials section removed per request */}
               {!!(galleryPaths && galleryPaths.length) && (
                 <section className="mb-2">
                   <h4 className="text-xs tracking-widest uppercase text-platinum/50 mb-2">Past Work</h4>
