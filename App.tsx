@@ -1,9 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { lazy, Suspense } from 'react';
-import { createPortal } from 'react-dom';
-import { foundersMap, foundersArray } from './components/founders';
-import type { FounderData } from './components/FounderBioModal';
-import type { FounderId } from './components/founders';
 import { ImageUploader } from './components/ImageUploader';
 import { RecommendationDisplay } from './components/RecommendationDisplay';
 import { BodyTypeSelector } from './components/BodyTypeSelector';
@@ -22,7 +18,7 @@ import PartnerPage from './components/PartnerPage';
 import ProfilePage from './components/ProfilePage';
 import VirtualTryOn from './components/VirtualTryOn';
 import { Squares2X2Icon, SparklesIcon } from '@heroicons/react/24/outline';
-const FounderBioModal = React.lazy(() => import('./components/FounderBioModal'));
+// Removed header-level FounderBioModal usage; About page handles founders now
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
@@ -141,11 +137,6 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
-  const [founderModalOpen, setFounderModalOpen] = React.useState(false);
-  const [activeFounder, setActiveFounder] = React.useState<null | {
-    id: 'tanvi' | 'muskaan' | 'riddhi';
-    name: string; title: string; headshot: string; bio?: string; signatureAesthetic?: string; highlights?: string[]; socials?: { [k: string]: string }; galleryPaths?: string[];
-  }>(null);
 
   // foundersMap and foundersArray are imported from components/founders
 
@@ -228,11 +219,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
           <button onClick={onClickAbout} aria-current={aboutActive ? 'page' : undefined} className={`${navLinkBase} ${navUnderlineBase} ${aboutActive ? `${navActive} after:w-full` : ''}`}>
             About Us
           </button>
-          <HeaderFoundersEntry founders={foundersArray} onSelect={(f) => {
-            const full = foundersMap[f.id as FounderId];
-            setActiveFounder(full);
-            setFounderModalOpen(true);
-          }} />
+          {/* Founders entry removed from navigation */}
           <button onClick={onClickRecipes} aria-current={recipesActive ? 'page' : undefined} className={`${navLinkBase} ${navUnderlineBase} ${recipesActive ? `${navActive} after:w-full` : ''}`}>
             #VestriaStyleRecipes
           </button>
@@ -326,8 +313,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
         <div className="rounded-2xl border border-platinum/20 bg-black/70 backdrop-blur-xl shadow-lg p-2">
           <div className="flex flex-col divide-y divide-platinum/10">
             <button onClick={onClickAbout} className={`text-left px-3 py-3 rounded-xl transition-colors ${aboutActive ? 'text-platinum bg-white/10 border border-platinum/20' : 'text-platinum/90'} hover:text-white hover:bg-white/5`}>About Us</button>
-            {/* Founders collapsible */}
-            <MobileFoundersMenu onSelect={(f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }) => { const full = foundersMap[f.id as FounderId]; setActiveFounder(full); setFounderModalOpen(true); setMobileNavOpen(false); }} />
+            {/* Founders collapsible removed from mobile navigation */}
             <button onClick={onClickRecipes} className={`text-left px-3 py-3 rounded-xl transition-colors ${recipesActive ? 'text-platinum bg-white/10 border border-platinum/20' : 'text-platinum/90'} hover:text-white hover:bg-white/5`}>#VestriaStyleRecipes</button>
             {/* Virtual Try-On removed from mobile navigation */}
             <button onClick={onClickPartner} className={`text-left px-3 py-3 rounded-xl transition-colors ${partnerActive ? 'text-platinum bg-white/10 border border-platinum/20' : 'text-platinum/90'} hover:text-white hover:bg-white/5`}>Partner With Us</button>
@@ -347,100 +333,12 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
       </div>
     )}
   </header>
-  {/* Portal modal to body to avoid clipping within sticky header/backdrop filters */}
-  {founderModalOpen && createPortal(
-    <Suspense fallback={null}>
-      <FounderBioModal
-        isOpen={founderModalOpen}
-        onClose={() => setFounderModalOpen(false)}
-        founder={activeFounder}
-      />
-    </Suspense>,
-    document.body
-  )}
+  {/* Founders modal removed from header */}
   </>
   );
 };
 
-// Small helper for a compact, always-visible "Meet The Founders" entry with a dropdown of names
-const HeaderFoundersEntry: React.FC<{ founders: Array<{ id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }>; onSelect: (f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths: string[] }) => void }>
-  = ({ founders, onSelect }) => {
-  const [open, setOpen] = React.useState(false);
-  const wrapRef = React.useRef<HTMLDivElement>(null);
-  const hoverTimer = React.useRef<number | null>(null);
-  const clearHoverTimer = () => { if (hoverTimer.current !== null) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } };
-  React.useEffect(() => {
-    const onDoc = (e: MouseEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
-  return (
-    <div
-      className="relative"
-      ref={wrapRef}
-      onMouseEnter={() => { clearHoverTimer(); setOpen(true); }}
-      onMouseLeave={() => { clearHoverTimer(); hoverTimer.current = window.setTimeout(() => setOpen(false), 150); }}
-    >
-      <button
-        onClick={() => setOpen(v => !v)}
-        onFocus={() => { clearHoverTimer(); setOpen(true); }}
-        className="hidden sm:inline-flex items-center px-2 py-1 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
-        aria-haspopup="true"
-      >
-        <span className="text-sm tracking-wide">The Founders</span>
-      </button>
-      {open && (
-        <div className="absolute right-0 mt-2 w-56 bg-[#1F2937] rounded-xl shadow-lg p-2 border border-platinum/20 z-30">
-          <p className="text-[11px] uppercase tracking-widest text-platinum/50 px-3 pb-1">Founders</p>
-          {founders.map(f => (
-            <button
-              key={f.id}
-              className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10"
-              onClick={() => {
-                onSelect({ id: f.id, name: f.name, title: f.title, headshot: f.headshot, galleryPaths: f.galleryPaths ?? [`/founders/${f.id}/work-01.jpg`, `/founders/${f.id}/work-02.jpg`, `/founders/${f.id}/work-03.jpg`] });
-                setOpen(false);
-              }}
-            >{f.name}</button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Mobile founders submenu used inside the mobile nav panel
-const MobileFoundersMenu: React.FC<{
-  onSelect: (f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }) => void;
-}> = ({ onSelect }) => {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <div className="py-1">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full text-left px-3 py-3 flex items-center justify-between text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl"
-        aria-haspopup="true"
-      >
-        <span>Founders</span>
-        <svg className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.586l3.71-3.355a.75.75 0 111.04 1.08l-4.24 3.83a.75.75 0 01-1.04 0l-4.24-3.83a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-        </svg>
-      </button>
-      {open && (
-        <div className="mt-1 pl-1">
-          {foundersArray.map(f => (
-            <button
-              key={f.id}
-              onClick={() => onSelect({ id: f.id, name: f.name, title: f.title, headshot: f.headshot, galleryPaths: f.galleryPaths })}
-              className="w-full text-left px-3 py-2 text-sm text-platinum/80 hover:text-white hover:bg-white/5 rounded-lg"
-            >
-              {f.name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+// Founders nav components removed
 
 const WARDROBE_STORAGE_KEY = 'ai-wardrobe-items';
 const USER_STORAGE_KEY = 'ai-wardrobe-user';
