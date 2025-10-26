@@ -73,7 +73,7 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack, onGoPartner }) => {
           <h2 className="text-sm tracking-widest uppercase text-platinum/60">A Note From The Founders</h2>
           <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
             <p className="leading-relaxed text-platinum/85">
-              Style is incredibly personal. It’s the quiet way you introduce yourself before you speak. Our goal isn’t to change who you are—it’s to help you see yourself more clearly, and to build a wardrobe that supports the life you’re actually living. We’ll bring the expert eye; you bring your story. Together, we’ll shape a signature that feels effortless and unmistakably you.
+              Style is personal. It’s the first impression you make without saying a word. We’re not here to change who you are. We’re here to help you see yourself a little more clearly, and to build a wardrobe that actually fits the life you’re living. We’ll bring the know-how; you bring your story. Together, we’ll create something that feels easy, natural, and unmistakably you.
             </p>
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="flex items-center gap-3">
