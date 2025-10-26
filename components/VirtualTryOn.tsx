@@ -146,6 +146,9 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                   Upload Image
                 </label>
               </div>
+              <div className="mt-2 text-xs text-platinum/70">
+                Hint: Use one image only and ensure all items are clearly visible. It’s okay if a model is wearing them — we’ll remove the person and keep just the clothes.
+              </div>
               {outfitSource && (
                 <div className="mt-4">
                   <p className="text-sm text-platinum/70 mb-2">Selected image:</p>
