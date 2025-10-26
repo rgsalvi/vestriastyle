@@ -28,7 +28,9 @@ import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile
 interface HeaderProps {
   user: User | null;
   onSignOut: () => void;
-  onSignIn: () => void;
+  onSignIn: () => void; // legacy; use onOpenLogin for explicit mode
+  onOpenLogin: (mode: 'signin' | 'signup') => void;
+  onChatNav: () => void;
   showWardrobeButton: boolean;
   onWardrobeClick: () => void;
   onEditProfile: () => void;
@@ -124,7 +126,7 @@ const EditProfileModal: React.FC<{
 };
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [founderModalOpen, setFounderModalOpen] = React.useState(false);
@@ -162,99 +164,115 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
+  const onClickAbout = () => {
+    // Placeholder: navigate to #about
+    try { document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }
+    catch { window.location.hash = '#about'; }
+  };
+  const onClickPartner = () => {
+    // Placeholder: navigate to #partner
+    try { document.getElementById('partner')?.scrollIntoView({ behavior: 'smooth' }); }
+    catch { window.location.hash = '#partner'; }
+  };
+  const onClickChatNav = () => { onChatNav(); };
+
   return (
   <>
-  <header className="relative p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
-    <Logo className="h-24 w-auto" />
-
-
-    <div className="flex items-center space-x-4">
-      {/* Always-visible founders dropdown trigger styled as a luxe nav item */}
-      <HeaderFoundersEntry founders={foundersArray} onSelect={(f) => {
-        const full = foundersMap[f.id as FounderId];
-        setActiveFounder(full);
-        setFounderModalOpen(true);
-      }} />
-      {user && showWardrobeButton && (
-          <button
-            onClick={onWardrobeClick}
-            className="hidden md:flex items-center px-4 py-2 bg-platinum/10 text-platinum font-semibold rounded-full shadow-sm hover:bg-platinum/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/30"
-          >
-            My Wardrobe
+  <header className="relative p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20">
+    <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      {/* Left: Logo + primary nav */}
+      <div className="flex items-center gap-6 min-w-0">
+        <Logo className="h-24 w-auto flex-shrink-0" />
+        <nav aria-label="Primary" className="hidden md:flex items-center gap-2">
+          <button onClick={onClickAbout} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
+            About Us
           </button>
-      )}
-      {user ? (
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setMenuOpen(v => !v)}
-            onMouseEnter={() => setMenuOpen(true)}
-            className="relative"
-            aria-haspopup="menu"
-            aria-controls="user-menu"
-          >
-            <img
-              src={user.picture}
-              alt={user.name}
-              className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30"
-              onError={(e) => {
-                const target = e.currentTarget as HTMLImageElement;
-                // prevent infinite loop
-                target.onerror = null;
-                if (!user || !user.name) return;
-                const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`;
-                if (target.src !== fallback) target.src = fallback;
-              }}
-            />
+          <HeaderFoundersEntry founders={foundersArray} onSelect={(f) => {
+            const full = foundersMap[f.id as FounderId];
+            setActiveFounder(full);
+            setFounderModalOpen(true);
+          }} />
+          <button onClick={onClickChatNav} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
+            Chat With A Stylist
           </button>
-          {menuOpen && (
-            <div
-              id="user-menu"
-              className="absolute top-full right-0 mt-2 w-56 bg-[#1F2937] rounded-xl shadow-lg p-2 border border-platinum/20"
-              role="menu"
-              onMouseEnter={() => setMenuOpen(true)}
-              onMouseLeave={() => setMenuOpen(false)}
-            >
-              {greetingFirstName && (
-                <p className="text-xs px-3 pb-1 text-platinum/70">Welcome back, <span className="font-semibold text-platinum">{greetingFirstName}</span></p>
-              )}
-              <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
-              <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
-              <div className="h-px bg-platinum/20 my-1"></div>
-              {/* The Founders section */}
-              <div className="px-3 py-1">
-                <p className="text-[11px] uppercase tracking-widest text-platinum/50 mb-1">The Founders</p>
-                <div className="flex flex-col gap-0.5">
-                  {foundersArray.map((f: FounderData) => (
-                    <button
-                      key={f.id}
-                      role="menuitem"
-                      className="w-full text-left text-sm text-platinum/90 px-0 py-1 rounded-md hover:text-white"
-                      onClick={() => {
-                        setActiveFounder(foundersMap[f.id as FounderId]);
-                        setFounderModalOpen(true);
-                      }}
-                    >
-                      {f.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="h-px bg-platinum/20 my-1"></div>
-              <button onClick={onEditProfile} className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">Edit Profile</button>
-              <button onClick={onSignOut} className="w-full text-left text-sm text-red-400 px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">
-                Sign Out
+          <button onClick={onClickPartner} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
+            Partner With Us
+          </button>
+        </nav>
+      </div>
+
+      {/* Right: utilities */}
+      <div className="flex items-center gap-3">
+        {user ? (
+          <>
+            {greetingFirstName && (
+              <span className="hidden sm:inline text-sm text-platinum/80">Welcome, <span className="text-platinum font-semibold">{greetingFirstName}</span></span>
+            )}
+            {showWardrobeButton && (
+              <button
+                onClick={onWardrobeClick}
+                className="hidden md:inline-flex items-center px-4 py-2 bg-platinum/10 text-platinum font-semibold rounded-full shadow-sm hover:bg-platinum/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/30"
+              >
+                My Wardrobe
               </button>
+            )}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(v => !v)}
+                onMouseEnter={() => setMenuOpen(true)}
+                className="relative"
+                aria-haspopup="menu"
+                aria-controls="user-menu"
+              >
+                <img
+                  src={user.picture}
+                  alt={user.name}
+                  className="w-10 h-10 rounded-full cursor-pointer border-2 border-platinum/30"
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.onerror = null;
+                    if (!user || !user.name) return;
+                    const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`;
+                    if (target.src !== fallback) target.src = fallback;
+                  }}
+                />
+              </button>
+              {menuOpen && (
+                <div
+                  id="user-menu"
+                  className="absolute top-full right-0 mt-2 w-56 bg-[#1F2937] rounded-xl shadow-lg p-2 border border-platinum/20"
+                  role="menu"
+                  onMouseEnter={() => setMenuOpen(true)}
+                  onMouseLeave={() => setMenuOpen(false)}
+                >
+                  <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
+                  <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
+                  <div className="h-px bg-platinum/20 my-1"></div>
+                  <button onClick={onEditProfile} className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">Edit Profile</button>
+                  <button onClick={onSignOut} className="w-full text-left text-sm text-red-400 px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      ) : (
-        <button
-          onClick={onSignIn}
-          className="px-5 py-2 bg-dark-blue text-platinum font-semibold rounded-full shadow-md hover:bg-[#1F2937] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/50"
-        >
-          Sign In
-        </button>
-      )}
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onOpenLogin('signup')}
+              className="hidden sm:inline-flex px-4 py-2 bg-platinum text-dark-blue font-semibold rounded-full shadow hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
+            >
+              Sign Up
+            </button>
+            <button
+              onClick={() => onOpenLogin('signin')}
+              className="px-4 py-2 bg-dark-blue text-platinum font-semibold rounded-full shadow-md hover:bg-[#1F2937] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/50"
+            >
+              Sign In
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   </header>
   {/* Portal modal to body to avoid clipping within sticky header/backdrop filters */}
@@ -357,6 +375,7 @@ const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<AiResponse | null>(null);
   const [chatNewItem, setChatNewItem] = useState<AnalysisItem | null>(null);
+  const [loginInitialMode, setLoginInitialMode] = useState<'signin' | 'signup'>('signin');
   // Profile page controlled via currentPage === 'profile'
   const [profileSavedBanner, setProfileSavedBanner] = useState<string | null>(null);
   const [onboardingGateBanner, setOnboardingGateBanner] = useState(false);
@@ -907,6 +926,7 @@ const App: React.FC = () => {
         onBack={() => setShowLogin(false)}
         onNavigateToTerms={() => setCurrentPage('terms')}
         onNavigateToPrivacy={() => setCurrentPage('privacy')}
+        initialMode={loginInitialMode}
       />
     );
   }
@@ -1150,6 +1170,14 @@ const App: React.FC = () => {
           user={user} 
           onSignOut={handleSignOut} 
           onSignIn={() => setShowLogin(true)}
+          onOpenLogin={(mode) => { setShowLogin(true); /* store mode in state below */ setLoginInitialMode(mode); }}
+          onChatNav={() => {
+            if (!user) { setLoginInitialMode('signin'); setShowLogin(true); return; }
+            if (!styleProfile || !isProfileComplete(styleProfile)) { setShowOnboarding(true); setOnboardingGateBanner(true); return; }
+            if (!styleProfile.isPremium) { setShowPremiumUpsell(true); return; }
+            setProfileSavedBanner('Upload an item and get style advice to start a chat with a stylist.');
+            setTimeout(() => setProfileSavedBanner(null), 5000);
+          }}
           showWardrobeButton={currentPage === 'main'}
           onWardrobeClick={handleWardrobeClick}
           onEditProfile={() => setCurrentPage('profile')}

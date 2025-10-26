@@ -6,6 +6,7 @@ interface LoginPageProps {
     onBack: () => void;
     onNavigateToTerms: () => void;
     onNavigateToPrivacy: () => void;
+    initialMode?: 'signin' | 'signup';
 }
 
 const BackArrowIcon: React.FC = () => (
@@ -15,8 +16,8 @@ const BackArrowIcon: React.FC = () => (
 );
 
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms, onNavigateToPrivacy }) => {
-    const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms, onNavigateToPrivacy, initialMode }) => {
+    const [mode, setMode] = useState<'signin' | 'signup'>(initialMode || 'signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [firstName, setFirstName] = useState('');
@@ -27,6 +28,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
     const [message, setMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // Update mode when parent changes initialMode
+    React.useEffect(() => {
+        if (initialMode && (initialMode === 'signin' || initialMode === 'signup')) {
+            setMode(initialMode);
+        }
+    }, [initialMode]);
 
     // Map Firebase auth error codes to user-friendly messages.
     const friendlyAuthMessage = (code: string, mode: 'signin' | 'signup'): string | null => {
