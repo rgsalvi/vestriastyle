@@ -495,6 +495,8 @@ const App: React.FC = () => {
   // Track if we already triggered immediate onboarding to prevent duplicate flicker
   const immediateOnboardingRef = useRef(false);
   const [recipesInView, setRecipesInView] = useState(false);
+  // Landing mode selector: none shows two-box choice, 'wardrobe' shows existing flow
+  const [landingMode, setLandingMode] = useState<'none' | 'wardrobe'>('none');
 
   // Scroll to top when navigating to content pages like About or Partner
   useEffect(() => {
@@ -1159,58 +1161,88 @@ const App: React.FC = () => {
         return (
           <>
             <main className="container mx-auto p-4 md:p-8">
-              <div className="space-y-12">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                  <div className="space-y-8">
-                    <ImageUploader
-                      title="1. Upload New Item"
-                      description="Select a single image of an item you're thinking of buying. For best results, use clear photos of just the clothing."
-                      onFilesSelect={handleNewItemSelect}
-                      multiple={false}
-                    />
-                    <WardrobeInput 
-                      user={user}
-                      managedWardrobe={managedWardrobe}
-                      onAnalysisItemsChange={setWardrobeItems}
-                      maxFiles={5}
-                      onOccasionChange={setOccasion}
-                      selectedOccasion={occasion}
-                    />
-                    <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
-                    <div className="p-4 bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20">
-                      {error && <p className="text-red-400 text-center mb-4 font-medium">{error}</p>}
-                      <button
-                        onClick={handleGetAdvice}
-                        disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None' || occasion === 'None'}
-                        className="w-full bg-platinum text-dark-blue font-bold py-4 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 hover:shadow-glow disabled:bg-platinum/50 disabled:text-dark-blue/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
-                      >
-                        {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
-                      </button>
+              {landingMode === 'none' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                  <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-2xl font-extrabold tracking-tight">Wardrobe Check</h2>
+                      <p className="mt-2 text-platinum/80">See if a new item you&apos;re considering complements your wardrobe.</p>
+                    </div>
+                    <div className="mt-6">
+                      <button onClick={() => setLandingMode('wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
                     </div>
                   </div>
-                  <div className="lg:sticky lg:top-28">
-                    <RecommendationDisplay
-                      recommendation={recommendation}
-                      isLoading={isLoading}
-                      unsavedItems={unsavedItemsFromAnalysis}
-                      onSaveUnsavedItems={handleSaveUnsavedItems}
-                      user={user}
-                      onOpenChat={handleOpenChat}
-                      newItem={newItem}
-                      isPremium={!!styleProfile?.isPremium}
-                    />
+                  <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-2xl font-extrabold tracking-tight">Fit Check</h2>
+                      <p className="mt-2 text-platinum/80">Try on the product on your own photo to preview fit and vibe.</p>
+                    </div>
+                    <div className="mt-6">
+                      <button onClick={() => setCurrentPage('tryon')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Fit Check</button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-12">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    <div className="space-y-8">
+                      <ImageUploader
+                        title="1. Upload New Item"
+                        description="Select a single image of an item you're thinking of buying. For best results, use clear photos of just the clothing."
+                        onFilesSelect={handleNewItemSelect}
+                        multiple={false}
+                      />
+                      <WardrobeInput 
+                        user={user}
+                        managedWardrobe={managedWardrobe}
+                        onAnalysisItemsChange={setWardrobeItems}
+                        maxFiles={5}
+                        onOccasionChange={setOccasion}
+                        selectedOccasion={occasion}
+                      />
+                      <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
+                      <div className="p-4 bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20">
+                        {error && <p className="text-red-400 text-center mb-4 font-medium">{error}</p>}
+                        <button
+                          onClick={handleGetAdvice}
+                          disabled={isLoading || !newItem || wardrobeItems.length === 0 || bodyType === 'None' || occasion === 'None'}
+                          className="w-full bg-platinum text-dark-blue font-bold py-4 px-4 rounded-full shadow-lg shadow-platinum/10 hover:scale-105 hover:shadow-glow disabled:bg-platinum/50 disabled:text-dark-blue/50 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/50"
+                        >
+                          {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
+                        </button>
+                        <div className="mt-3 text-center">
+                          <button onClick={() => setLandingMode('none')} className="text-xs text-platinum/60 underline hover:text-platinum/80">Back to options</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="lg:sticky lg:top-28">
+                      <RecommendationDisplay
+                        recommendation={recommendation}
+                        isLoading={isLoading}
+                        unsavedItems={unsavedItemsFromAnalysis}
+                        onSaveUnsavedItems={handleSaveUnsavedItems}
+                        user={user}
+                        onOpenChat={handleOpenChat}
+                        newItem={newItem}
+                        isPremium={!!styleProfile?.isPremium}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </main>
-            <WardrobeManager
-              user={user}
-              items={managedWardrobe}
-              onAddItems={handleAddItemsToWardrobe}
-              onSaveItem={handleSaveWardrobeItem}
-              onDeleteItem={handleDeleteWardrobeItem}
-            />
-            <StyleRecipes isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
+            {landingMode === 'wardrobe' && (
+              <>
+                <WardrobeManager
+                  user={user}
+                  items={managedWardrobe}
+                  onAddItems={handleAddItemsToWardrobe}
+                  onSaveItem={handleSaveWardrobeItem}
+                  onDeleteItem={handleDeleteWardrobeItem}
+                />
+                <StyleRecipes isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
+              </>
+            )}
           </>
         );
     }
