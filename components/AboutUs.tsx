@@ -1,4 +1,7 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
+import { FounderBioModal, type FounderData } from './FounderBioModal';
+import { foundersMap, type FounderId } from './founders';
 import TanviImg from '../tanvi.webp';
 import MuskaanImg from '../muskaan.webp';
 import RiddhiImg from '../riddhi.webp';
@@ -9,6 +12,9 @@ interface AboutUsProps {
 }
 
 export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
+  const [founderModalOpen, setFounderModalOpen] = React.useState(false);
+  const [activeFounder, setActiveFounder] = React.useState<FounderData | null>(null);
+  const openFounder = (id: FounderId) => { setActiveFounder(foundersMap[id]); setFounderModalOpen(true); };
   return (
     <div className="min-h-screen bg-dark-blue text-platinum">
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16">
@@ -23,6 +29,45 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
 
         <div className="mt-6 h-px bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
 
+        {/* Move Founders' Note to be the first section under the heading */}
+        <section className="mt-10 md:mt-12">
+          <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">A Note From The Founders</h2>
+          <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
+            <p className="leading-relaxed text-platinum/85">
+              Style is personal. It’s the first impression you make without saying a word. We’re not here to change who you are. We’re here to help you see yourself a little more clearly, and to build a wardrobe that actually fits the life you’re living. We’ll bring the know-how; you bring your story. Together, we’ll create something that feels easy, natural, and unmistakably you.
+            </p>
+            <div className="mt-5 flex items-center justify-center select-none" aria-hidden>
+              <div className="h-px w-20 md:w-28 bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
+              <span className="mx-2 inline-block w-1.5 h-1.5 rounded-full bg-platinum/70 shadow-[0_0_10px_rgba(255,255,255,0.25)]" />
+              <div className="h-px w-20 md:w-28 bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
+            </div>
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <button onClick={() => openFounder('tanvi')} className="flex items-center justify-center gap-3 text-left hover:bg-white/5 p-2 rounded-xl transition">
+                <img src={TanviImg} alt="Tanvi Sankhe" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
+                <div>
+                  <div className="font-semibold underline decoration-platinum/40 decoration-2 underline-offset-4">Tanvi Sankhe</div>
+                  <div className="text-xs text-platinum/60">Co‑founder</div>
+                </div>
+              </button>
+              <button onClick={() => openFounder('muskaan')} className="flex items-center justify-center gap-3 text-left hover:bg-white/5 p-2 rounded-xl transition">
+                <img src={MuskaanImg} alt="Muskaan Datt" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
+                <div>
+                  <div className="font-semibold underline decoration-platinum/40 decoration-2 underline-offset-4">Muskaan Datt</div>
+                  <div className="text-xs text-platinum/60">Co‑founder</div>
+                </div>
+              </button>
+              <button onClick={() => openFounder('riddhi')} className="flex items-center justify-center gap-3 text-left hover:bg-white/5 p-2 rounded-xl transition">
+                <img src={RiddhiImg} alt="Riddhi Jogani" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
+                <div>
+                  <div className="font-semibold underline decoration-platinum/40 decoration-2 underline-offset-4">Riddhi Jogani</div>
+                  <div className="text-xs text-platinum/60">Co‑founder</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Original story content now follows the founders' note */}
         <section className="mt-10 md:mt-12">
           <div className="prose prose-invert max-w-none">
             <p className="text-lg leading-relaxed text-platinum/85">
@@ -66,45 +111,19 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
 
         
 
-        <section className="mt-10 md:mt-14">
-          <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">A Note From The Founders</h2>
-          <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
-            <p className="leading-relaxed text-platinum/85">
-              Style is personal. It’s the first impression you make without saying a word. We’re not here to change who you are. We’re here to help you see yourself a little more clearly, and to build a wardrobe that actually fits the life you’re living. We’ll bring the know-how; you bring your story. Together, we’ll create something that feels easy, natural, and unmistakably you.
-            </p>
-            <div className="mt-5 flex items-center justify-center select-none" aria-hidden>
-              <div className="h-px w-20 md:w-28 bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
-              <span className="mx-2 inline-block w-1.5 h-1.5 rounded-full bg-platinum/70 shadow-[0_0_10px_rgba(255,255,255,0.25)]" />
-              <div className="h-px w-20 md:w-28 bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
-            </div>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="flex items-center justify-center gap-3">
-                <img src={TanviImg} alt="Tanvi Sankhe" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
-                <div>
-                  <div className="font-semibold">Tanvi Sankhe</div>
-                  <div className="text-xs text-platinum/60">Co‑founder</div>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                <img src={MuskaanImg} alt="Muskaan Datt" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
-                <div>
-                  <div className="font-semibold">Muskaan Datt</div>
-                  <div className="text-xs text-platinum/60">Co‑founder</div>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                <img src={RiddhiImg} alt="Riddhi Jogani" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
-                <div>
-                  <div className="font-semibold">Riddhi Jogani</div>
-                  <div className="text-xs text-platinum/60">Co‑founder</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Founders section moved above; removed original duplicate */}
 
         {/* Partner CTA removed per UX direction to keep About page focused and complete */}
       </div>
+      {/* Portal modal to body to avoid clipping within page containers/backdrops */}
+      {founderModalOpen && createPortal(
+        <FounderBioModal
+          isOpen={founderModalOpen}
+          onClose={() => setFounderModalOpen(false)}
+          founder={activeFounder}
+        />,
+        document.body
+      )}
     </div>
   );
 };
