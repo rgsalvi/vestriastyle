@@ -8,7 +8,7 @@ interface AboutUsProps {
   onGoPartner: () => void;
 }
 
-export const AboutUs: React.FC<AboutUsProps> = ({ onBack, onGoPartner }) => {
+export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-dark-blue text-platinum">
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16">
@@ -106,17 +106,7 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack, onGoPartner }) => {
           </div>
         </section>
 
-        <section className="mt-10 md:mt-14">
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-            <button
-              onClick={onGoPartner}
-              className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-platinum text-dark-blue font-semibold shadow hover:opacity-90"
-            >
-              Partner With Us
-            </button>
-            <p className="text-sm text-platinum/60">Brands and collaborators—let’s create something you’ll be proud of.</p>
-          </div>
-        </section>
+        {/* Partner CTA removed per UX direction to keep About page focused and complete */}
       </div>
     </div>
   );
