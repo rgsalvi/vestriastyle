@@ -240,7 +240,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
           <button onClick={onClickPartner} aria-current={partnerActive ? 'page' : undefined} className={`${navLinkBase} ${navUnderlineBase} ${partnerActive ? `${navActive} after:w-full` : ''}`}>
             Partner With Us
           </button>
-          <button onClick={onClickChatNav} className="ml-1 inline-flex items-center px-3.5 py-1.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
+          <button onClick={onClickChatNav} className={`${navLinkBase} ${navUnderlineBase}`}>
             Chat With A Stylist
           </button>
         </nav>
@@ -332,7 +332,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             {/* Virtual Try-On removed from mobile navigation */}
             <button onClick={onClickPartner} className={`text-left px-3 py-3 rounded-xl transition-colors ${partnerActive ? 'text-platinum bg-white/10 border border-platinum/20' : 'text-platinum/90'} hover:text-white hover:bg-white/5`}>Partner With Us</button>
             <div className="pt-2 space-y-2">
-              <button onClick={onClickChatNav} className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Chat With A Stylist</button>
+              <button onClick={onClickChatNav} className={`w-full text-left px-3 py-3 rounded-xl transition-colors text-platinum/90 hover:text-white hover:bg-white/5`}>Chat With A Stylist</button>
               {showWardrobeButton && (
                 <button
                   onClick={() => { setMobileNavOpen(false); onWardrobeClick(); }}
