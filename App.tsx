@@ -1187,7 +1187,7 @@ const App: React.FC = () => {
                           <SparklesIcon className="h-6 w-6" aria-hidden="true" />
                         </div>
                         <h2 className="text-2xl font-extrabold tracking-tight">Fit Check</h2>
-                        <p className="mt-2 text-platinum/80">Try it on your photo—preview fit, proportion, and vibe.</p>
+                        <p className="mt-2 text-platinum/80">Try-on a product - preview fit, proportion, and vibe.</p>
                       </div>
                       <div className="mt-6">
                         <button onClick={() => setCurrentPage('tryon')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Fit Check</button>
