@@ -136,6 +136,7 @@ const EditProfileModal: React.FC<{
 
 const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateHome, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile, activePage, recipesActive }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [founderModalOpen, setFounderModalOpen] = React.useState(false);
   const [activeFounder, setActiveFounder] = React.useState<null | {
@@ -172,10 +173,10 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
-  const onClickAbout = () => onNavigateAbout();
-  const onClickRecipes = () => onNavigateRecipes();
-  const onClickPartner = () => onNavigatePartner();
-  const onClickChatNav = () => { onChatNav(); };
+  const onClickAbout = () => { setMobileNavOpen(false); onNavigateAbout(); };
+  const onClickRecipes = () => { setMobileNavOpen(false); onNavigateRecipes(); };
+  const onClickPartner = () => { setMobileNavOpen(false); onNavigatePartner(); };
+  const onClickChatNav = () => { setMobileNavOpen(false); onChatNav(); };
 
   const aboutActive = activePage === 'about';
   const partnerActive = activePage === 'partner';
@@ -194,6 +195,25 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
           className="rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
         >
           <Logo className="h-24 w-auto flex-shrink-0" />
+        </button>
+        {/* Mobile menu toggle */}
+        <button
+          type="button"
+          className="md:hidden inline-flex items-center justify-center p-2 rounded-md ring-1 ring-platinum/30 text-platinum hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
+          aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          onClick={() => setMobileNavOpen(v => !v)}
+        >
+          {mobileNavOpen ? (
+            // X icon
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+              <path fillRule="evenodd" d="M6.225 4.811a1 1 0 011.414 0L12 9.172l4.361-4.36a1 1 0 111.414 1.414L13.414 10.586l4.36 4.361a1 1 0 01-1.414 1.414L12 12l-4.361 4.361a1 1 0 01-1.414-1.414l4.361-4.36-4.361-4.361a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            // Hamburger icon
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+              <path d="M4 6h16a1 1 0 100-2H4a1 1 0 100 2zm16 5H4a1 1 0 100 2h16a1 1 0 100-2zm0 7H4a1 1 0 100 2h16a1 1 0 100-2z" />
+            </svg>
+          )}
         </button>
         <nav aria-label="Primary" className="hidden md:flex items-center gap-2">
           <button onClick={onClickAbout} className={`${navLinkBase} ${navUnderlineBase} ${aboutActive ? 'after:w-full text-platinum' : ''}`}>
@@ -289,6 +309,24 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
         )}
       </div>
     </div>
+
+    {/* Mobile nav panel */}
+    {mobileNavOpen && (
+      <div className="md:hidden mt-3 mx-auto max-w-7xl">
+        <div className="rounded-2xl border border-platinum/20 bg-black/70 backdrop-blur-xl shadow-lg p-2">
+          <div className="flex flex-col divide-y divide-platinum/10">
+            <button onClick={onClickAbout} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">About Us</button>
+            {/* Founders collapsible */}
+            <MobileFoundersMenu onSelect={(f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }) => { const full = foundersMap[f.id as FounderId]; setActiveFounder(full); setFounderModalOpen(true); setMobileNavOpen(false); }} />
+            <button onClick={onClickRecipes} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">#VestriaStyleRecipes</button>
+            <button onClick={onClickPartner} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">Partner With Us</button>
+            <div className="pt-2">
+              <button onClick={onClickChatNav} className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Chat With A Stylist</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   </header>
   {/* Portal modal to body to avoid clipping within sticky header/backdrop filters */}
   {founderModalOpen && createPortal(
@@ -344,6 +382,40 @@ const HeaderFoundersEntry: React.FC<{ founders: Array<{ id: 'tanvi'|'muskaan'|'r
                 setOpen(false);
               }}
             >{f.name}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Mobile founders submenu used inside the mobile nav panel
+const MobileFoundersMenu: React.FC<{
+  onSelect: (f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }) => void;
+}> = ({ onSelect }) => {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="py-1">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full text-left px-3 py-3 flex items-center justify-between text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl"
+        aria-haspopup="true"
+      >
+        <span>Founders</span>
+        <svg className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.586l3.71-3.355a.75.75 0 111.04 1.08l-4.24 3.83a.75.75 0 01-1.04 0l-4.24-3.83a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+        </svg>
+      </button>
+      {open && (
+        <div className="mt-1 pl-1">
+          {foundersArray.map(f => (
+            <button
+              key={f.id}
+              onClick={() => onSelect({ id: f.id, name: f.name, title: f.title, headshot: f.headshot, galleryPaths: f.galleryPaths })}
+              className="w-full text-left px-3 py-2 text-sm text-platinum/80 hover:text-white hover:bg-white/5 rounded-lg"
+            >
+              {f.name}
+            </button>
           ))}
         </div>
       )}
