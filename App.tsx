@@ -1153,7 +1153,7 @@ const App: React.FC = () => {
       case 'partner':
         return <PartnerPage onBack={() => setCurrentPage('main')} />;
       case 'tryon':
-        return <VirtualTryOn onBack={() => setCurrentPage('main')} />;
+        return <VirtualTryOn onBack={() => setCurrentPage('main')} onOpenChat={handleOpenChat} />;
       case 'main':
       default:
         return (

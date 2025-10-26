@@ -1,4 +1,5 @@
 import React from 'react';
+import type { AiResponse, AnalysisItem } from '../types';
 import { resizeImageToDataUrl, dataUrlToWebP, cropToUpperBody, cropToLowerBody } from '../utils/imageProcessor';
 import { generateFlatLay, generateTryOn, validateFullBody } from '../services/geminiService';
 
@@ -6,8 +7,8 @@ type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 const MAX_DIMENSION = 2048;
 
-export const VirtualTryOn: React.FC<{ onBack?: () => void }>
-  = ({ onBack }) => {
+export const VirtualTryOn: React.FC<{ onBack?: () => void; onOpenChat?: (context: AiResponse, newItem: AnalysisItem | null) => void }>
+  = ({ onBack, onOpenChat }) => {
   const [step, setStep] = React.useState<Step>(0);
   const [personDataUrl, setPersonDataUrl] = React.useState<string | null>(null);
   const [outfitSource, setOutfitSource] = React.useState<{ dataUrl: string; mimeType: string } | null>(null);
@@ -105,6 +106,32 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
 
   const canProceedFlatLay = !!outfitSource;
   const canProceedTryOn = !!personDataUrl && !!flatLayDataUrl;
+
+  const resetFlow = () => {
+    setStep(0);
+    setPersonDataUrl(null);
+    setOutfitSource(null);
+    setFlatLayDataUrl(null);
+    setTryOnDataUrl(null);
+    setValidator(null);
+    setWarningShown(false);
+    setRegion('full');
+    setOutputSize('1024x1536');
+  };
+
+  const handleChatWithStylist = () => {
+    if (!onOpenChat) return;
+    const context: AiResponse = {
+      compatibility: 'N/A',
+      outfits: [],
+      advice: 'Fit Check result is ready. The user would like a stylist review of the try-on for fit, proportion, and styling tweaks.',
+      verdict: 'Fit Check completed',
+      // Optional: include generated image as base64 for stylist context if desired
+      // Note: Chat UI assumes PNG; if using WebP here, the image may not render in all clients.
+      generatedOutfitImages: [],
+    };
+    onOpenChat(context, null);
+  };
 
   return (
     <main className="container mx-auto p-4 md:p-8">
@@ -246,16 +273,16 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
         {step === 5 && (
           <section className="mt-6">
             {tryOnDataUrl ? (
-              <div className="space-y-4">
+              <div className="space-y-4 text-center flex flex-col items-center">
                 <img src={tryOnDataUrl} alt="try-on" className="w-full max-w-md rounded-lg border border-platinum/20" />
                 <p className="text-xs text-platinum/60">These images are AI-generated simulations for inspiration only. Actual color, fit, and appearance may vary.</p>
-                <div className="flex gap-3">
-                  <a download="try-on.webp" href={tryOnDataUrl} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold">Download</a>
-                  <button onClick={() => setStep(4)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={handleChatWithStylist} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold">Chat With A Stylist</button>
+                  <button onClick={resetFlow} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Try Another Fit Check</button>
                 </div>
               </div>
             ) : (
-              <div className="text-platinum/80">No result yet. You can accept the flat lay and click Generate Try-On.</div>
+              <div className="text-platinum/80 text-center">No result yet. You can accept the flat lay and click Generate Try-On.</div>
             )}
           </section>
         )}
