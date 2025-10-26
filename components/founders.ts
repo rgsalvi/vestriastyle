@@ -6,46 +6,46 @@ export const foundersMap: Record<FounderId, FounderData> = {
   tanvi: {
     id: 'tanvi',
     name: 'Tanvi Sankhe',
-    title: 'Co-founder & CTO',
+    title: 'Lead Stylist',
     headshot: '/tanvi.jpg',
-    bio: 'Tanvi leads the product and technology at Vestria Style. She blends practical engineering with a deep love for design to deliver magical wardrobe experiences that feel effortless and personal.',
-    signatureAesthetic: 'Minimalism with intelligent tailoring — elevated staples that work hard and look polished.',
+    bio: 'I am a BMS graduate and later pursued a diploma in Fashion Designing from INIFD. Throughout my career, I’ve had the opportunity to freelance for various ads, a web series, jewelry shoots, campaigns, and catalogs. Worked with celebrities. I’ve also styled streetwear brands, jewelry brands, ethnic wear brands and I have done editorial shoots too while also working with influencers to create unique content. Additionally, I’ve worked as an E-commerce catalogue and campaign stylist. My personal style is simple, clothes that feel super comfortable. Personally, I love having colours in my wardrobe, but I always lean towards timeless classics over trends.I believe that once you discover your own unique style, you’ll feel confident and good in anything you wear.',
+    signatureAesthetic: 'Modern classics with clean lines, elevated basics, and subtle color play—effortless but impeccably finished.',
     highlights: [
-      'Architected our AI-driven wardrobe engine',
-      'Obsessed with fast UX and thoughtful details',
-      'Believes great style should feel easy and empowering',
+      'Lead stylist for e‑commerce campaign series (multi-brand)',
+      'Editorial direction for streetwear + jewelry collaborations',
+      'Celebrity styling for ads and web series'
     ],
-    socials: { Instagram: '#', Pinterest: '#' },
+    socials: { Instagram: 'https://instagram.com/', Pinterest: 'https://pinterest.com/' },
     galleryPaths: ['/founders/tanvi/work-01.jpg','/founders/tanvi/work-02.jpg','/founders/tanvi/work-03.jpg']
   },
   muskaan: {
     id: 'muskaan',
     name: 'Muskaan Datt',
-    title: 'Co-founder & CEO',
+    title: 'Senior Stylist',
     headshot: '/muskaan.jpg',
-    bio: 'Muskaan drives the vision and brand of Vestria Style. She champions an inclusive, confidence-first approach where every wardrobe tells a story worth celebrating.',
-    signatureAesthetic: 'Modern romantic with clean silhouettes and luxe textures.',
+    bio: 'I studied Fashion Communication & Styling at ISDI School of Design & Innovation Parsons, building a strong foundation in fashion storytelling, styling, and creative direction. Over the past few years, I’ve styled everything from celebrity looks and brand campaigns to editorials, catalogues, and even short films—combining creative vision with practical execution. From trend forecasting and shoot coordination to content curation, I bring versatility and attention to detail. My experience spans across streetwear, jewellery, wedding styling, evening wear, and much more. My personal style is about making “less is more” feel powerful. I love pieces that are effortless yet polished. Blending laid-back ease with timeless classics, my style is all about creating looks that look great, confident, and easy to live in because great style should feel as good as it looks.',
+    signatureAesthetic: 'Minimalist elegance—clean silhouettes, luxurious textures, and refined neutrals for high-impact simplicity.',
     highlights: [
-      'Shaped Vestria’s customer-first philosophy',
-      'Always-on curator of timeless yet fresh looks',
-      'Leads partnerships and brand experiences',
+      'Brand campaign styling across fashion and jewelry',
+      'Editorials and lookbooks with narrative styling',
+      'Short-film costume and on-set coordination'
     ],
-    socials: { Instagram: '#', Pinterest: '#' },
+    socials: { Instagram: 'https://instagram.com/', Pinterest: 'https://pinterest.com/' },
     galleryPaths: ['/founders/muskaan/work-01.jpg','/founders/muskaan/work-02.jpg','/founders/muskaan/work-03.jpg']
   },
   riddhi: {
     id: 'riddhi',
     name: 'Riddhi Jogani',
-    title: 'Co-founder & Chief Stylist',
+    title: 'Stylist',
     headshot: '/riddhi.jpg',
-    bio: 'Riddhi brings editorial styling sensibilities to everyday life. She’s passionate about creating looks that feel authentic, flattering, and truly wearable.',
-    signatureAesthetic: 'Elevated everyday — sculpted shapes, smart proportions, and quiet luxury.',
+    bio: 'I hold a BA in Psychology and a Diploma in Fashion Designing from the International Institute of Fashion Design. As a Fashion Stylist, I planned and executed catalogue and campaign shoots, My experience also includes a year as a Fashion Styling Intern and Assistant Stylist, where I collaborated with artists for reality shows and live events. My personal style is versatile and relaxed, which is a key part of my professional approach—I believe in creating looks that are effortlessly chic and authentic to the individual.',
+    signatureAesthetic: 'Relaxed sophistication—versatile pieces styled for ease, authenticity, and effortless chic.',
     highlights: [
-      'Styled hundreds of real-world wardrobes',
-      'Translates runway ideas into daily outfits',
-      'Specialist in body-type smart dressing',
+      'Catalogue and campaign styling for apparel brands',
+      'Reality-show and live-event artist collaborations',
+      'Assistant stylist experience across diverse formats'
     ],
-    socials: { Instagram: '#', Pinterest: '#' },
+    socials: { Instagram: 'https://instagram.com/', Pinterest: 'https://pinterest.com/' },
     galleryPaths: ['/founders/riddhi/work-01.jpg','/founders/riddhi/work-02.jpg','/founders/riddhi/work-03.jpg']
   }
 };
