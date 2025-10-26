@@ -55,16 +55,20 @@ export const FounderBioModal: React.FC<FounderBioModalProps> = ({ isOpen, onClos
                 <div className="flex-shrink-0 w-12 h-12 rounded-full ring-1 ring-platinum/40 overflow-hidden">
                   <img src={headshot} alt={name} className="w-full h-full object-cover" />
                 </div>
-                <div>
+                <div className="flex items-center gap-2">
                   <h3 id="founder-bio-title" className="text-2xl font-extrabold tracking-tight text-platinum">{name}</h3>
                   {instagramUrl && (
                     <a
                       href={instagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 inline-flex items-center gap-2 text-sm text-platinum/80 hover:text-white underline decoration-platinum/30 underline-offset-4"
+                      aria-label={`Visit ${name}'s Instagram`}
+                      title="Instagram"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-full text-platinum/80 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-platinum/40 transition"
                     >
-                      Me On The Gram
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                        <path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm0 2h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3zm11 1a1 1 0 100 2 1 1 0 000-2zM12 7a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6z" />
+                      </svg>
                     </a>
                   )}
                 </div>
