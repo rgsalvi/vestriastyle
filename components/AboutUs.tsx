@@ -26,13 +26,45 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack, onGoPartner }) => {
         <section className="mt-10 md:mt-12">
           <div className="prose prose-invert max-w-none">
             <p className="text-lg leading-relaxed text-platinum/85">
-              We started Vestria Style with a simple belief: great style should feel like you. Not a trend you chase, not a rulebook to memorize—just pieces you love, worn with ease and confidence.
+              At Vestria Style, we believe fashion is more than clothing—it’s expression, confidence, and intention. The modern landscape is crowded with fast trends and endless choice, which can make it hard to connect with your own sense of style. The joy of dressing with ease and authenticity often gets lost behind algorithms and infinite scrolls.
             </p>
             <p className="mt-4 leading-relaxed text-platinum/80">
-              Between campaign styling, editorial shoots, and one-on-one consultations, we’ve seen how the right outfit can shift someone’s energy. It’s why we obsess over fit and fabric as much as silhouette and story. Our work lives where real life meets personal aesthetic: elevated, practical, and always you.
+              We built Vestria Style to change that. Our purpose is to restore meaning and individuality to how people engage with fashion. By merging intelligent technology with professional styling expertise, we’re creating a platform that makes style more intentional, accessible, and deeply personal.
             </p>
             <p className="mt-4 leading-relaxed text-platinum/80">
-              Vestria Style is our way of bringing a stylist’s eye to your everyday wardrobe—whether you’re refining what you have, exploring new looks, or getting ready for a moment that matters. Think of us as your creative partners: honest, detail-driven, and here to help you dress with intention.
+              Together, our team brings over fifteen years of combined experience—grounded in formal training and work across red carpets, designer collections, campaigns, and private clients. Our shared belief is simple: style isn’t about trends; it’s about aligning what you wear with who you are.
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-10 md:mt-14">
+          <h2 className="text-sm tracking-widest uppercase text-platinum/60">For Individuals</h2>
+          <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
+            <p className="leading-relaxed text-platinum/85">
+              As professional stylists, we’ve met countless people who love fashion but still feel overwhelmed by it—full closets, yet nothing feels quite right. We set out to bridge that gap with a solution that understands both data and emotion.
+            </p>
+            <p className="mt-4 leading-relaxed text-platinum/80">
+              Vestria Style’s AI stylist learns your preferences, body type, and lifestyle to create combinations that feel authentic to you. Every suggestion is guided by real stylists who refine and shape the system’s understanding of fabric, proportion, and design. It’s not just about recommendations; it’s about helping you rediscover the potential of your wardrobe and build confidence in your personal aesthetic.
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-10 md:mt-14">
+          <h2 className="text-sm tracking-widest uppercase text-platinum/60">For Brands & Partners</h2>
+          <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
+            <p className="leading-relaxed text-platinum/85">
+              For fashion businesses, Vestria Style represents the future of meaningful engagement. Our technology enables brands and retailers to offer more than products—it empowers them to offer expertise.
+            </p>
+            <p className="mt-4 leading-relaxed text-platinum/80">
+              By combining AI insights with the trained eye of industry stylists, we help partners craft personalized shopping experiences that strengthen loyalty and elevate brand value. We help brands move from selling clothes to shaping identities—offering guidance that feels human, intelligent, and relevant.
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-10 md:mt-14">
+          <div className="rounded-2xl border border-platinum/20 bg-gradient-to-br from-white/5 to-white/0 p-6 md:p-8">
+            <p className="leading-relaxed text-platinum/85">
+              At its heart, Vestria Style is about connection: between people and their wardrobes, between brands and their audiences, and between technology and creativity. We exist to make style more thoughtful, more personal, and more powerful.
             </p>
           </div>
         </section>
