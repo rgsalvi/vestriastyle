@@ -187,7 +187,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   const partnerActive = activePage === 'partner';
   // Removed since Try-On is no longer a top-level nav item
   // const tryOnActive = activePage === 'tryon';
-  const navLinkBase = "group relative px-3 py-1.5 rounded-md text-sm tracking-[0.06em] text-platinum/75 hover:text-white transition-colors";
+  // Navbar styling tokens
+  const navLinkBase = "group relative px-3 py-1.5 rounded-full text-sm tracking-[0.06em] text-platinum/80 bg-white/0 ring-1 ring-transparent hover:text-white hover:bg-white/5 hover:ring-platinum/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/40";
+  const navActive = "text-platinum bg-white/10 ring-1 ring-platinum/30 shadow-sm";
   const navUnderlineBase = "after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-px after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-transparent after:via-platinum/60 after:to-transparent after:transition-all after:duration-200 group-hover:after:w-full focus-visible:after:w-full";
 
   return (
@@ -223,7 +225,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
           )}
         </button>
         <nav aria-label="Primary" className="hidden md:flex items-center gap-2">
-          <button onClick={onClickAbout} className={`${navLinkBase} ${navUnderlineBase} ${aboutActive ? 'after:w-full text-platinum' : ''}`}>
+          <button onClick={onClickAbout} aria-current={aboutActive ? 'page' : undefined} className={`${navLinkBase} ${navUnderlineBase} ${aboutActive ? `${navActive} after:w-full` : ''}`}>
             About Us
           </button>
           <HeaderFoundersEntry founders={foundersArray} onSelect={(f) => {
@@ -231,11 +233,11 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             setActiveFounder(full);
             setFounderModalOpen(true);
           }} />
-          <button onClick={onClickRecipes} className={`${navLinkBase} ${navUnderlineBase} ${recipesActive ? 'after:w-full text-platinum' : ''}`}>
+          <button onClick={onClickRecipes} aria-current={recipesActive ? 'page' : undefined} className={`${navLinkBase} ${navUnderlineBase} ${recipesActive ? `${navActive} after:w-full` : ''}`}>
             #VestriaStyleRecipes
           </button>
           {/* Virtual Try-On removed from primary navigation */}
-          <button onClick={onClickPartner} className={`${navLinkBase} ${navUnderlineBase} ${partnerActive ? 'after:w-full text-platinum' : ''}`}>
+          <button onClick={onClickPartner} aria-current={partnerActive ? 'page' : undefined} className={`${navLinkBase} ${navUnderlineBase} ${partnerActive ? `${navActive} after:w-full` : ''}`}>
             Partner With Us
           </button>
           <button onClick={onClickChatNav} className="ml-1 inline-flex items-center px-3.5 py-1.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
@@ -323,12 +325,12 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
       <div className="md:hidden mt-3 mx-auto max-w-7xl">
         <div className="rounded-2xl border border-platinum/20 bg-black/70 backdrop-blur-xl shadow-lg p-2">
           <div className="flex flex-col divide-y divide-platinum/10">
-            <button onClick={onClickAbout} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">About Us</button>
+            <button onClick={onClickAbout} className={`text-left px-3 py-3 rounded-xl transition-colors ${aboutActive ? 'text-platinum bg-white/10 border border-platinum/20' : 'text-platinum/90'} hover:text-white hover:bg-white/5`}>About Us</button>
             {/* Founders collapsible */}
             <MobileFoundersMenu onSelect={(f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }) => { const full = foundersMap[f.id as FounderId]; setActiveFounder(full); setFounderModalOpen(true); setMobileNavOpen(false); }} />
-            <button onClick={onClickRecipes} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">#VestriaStyleRecipes</button>
+            <button onClick={onClickRecipes} className={`text-left px-3 py-3 rounded-xl transition-colors ${recipesActive ? 'text-platinum bg-white/10 border border-platinum/20' : 'text-platinum/90'} hover:text-white hover:bg-white/5`}>#VestriaStyleRecipes</button>
             {/* Virtual Try-On removed from mobile navigation */}
-            <button onClick={onClickPartner} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">Partner With Us</button>
+            <button onClick={onClickPartner} className={`text-left px-3 py-3 rounded-xl transition-colors ${partnerActive ? 'text-platinum bg-white/10 border border-platinum/20' : 'text-platinum/90'} hover:text-white hover:bg-white/5`}>Partner With Us</button>
             <div className="pt-2 space-y-2">
               <button onClick={onClickChatNav} className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Chat With A Stylist</button>
               {showWardrobeButton && (
