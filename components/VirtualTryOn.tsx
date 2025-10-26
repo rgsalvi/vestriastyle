@@ -43,6 +43,8 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
     const dataUrl = await resizeImageToDataUrl(file, MAX_DIMENSION, 0.9);
     const mime = dataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg';
     setOutfitSource({ dataUrl, mimeType: mime });
+    // Reset any previous flat lay when a new outfit image is selected
+    setFlatLayDataUrl(null);
   };
 
   const ensurePersonWarning = () => {
@@ -55,7 +57,6 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
       if (!outfitSource) throw new Error('No outfit image uploaded');
       const result = await generateFlatLay({ source: { base64: outfitSource.dataUrl.split(',')[1], mimeType: outfitSource.mimeType } });
       setFlatLayDataUrl(`data:${result.mimeType};base64,${result.base64Image}`);
-      // Stay on this step to allow the user to review and explicitly accept the flat lay
     } catch (e) {
       console.error('flat lay failed', e);
       alert('We had trouble generating the flat lay. Please try again.');
@@ -63,6 +64,19 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
       setIsGeneratingFlatLay(false);
     }
   };
+
+  // Auto-generate flat lay when entering Step 3, then advance to Step 4 (confirmation)
+  React.useEffect(() => {
+    if (step === 3 && outfitSource && !flatLayDataUrl && !isGeneratingFlatLay) {
+      handleGenerateFlatLay();
+    }
+  }, [step, outfitSource, flatLayDataUrl, isGeneratingFlatLay]);
+
+  React.useEffect(() => {
+    if (step === 3 && flatLayDataUrl && !isGeneratingFlatLay) {
+      setStep(4);
+    }
+  }, [step, flatLayDataUrl, isGeneratingFlatLay]);
 
   const handleGenerateTryOn = async () => {
     if (!personDataUrl) return;
@@ -195,56 +209,34 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
           </section>
         )}
 
-        {/* Step 4: Generate Flat Lay */}
+        {/* Step 4: Extracting (auto) */}
         {step === 3 && (
           <section className="mt-6">
-            <div className="rounded-xl border border-platinum/20 bg-white/5 p-4">
-              <h3 className="font-semibold">Flat Lay Extraction</h3>
-              {flatLayDataUrl ? (
-                <img src={flatLayDataUrl} alt="flat lay" className="mt-3 w-full max-w-md rounded-lg border border-platinum/20" />
-              ) : (
-                <div className="mt-3 text-platinum/70 text-sm">We&apos;ll extract all products visible in your uploaded image (removing any model) and compose them into a clean, overhead flat lay.</div>
-              )}
-              <div className="mt-4 flex flex-wrap gap-3">
-                <button onClick={handleGenerateFlatLay} disabled={isGeneratingFlatLay || !canProceedFlatLay} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingFlatLay ? 'Generating…' : 'Generate Flat Lay'}</button>
-                <button onClick={() => setStep(4)} disabled={!flatLayDataUrl} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80 disabled:opacity-50">Accept Flat Lay</button>
+            <div className="rounded-xl border border-platinum/20 bg-white/5 p-4 text-center">
+              <h3 className="font-semibold">Extracting Products…</h3>
+              <div className="mt-3 text-platinum/70 text-sm">
+                We&apos;re pulling out all the products from your image into a clean flat lay.
+              </div>
+              <div className="mt-4 text-xs text-platinum/50">This will only take a moment.</div>
+              <div className="mt-5">
                 <button onClick={() => setStep(2)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>
             </div>
           </section>
         )}
 
-        {/* Step 5: Generate Try-On */}
+        {/* Step 5: Product(s) Confirmation */}
         {step === 4 && (
           <section className="mt-6">
-            <div className="rounded-xl border border-platinum/20 bg-white/5 p-4">
-              <h3 className="font-semibold">Try-On Settings</h3>
-              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-platinum/80">
-                <label className="inline-flex items-center gap-2">Output size:
-                  <select className="bg-black/20 border border-platinum/30 rounded-md px-2 py-1" value={outputSize} onChange={e => setOutputSize(e.target.value as any)}>
-                    <option value="1024x1536">1024×1536 (WebP)</option>
-                    <option value="768x1024">768×1024 (WebP)</option>
-                  </select>
-                </label>
-                <label className="inline-flex items-center gap-2">Try-on area:
-                  <select className="bg-black/20 border border-platinum/30 rounded-md px-2 py-1" value={region} onChange={e => setRegion(e.target.value as any)}>
-                    <option value="full">Full body</option>
-                    <option value="upper">Upper body (tops/jackets)</option>
-                    <option value="lower">Lower body (pants/skirts/shorts)</option>
-                  </select>
-                </label>
-              </div>
-              <div className="mt-2 inline-flex items-start gap-2 rounded-md border border-sky-400/30 bg-sky-400/10 px-3 py-2 text-[12px] text-sky-100/90">
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-[2px] h-4 w-4 flex-shrink-0 text-sky-300">
-                  <path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.012 10.012 0 0 0 12 2Zm0 14a1 1 0 0 1-1-1v-4a1 1 0 0 1 2 0v4a1 1 0 0 1-1 1Zm0-8a1.25 1.25 0 1 1 1.25-1.25A1.25 1.25 0 0 1 12 8Z"/>
-                </svg>
-                <span>
-                  Full replaces all garments. Upper affects only tops/jackets (bottoms stay the same). Lower affects only pants/skirts/shorts; if you’re wearing a dress or one‑piece, only the lower part is replaced and no top is added.
-                </span>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <button onClick={handleGenerateTryOn} disabled={!canProceedTryOn || isGeneratingTryOn} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingTryOn ? 'Generating…' : 'Generate Try-On'}</button>
-                <button onClick={() => setStep(3)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
+            <div className="rounded-xl border border-platinum/20 bg-white/5 p-4 text-center">
+              <h3 className="font-semibold">Product(s) Confirmation</h3>
+              {flatLayDataUrl && (
+                <img src={flatLayDataUrl} alt="flat lay products" className="mt-3 w-full max-w-md rounded-lg border border-platinum/20 inline-block" />
+              )}
+              <p className="mt-3 text-platinum/90 text-sm">Here are all the products from the image you uploaded that we will try on you. Good to go?</p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                <button onClick={handleGenerateTryOn} disabled={!canProceedTryOn || isGeneratingTryOn} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingTryOn ? 'Generating…' : 'Generate Fit Check'}</button>
+                <button onClick={() => setStep(2)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>
             </div>
           </section>
