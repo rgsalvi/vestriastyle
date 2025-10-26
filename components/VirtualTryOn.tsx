@@ -21,6 +21,10 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   const [validator, setValidator] = React.useState<{ ok: boolean; reasons: string[]; tips?: string[] } | null>(null);
   
 
+  // Dropzone affordance states
+  const [dragPersonActive, setDragPersonActive] = React.useState(false);
+  const [dragOutfitActive, setDragOutfitActive] = React.useState(false);
+
   const onPickPerson = async (file: File) => {
     const dataUrl = await resizeImageToDataUrl(file, MAX_DIMENSION, 0.9);
     setPersonDataUrl(dataUrl);
@@ -119,7 +123,18 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
         {/* Step 2: Person photo */}
         {step === 1 && (
           <section className="mt-6">
-            <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center">
+              <div
+                className={`rounded-2xl border ${dragPersonActive ? 'border-platinum/60 border-dashed bg-white/10' : 'border-platinum/20'} bg-white/5 p-6 text-center transition-colors`}
+                onDragOver={(e) => { e.preventDefault(); setDragPersonActive(true); }}
+                onDragEnter={(e) => { e.preventDefault(); setDragPersonActive(true); }}
+                onDragLeave={() => setDragPersonActive(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragPersonActive(false);
+                  const f = e.dataTransfer.files?.[0];
+                  if (f && f.type.startsWith('image/')) { onPickPerson(f); }
+                }}
+              >
               <p className="text-platinum/90 text-base">Upload a full-length photo of yourself with a plain background.</p>
               <div className="mt-5 flex flex-col items-center justify-center gap-4">
                 <label className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer">
@@ -127,6 +142,9 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                   Select Photo
                 </label>
                 {personDataUrl && <img src={personDataUrl} alt="person preview" className="h-40 rounded-xl border border-platinum/20 object-cover" />}
+                  {!personDataUrl && (
+                    <span className="text-xs text-platinum/60">Or drag & drop a photo here</span>
+                  )}
               </div>
               {personDataUrl && validator && !validator.ok && (
                 <div className="mt-4 mx-auto max-w-md text-xs text-amber-200/90 bg-amber-400/10 border border-amber-400/40 rounded-lg px-3 py-2">
@@ -144,7 +162,18 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
         {/* Step 3: Outfit source image (single) */}
         {step === 2 && (
           <section className="mt-6">
-            <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center">
+            <div
+              className={`rounded-2xl border ${dragOutfitActive ? 'border-platinum/60 border-dashed bg-white/10' : 'border-platinum/20'} bg-white/5 p-6 text-center transition-colors`}
+              onDragOver={(e) => { e.preventDefault(); setDragOutfitActive(true); }}
+              onDragEnter={(e) => { e.preventDefault(); setDragOutfitActive(true); }}
+              onDragLeave={() => setDragOutfitActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOutfitActive(false);
+                const f = e.dataTransfer.files?.[0] || null;
+                if (f && f.type.startsWith('image/')) onPickOutfitSource(f);
+              }}
+            >
               <p className="text-platinum/90 text-base">Upload a single image that contains all products you want to try on. No problem if they&apos;re on a model.</p>
               <div className="mt-5 flex flex-col items-center justify-center gap-4">
                 <label className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer" aria-label="Upload outfit source image">
@@ -153,6 +182,9 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                 </label>
                 {outfitSource && (
                   <img src={outfitSource.dataUrl} alt="outfit source" className="w-full max-w-md rounded-xl border border-platinum/20 object-cover" />
+                )}
+                {!outfitSource && (
+                  <span className="text-xs text-platinum/60">Or drag & drop an image here</span>
                 )}
               </div>
               <div className="mt-5 flex items-center justify-center gap-3">
