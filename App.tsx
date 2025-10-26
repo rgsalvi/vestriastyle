@@ -14,6 +14,7 @@ import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
 import ProfilePage from './components/ProfilePage';
+const FounderBioModal = React.lazy(() => import('./components/FounderBioModal'));
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
@@ -122,6 +123,11 @@ const EditProfileModal: React.FC<{
 const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const [founderModalOpen, setFounderModalOpen] = React.useState(false);
+  const [activeFounder, setActiveFounder] = React.useState<null | {
+    id: 'tanvi' | 'muskaan' | 'riddhi';
+    name: string; title: string; headshot: string; bio?: string; signatureAesthetic?: string; highlights?: string[]; socials?: { [k: string]: string }; galleryPaths?: string[];
+  }>(null);
 
   const greetingFirstName = React.useMemo(() => {
     if (!user) return null;
@@ -206,12 +212,57 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
               <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
               <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
               <div className="h-px bg-platinum/20 my-1"></div>
+              {/* Meet The Founders section */}
+              <div className="px-3 py-1">
+                <p className="text-[11px] uppercase tracking-widest text-platinum/50 mb-1">Meet The Founders</p>
+                <div className="flex flex-col gap-0.5">
+                  {[
+                    { id: 'tanvi', name: 'Tanvi', title: 'Co-founder & CTO', headshot: '/tanvi.jpg', bio: undefined },
+                    { id: 'muskaan', name: 'Muskaan', title: 'Co-founder & CEO', headshot: '/muskaan.jpg', bio: undefined },
+                    { id: 'riddhi', name: 'Riddhi', title: 'Co-founder & Chief Stylist', headshot: '/riddhi.jpg', bio: undefined },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      role="menuitem"
+                      className="w-full text-left text-sm text-platinum/90 px-0 py-1 rounded-md hover:text-white"
+                      onClick={() => {
+                        // Hardcoded minimal data; modal will render gallery based on public paths convention
+                        setActiveFounder({
+                          id: f.id as any,
+                          name: f.name,
+                          title: f.title,
+                          headshot: f.headshot,
+                          bio: undefined,
+                          signatureAesthetic: undefined,
+                          highlights: undefined,
+                          socials: undefined,
+                          galleryPaths: [`/founders/${f.id}/work-01.jpg`, `/founders/${f.id}/work-02.jpg`, `/founders/${f.id}/work-03.jpg`],
+                        });
+                        setFounderModalOpen(true);
+                      }}
+                    >
+                      {f.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="h-px bg-platinum/20 my-1"></div>
               <button onClick={onEditProfile} className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">Edit Profile</button>
               <button onClick={onSignOut} className="w-full text-left text-sm text-red-400 px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">
                 Sign Out
               </button>
             </div>
           )}
+          {/* Founder Bio Modal */}
+          <Suspense fallback={null}>
+            {founderModalOpen && (
+              <FounderBioModal
+                isOpen={founderModalOpen}
+                onClose={() => setFounderModalOpen(false)}
+                founder={activeFounder}
+              />
+            )}
+          </Suspense>
         </div>
       ) : (
         <button
