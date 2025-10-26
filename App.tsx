@@ -1,6 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
+import { foundersMap, foundersArray } from './components/founders';
+import type { FounderData } from './components/FounderBioModal';
+import type { FounderId } from './components/founders';
 import { ImageUploader } from './components/ImageUploader';
 import { RecommendationDisplay } from './components/RecommendationDisplay';
 import { BodyTypeSelector } from './components/BodyTypeSelector';
@@ -130,54 +133,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
     name: string; title: string; headshot: string; bio?: string; signatureAesthetic?: string; highlights?: string[]; socials?: { [k: string]: string }; galleryPaths?: string[];
   }>(null);
 
-  // Centralized founder content used across header entry and user menu
-  const foundersMap: Record<'tanvi'|'muskaan'|'riddhi', { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; bio?: string; signatureAesthetic?: string; highlights?: string[]; socials?: { [k: string]: string }; galleryPaths: string[] }> = React.useMemo(() => ({
-    tanvi: {
-      id: 'tanvi',
-      name: 'Tanvi Sankhe',
-      title: 'Co-founder & CTO',
-      headshot: '/tanvi.jpg',
-      bio: 'Tanvi leads the product and technology at Vestria Style. She blends practical engineering with a deep love for design to deliver magical wardrobe experiences that feel effortless and personal.',
-      signatureAesthetic: 'Minimalism with intelligent tailoring — elevated staples that work hard and look polished.',
-      highlights: [
-        'Architected our AI-driven wardrobe engine',
-        'Obsessed with fast UX and thoughtful details',
-        'Believes great style should feel easy and empowering',
-      ],
-      socials: { Instagram: '#', Pinterest: '#' },
-      galleryPaths: ['/founders/tanvi/work-01.jpg','/founders/tanvi/work-02.jpg','/founders/tanvi/work-03.jpg']
-    },
-    muskaan: {
-      id: 'muskaan',
-      name: 'Muskaan Datt',
-      title: 'Co-founder & CEO',
-      headshot: '/muskaan.jpg',
-      bio: 'Muskaan drives the vision and brand of Vestria Style. She champions an inclusive, confidence-first approach where every wardrobe tells a story worth celebrating.',
-      signatureAesthetic: 'Modern romantic with clean silhouettes and luxe textures.',
-      highlights: [
-        'Shaped Vestria’s customer-first philosophy',
-        'Always-on curator of timeless yet fresh looks',
-        'Leads partnerships and brand experiences',
-      ],
-      socials: { Instagram: '#', Pinterest: '#' },
-      galleryPaths: ['/founders/muskaan/work-01.jpg','/founders/muskaan/work-02.jpg','/founders/muskaan/work-03.jpg']
-    },
-    riddhi: {
-      id: 'riddhi',
-      name: 'Riddhi Jogani',
-      title: 'Co-founder & Chief Stylist',
-      headshot: '/riddhi.jpg',
-      bio: 'Riddhi brings editorial styling sensibilities to everyday life. She’s passionate about creating looks that feel authentic, flattering, and truly wearable.',
-      signatureAesthetic: 'Elevated everyday — sculpted shapes, smart proportions, and quiet luxury.',
-      highlights: [
-        'Styled hundreds of real-world wardrobes',
-        'Translates runway ideas into daily outfits',
-        'Specialist in body-type smart dressing',
-      ],
-      socials: { Instagram: '#', Pinterest: '#' },
-      galleryPaths: ['/founders/riddhi/work-01.jpg','/founders/riddhi/work-02.jpg','/founders/riddhi/work-03.jpg']
-    }
-  }), []);
+  // foundersMap and foundersArray are imported from components/founders
 
   const greetingFirstName = React.useMemo(() => {
     if (!user) return null;
@@ -214,8 +170,8 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
 
     <div className="flex items-center space-x-4">
       {/* Always-visible founders dropdown trigger styled as a luxe nav item */}
-      <HeaderFoundersEntry onSelect={(f) => {
-        const full = foundersMap[f.id];
+      <HeaderFoundersEntry founders={foundersArray} onSelect={(f) => {
+        const full = foundersMap[f.id as FounderId];
         setActiveFounder(full);
         setFounderModalOpen(true);
       }} />
@@ -268,22 +224,19 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
               <div className="px-3 py-1">
                 <p className="text-[11px] uppercase tracking-widest text-platinum/50 mb-1">The Founders</p>
                 <div className="flex flex-col gap-0.5">
-                  {(['tanvi','muskaan','riddhi'] as const).map((id) => {
-                    const f = foundersMap[id];
-                    return (
+                  {foundersArray.map((f: FounderData) => (
                     <button
-                      key={id}
+                      key={f.id}
                       role="menuitem"
                       className="w-full text-left text-sm text-platinum/90 px-0 py-1 rounded-md hover:text-white"
                       onClick={() => {
-                        setActiveFounder(f);
+                        setActiveFounder(foundersMap[f.id as FounderId]);
                         setFounderModalOpen(true);
                       }}
                     >
                       {f.name}
                     </button>
-                    );
-                  })}
+                  ))}
                 </div>
               </div>
               <div className="h-px bg-platinum/20 my-1"></div>
@@ -320,8 +273,8 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
 };
 
 // Small helper for a compact, always-visible "Meet The Founders" entry with a dropdown of names
-const HeaderFoundersEntry: React.FC<{ onSelect: (f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths: string[] }) => void }>
-  = ({ onSelect }) => {
+const HeaderFoundersEntry: React.FC<{ founders: Array<{ id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }>; onSelect: (f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths: string[] }) => void }>
+  = ({ founders, onSelect }) => {
   const [open, setOpen] = React.useState(false);
   const wrapRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
@@ -329,11 +282,6 @@ const HeaderFoundersEntry: React.FC<{ onSelect: (f: { id: 'tanvi'|'muskaan'|'rid
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
-  const founders = [
-    { id: 'tanvi' as const, name: 'Tanvi Sankhe', title: 'Co-founder & CTO', headshot: '/tanvi.jpg' },
-    { id: 'muskaan' as const, name: 'Muskaan Datt', title: 'Co-founder & CEO', headshot: '/muskaan.jpg' },
-    { id: 'riddhi' as const, name: 'Riddhi Jogani', title: 'Co-founder & Chief Stylist', headshot: '/riddhi.jpg' },
-  ];
   return (
     <div className="relative" ref={wrapRef}>
       <button
@@ -351,7 +299,7 @@ const HeaderFoundersEntry: React.FC<{ onSelect: (f: { id: 'tanvi'|'muskaan'|'rid
               key={f.id}
               className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10"
               onClick={() => {
-                onSelect({ ...f, galleryPaths: [`/founders/${f.id}/work-01.jpg`, `/founders/${f.id}/work-02.jpg`, `/founders/${f.id}/work-03.jpg`] });
+                onSelect({ id: f.id, name: f.name, title: f.title, headshot: f.headshot, galleryPaths: f.galleryPaths ?? [`/founders/${f.id}/work-01.jpg`, `/founders/${f.id}/work-02.jpg`, `/founders/${f.id}/work-03.jpg`] });
                 setOpen(false);
               }}
             >{f.name}</button>
