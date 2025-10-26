@@ -10,7 +10,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   = ({ onBack }) => {
   const [step, setStep] = React.useState<Step>(0);
   const [personDataUrl, setPersonDataUrl] = React.useState<string | null>(null);
-  const [products, setProducts] = React.useState<Array<{ id: string; dataUrl: string; mimeType: string }>>([]);
+  const [outfitSource, setOutfitSource] = React.useState<{ dataUrl: string; mimeType: string } | null>(null);
   const [isGeneratingFlatLay, setIsGeneratingFlatLay] = React.useState(false);
   const [flatLayDataUrl, setFlatLayDataUrl] = React.useState<string | null>(null);
   const [isGeneratingTryOn, setIsGeneratingTryOn] = React.useState(false);
@@ -18,7 +18,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   const [outputSize, setOutputSize] = React.useState<'1024x1536' | '768x1024'>('1024x1536');
   const [warningShown, setWarningShown] = React.useState(false);
   const [validator, setValidator] = React.useState<{ ok: boolean; reasons: string[]; tips?: string[] } | null>(null);
-  const [extracted, setExtracted] = React.useState<Array<{ id: string; dataUrl: string; mimeType: string }>>([]);
+  
 
   const onPickPerson = async (file: File) => {
     const dataUrl = await resizeImageToDataUrl(file, MAX_DIMENSION, 0.9);
@@ -33,18 +33,12 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
     } catch {}
   };
 
-  const onPickProducts = async (files: FileList | null) => {
-    if (!files) return;
-    const next: Array<{ id: string; dataUrl: string; mimeType: string }> = [];
-    for (const f of Array.from(files)) {
-      const dataUrl = await resizeImageToDataUrl(f, MAX_DIMENSION, 0.9);
-      const mime = dataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg';
-      next.push({ id: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2)}`, dataUrl, mimeType: mime });
-    }
-    setProducts(prev => [...prev, ...next]);
+  const onPickOutfitSource = async (file: File | null) => {
+    if (!file) return;
+    const dataUrl = await resizeImageToDataUrl(file, MAX_DIMENSION, 0.9);
+    const mime = dataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg';
+    setOutfitSource({ dataUrl, mimeType: mime });
   };
-
-  const removeProduct = (id: string) => setProducts(prev => prev.filter(p => p.id !== id));
 
   const ensurePersonWarning = () => {
     if (!warningShown) setWarningShown(true);
@@ -53,9 +47,8 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   const handleGenerateFlatLay = async () => {
     setIsGeneratingFlatLay(true);
     try {
-      const source = extracted.length > 0 ? extracted : products;
-      const garments = source.map(p => ({ base64: p.dataUrl.split(',')[1], mimeType: p.mimeType }));
-      const result = await generateFlatLay({ garments });
+      if (!outfitSource) throw new Error('No outfit image uploaded');
+      const result = await generateFlatLay({ source: { base64: outfitSource.dataUrl.split(',')[1], mimeType: outfitSource.mimeType } });
       setFlatLayDataUrl(`data:${result.mimeType};base64,${result.base64Image}`);
       setStep(4); // move to try-on step
     } catch (e) {
@@ -70,10 +63,11 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
     if (!personDataUrl) return;
     setIsGeneratingTryOn(true);
     try {
-      const person = { base64: personDataUrl.split(',')[1], mimeType: personDataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg' };
-      const garments = products.map(p => ({ base64: p.dataUrl.split(',')[1], mimeType: p.mimeType }));
-      const size = outputSize === '1024x1536' ? { width: 1024, height: 1536 } : { width: 768, height: 1024 };
-      const result = await generateTryOn({ person, garments, size });
+  const person = { base64: personDataUrl.split(',')[1], mimeType: personDataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg' };
+  if (!flatLayDataUrl) throw new Error('No flat lay yet');
+  const flatLay = { base64: flatLayDataUrl.split(',')[1], mimeType: flatLayDataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg' };
+  const size = outputSize === '1024x1536' ? { width: 1024, height: 1536 } : { width: 768, height: 1024 };
+  const result = await generateTryOn({ person, flatLay, size });
       const mime = result.mimeType || 'image/jpeg';
       const rawDataUrl = `data:${mime};base64,${result.base64Image}`;
       const [w, h] = outputSize === '1024x1536' ? [1024, 1536] : [768, 1024];
@@ -88,8 +82,8 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
     }
   };
 
-  const canProceedFlatLay = products.length > 0;
-  const canProceedTryOn = !!personDataUrl && products.length > 0;
+  const canProceedFlatLay = !!outfitSource;
+  const canProceedTryOn = !!personDataUrl && !!flatLayDataUrl;
 
   return (
     <main className="container mx-auto p-4 md:p-8">
@@ -141,53 +135,24 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
           </section>
         )}
 
-        {/* Step 3: Product images */}
+        {/* Step 3: Outfit source image (single) */}
         {step === 2 && (
           <section className="mt-6">
             <div className="rounded-xl border border-platinum/20 bg-white/5 p-4">
               <div className="flex items-center justify-between">
-                <p className="text-platinum/80">Upload product images you want to try on (add multiple).</p>
-                <label className="inline-flex items-center px-3 py-2 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:bg-white/5 cursor-pointer" aria-label="Add product images">
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={e => onPickProducts(e.target.files)} />
-                  Add Images
+                <p className="text-platinum/80">Upload a single image that contains all products you want to try on (it can have a model wearing them). We will extract the products into a clean flat lay.</p>
+                <label className="inline-flex items-center px-3 py-2 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:bg-white/5 cursor-pointer" aria-label="Upload outfit source image">
+                  <input type="file" accept="image/*" className="hidden" onChange={e => onPickOutfitSource(e.target.files?.[0] || null)} />
+                  Upload Image
                 </label>
               </div>
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {products.map(p => (
-                  <div key={p.id} className="relative group">
-                    <img src={p.dataUrl} alt="product" className="w-full aspect-square object-cover rounded-lg border border-platinum/20" />
-                    <button onClick={() => removeProduct(p.id)} className="absolute top-1 right-1 hidden group-hover:inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/60 text-white text-xs ring-1 ring-white/20">✕</button>
-                  </div>
-                ))}
-              </div>
-              {extracted.length > 0 && (
+              {outfitSource && (
                 <div className="mt-4">
-                  <p className="text-sm text-platinum/70 mb-2">Extracted previews (used for flat lay):</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {extracted.map(p => (
-                      <img key={p.id} src={p.dataUrl} alt="extracted" className="w-full aspect-square object-cover rounded-lg border border-platinum/20" />
-                    ))}
-                  </div>
+                  <p className="text-sm text-platinum/70 mb-2">Selected image:</p>
+                  <img src={outfitSource.dataUrl} alt="outfit source" className="w-full max-w-md rounded-lg border border-platinum/20" />
                 </div>
               )}
               <div className="mt-4 flex gap-3">
-                <button onClick={async () => {
-                  // Extract background-removed previews via editOutfitImage per garment
-                  const next: Array<{ id: string; dataUrl: string; mimeType: string }> = [];
-                  for (const p of products) {
-                    try {
-                      const base64 = p.dataUrl.split(',')[1];
-                      const prompt = 'Remove background to transparent if possible, center the garment on neutral cloth or very light backdrop, square crop, high fidelity.';
-                      const edited = await (await import('../services/geminiService')).editOutfitImage(base64, p.mimeType, prompt);
-                      const mime = p.mimeType || 'image/png';
-                      next.push({ id: `x-${p.id}`, dataUrl: `data:${mime};base64,${edited}`, mimeType: mime });
-                    } catch (e) {
-                      // fallback to original
-                      next.push(p);
-                    }
-                  }
-                  setExtracted(next);
-                }} disabled={!canProceedFlatLay} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Extract Previews</button>
                 <button onClick={() => setStep(3)} disabled={!canProceedFlatLay} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">Next</button>
                 <button onClick={() => setStep(1)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>
@@ -199,11 +164,11 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
         {step === 3 && (
           <section className="mt-6">
             <div className="rounded-xl border border-platinum/20 bg-white/5 p-4">
-              <h3 className="font-semibold">Flat Lay Preview</h3>
+              <h3 className="font-semibold">Flat Lay Extraction</h3>
               {flatLayDataUrl ? (
                 <img src={flatLayDataUrl} alt="flat lay" className="mt-3 w-full max-w-md rounded-lg border border-platinum/20" />
               ) : (
-                <div className="mt-3 text-platinum/70 text-sm">We&apos;ll arrange your selected products into a clean, overhead flat lay with soft shadows.</div>
+                <div className="mt-3 text-platinum/70 text-sm">We&apos;ll extract all products visible in your uploaded image (removing any model) and compose them into a clean, overhead flat lay.</div>
               )}
               <div className="mt-4 flex flex-wrap gap-3">
                 <button onClick={handleGenerateFlatLay} disabled={isGeneratingFlatLay || !canProceedFlatLay} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingFlatLay ? 'Generating…' : 'Generate Flat Lay'}</button>
@@ -227,7 +192,6 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                 </label>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
-                <button onClick={() => setStep(5)} disabled={!flatLayDataUrl} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Accept Flat Lay</button>
                 <button onClick={handleGenerateTryOn} disabled={!canProceedTryOn || isGeneratingTryOn} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingTryOn ? 'Generating…' : 'Generate Try-On'}</button>
                 <button onClick={() => setStep(3)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>

@@ -188,7 +188,7 @@ export const initiateChatSession = async (analysisContext: AiResponse, newItemCo
 };
 
 // New: Virtual Try-On helpers
-export async function generateFlatLay(params: { garments: Array<{ base64: string; mimeType: string }> }): Promise<{ base64Image: string; mimeType: string }> {
+export async function generateFlatLay(params: { source: { base64: string; mimeType: string } }): Promise<{ base64Image: string; mimeType: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => { try { controller.abort(); } catch {} }, 60000);
   try {
@@ -203,7 +203,7 @@ export async function generateFlatLay(params: { garments: Array<{ base64: string
   }
 }
 
-export async function generateTryOn(params: { person: { base64: string; mimeType: string }, garments: Array<{ base64: string; mimeType: string }>, size: { width: number; height: number } }): Promise<{ base64Image: string; mimeType: string }> {
+export async function generateTryOn(params: { person: { base64: string; mimeType: string }, flatLay: { base64: string; mimeType: string }, size?: { width: number; height: number } }): Promise<{ base64Image: string; mimeType: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => { try { controller.abort(); } catch {} }, 60000);
   try {

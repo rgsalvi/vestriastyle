@@ -14,17 +14,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { garments } = req.body as { garments?: Array<{ base64: string; mimeType: string }> };
-    if (!garments || !Array.isArray(garments) || garments.length === 0) {
-      return res.status(400).json({ message: 'garments array is required' });
+    const { source } = req.body as { source?: { base64: string; mimeType: string } };
+    if (!source?.base64 || !source?.mimeType) {
+      return res.status(400).json({ message: 'source image is required' });
     }
 
-    const parts: any[] = [];
-    for (const g of garments) {
-      if (!g?.base64 || !g?.mimeType) continue;
-      parts.push({ inlineData: { data: g.base64, mimeType: g.mimeType } });
-    }
-    parts.push({ text: `Compose a single overhead flat lay image from the provided garment images. Use a neutral cloth/texture background with soft realistic shadows. Keep aspect ratio 1:1, high quality. Align items neatly without overlaps when possible.` });
+    // Single-image extraction: remove model if present, isolate each visible clothing item,
+    // and arrange them into one clean overhead flat lay.
+    const parts: any[] = [
+      { inlineData: { data: source.base64, mimeType: source.mimeType } },
+      { text: `Extract all clothing products visible in this image (even if worn by a model). Remove the person/model entirely. Isolate each product with accurate masks and arrange them into a single overhead flat lay on a neutral light cloth/texture background with soft realistic shadows. Avoid brand logos or text overlays. Output one square, high-quality flat lay image that includes every extracted product.` }
+    ];
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image-preview',
