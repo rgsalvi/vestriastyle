@@ -75,6 +75,11 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack, onGoPartner }) => {
             <p className="leading-relaxed text-platinum/85">
               Style is personal. It’s the first impression you make without saying a word. We’re not here to change who you are. We’re here to help you see yourself a little more clearly, and to build a wardrobe that actually fits the life you’re living. We’ll bring the know-how; you bring your story. Together, we’ll create something that feels easy, natural, and unmistakably you.
             </p>
+            <div className="mt-5 flex items-center justify-center select-none" aria-hidden>
+              <div className="h-px w-20 md:w-28 bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
+              <span className="mx-2 inline-block w-1.5 h-1.5 rounded-full bg-platinum/70 shadow-[0_0_10px_rgba(255,255,255,0.25)]" />
+              <div className="h-px w-20 md:w-28 bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
+            </div>
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="flex items-center gap-3">
                 <img src={TanviImg} alt="Tanvi Sankhe" className="w-12 h-12 rounded-full object-cover border border-platinum/30" />
