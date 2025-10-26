@@ -56,7 +56,7 @@ export const StyleRecipes: React.FC<{ isLoggedIn?: boolean; onRequireLogin?: () 
 
     return (
         <>
-            <section className="mt-12 py-16 bg-black/20 border-t border-platinum/20">
+            <section id="style-recipes" className="mt-12 py-16 bg-black/20 border-t border-platinum/20">
                 <div className="container mx-auto px-4 md:px-8">
                     <div className="text-center mb-10">
                         <h2 className="text-3xl font-semibold text-platinum tracking-[0.2em] uppercase">Style Recipes</h2>

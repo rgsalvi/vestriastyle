@@ -34,6 +34,7 @@ interface HeaderProps {
   onOpenLogin: (mode: 'signin' | 'signup') => void;
   onChatNav: () => void;
   onNavigateAbout: () => void;
+  onNavigateRecipes: () => void;
   onNavigatePartner: () => void;
   showWardrobeButton: boolean;
   onWardrobeClick: () => void;
@@ -130,7 +131,7 @@ const EditProfileModal: React.FC<{
 };
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [founderModalOpen, setFounderModalOpen] = React.useState(false);
@@ -169,6 +170,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   }, []);
 
   const onClickAbout = () => onNavigateAbout();
+  const onClickRecipes = () => onNavigateRecipes();
   const onClickPartner = () => onNavigatePartner();
   const onClickChatNav = () => { onChatNav(); };
 
@@ -188,6 +190,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             setActiveFounder(full);
             setFounderModalOpen(true);
           }} />
+          <button onClick={onClickRecipes} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
+            #VestriaStyleRecipe
+          </button>
           <button onClick={onClickChatNav} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
             Chat With A Stylist
           </button>
@@ -1193,6 +1198,12 @@ const App: React.FC = () => {
             setTimeout(() => setProfileSavedBanner(null), 5000);
           }}
           onNavigateAbout={() => setCurrentPage('about')}
+          onNavigateRecipes={() => {
+            setCurrentPage('main');
+            setTimeout(() => {
+              try { document.getElementById('style-recipes')?.scrollIntoView({ behavior: 'smooth' }); } catch {}
+            }, 0);
+          }}
           onNavigatePartner={() => {
             setCurrentPage('partner');
           }}
