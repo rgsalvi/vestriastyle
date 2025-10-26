@@ -205,6 +205,9 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                   </select>
                 </label>
               </div>
+              <p className="mt-2 text-xs text-platinum/60">
+                Help: Full replaces all garments. Upper affects only tops/jackets (bottoms stay the same). Lower affects only pants/skirts/shorts; if you’re wearing a dress or one‑piece, only the lower part is replaced and no top is added.
+              </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <button onClick={handleGenerateTryOn} disabled={!canProceedTryOn || isGeneratingTryOn} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingTryOn ? 'Generating…' : 'Generate Try-On'}</button>
                 <button onClick={() => setStep(3)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
