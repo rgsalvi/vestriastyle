@@ -320,8 +320,16 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             <MobileFoundersMenu onSelect={(f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }) => { const full = foundersMap[f.id as FounderId]; setActiveFounder(full); setFounderModalOpen(true); setMobileNavOpen(false); }} />
             <button onClick={onClickRecipes} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">#VestriaStyleRecipes</button>
             <button onClick={onClickPartner} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">Partner With Us</button>
-            <div className="pt-2">
+            <div className="pt-2 space-y-2">
               <button onClick={onClickChatNav} className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Chat With A Stylist</button>
+              {showWardrobeButton && (
+                <button
+                  onClick={() => { setMobileNavOpen(false); onWardrobeClick(); }}
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-platinum/10 text-platinum font-semibold shadow-sm hover:bg-platinum/20 transition-all ring-1 ring-platinum/30"
+                >
+                  My Wardrobe
+                </button>
+              )}
             </div>
           </div>
         </div>
