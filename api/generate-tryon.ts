@@ -47,10 +47,14 @@ ADDITIONAL STRICTNESS:
         ? 'LIMIT EDITS TO LOWER-BODY GARMENTS ONLY (pants, skirts, shorts). Do not modify any upper-body garments. REMOVE any original lower-body garment fully so it does not show under the new item. If the person is wearing a dress or one-piece, remove only the lower portion necessary to fit the provided bottoms; DO NOT add or invent any top.'
         : 'Replace all visible clothing. REMOVE original garments fully in their respective regions so none of the old clothing shows under the new items.';
 
-    const instruction = `Using only the garments in the flat lay image, ${regionScope} Ensure realistic fit and drape while strictly adhering to the rules.
+  const instruction = `Using only the garments in the flat lay image, ${regionScope} Ensure realistic fit and drape while strictly adhering to the rules.
 ${constraint}
 ${strict ? stricter : ''}
-OUTPUT: One high-quality portrait of the person dressed ONLY in the flat lay items, with no extra additions.`;
+OUTPUT FORMAT (MANDATORY):
+- Output ONLY a single edited portrait photo.
+- DO NOT include side-by-side comparisons, before/after, grids, frames, borders, picture-in-picture, or any duplication of the original image within the output.
+- DO NOT include the flat lay or the original person photo in the frame; use them strictly as references.
+- The result should look like a single natural photograph of the person wearing ONLY the flat lay items.`;
 
     const parts: any[] = [
       { inlineData: { data: person.base64, mimeType: person.mimeType } },
