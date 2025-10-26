@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import TanviImg from '../tanvi.jpg';
-import MuskaanImg from '../muskaan.jpg';
-import RiddhiImg from '../riddhi.jpg';
+import TanviImg from '../tanvi.webp';
+import MuskaanImg from '../muskaan.webp';
+import RiddhiImg from '../riddhi.webp';
 import type { User, AiResponse, ChatMessage, AnalysisItem } from '../types';
 import { initiateChatSession, ChatSessionData } from '../services/geminiService';
 import { Client, Conversation, Message, Participant as TwilioParticipant } from '@twilio/conversations';

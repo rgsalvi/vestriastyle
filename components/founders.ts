@@ -1,8 +1,8 @@
 import { FounderData } from './FounderBioModal';
 // Import images so Vite bundles and fingerprints them correctly
-import TanviImg from '../tanvi.jpg';
-import MuskaanImg from '../muskaan.jpg';
-import RiddhiImg from '../riddhi.jpg';
+import TanviImg from '../tanvi.webp';
+import MuskaanImg from '../muskaan.webp';
+import RiddhiImg from '../riddhi.webp';
 
 export type FounderId = 'tanvi' | 'muskaan' | 'riddhi';
 
