@@ -67,7 +67,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   if (!flatLayDataUrl) throw new Error('No flat lay yet');
   const flatLay = { base64: flatLayDataUrl.split(',')[1], mimeType: flatLayDataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg' };
   const size = outputSize === '1024x1536' ? { width: 1024, height: 1536 } : { width: 768, height: 1024 };
-  const result = await generateTryOn({ person, flatLay, size });
+  const result = await generateTryOn({ person, flatLay, size, strict: true });
       const mime = result.mimeType || 'image/jpeg';
       const rawDataUrl = `data:${mime};base64,${result.base64Image}`;
       const [w, h] = outputSize === '1024x1536' ? [1024, 1536] : [768, 1024];

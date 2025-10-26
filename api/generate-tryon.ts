@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { person, flatLay, size } = req.body as { person?: ImageRef; flatLay?: ImageRef; size?: { width: number; height: number } };
+  const { person, flatLay, size, strict } = req.body as { person?: ImageRef; flatLay?: ImageRef; size?: { width: number; height: number }; strict?: boolean };
     if (!person?.base64 || !person?.mimeType) {
       return res.status(400).json({ message: 'person image is required' });
     }
@@ -26,10 +26,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Single-pass try-on: replace all clothing on the person using the products visible in the flat lay image.
     // Preserve the original face and background exactly; maintain pose and lighting.
+    const constraint = `
+RULES (NO EXCEPTIONS):
+- Use ONLY and ALL garments visible in the flat lay. Do NOT add any new items (no belts, no jewelry, no hats, no extra graphics, no text, no logos beyond what exists).
+- Do NOT alter colors, patterns, logos, or prints. Reproduce them exactly.
+- Preserve the person's original face, hair, skin, and background exactly.
+- Maintain body pose and lighting; avoid edge artifacts (hands, neckline, hems).
+- If a body region has no corresponding flat lay item, do NOT invent a garment for it; leave the original region unmodified where feasible rather than adding anything new.`;
+
+    const stricter = `
+ADDITIONAL STRICTNESS:
+- Zero tolerance for hallucinated accessories or fabricated details.
+- If uncertain, prefer leaving an area unchanged instead of adding or modifying it.
+`;
+
+    const instruction = `Using only the garments in the flat lay image, replace all visible clothing on the person. Ensure realistic fit and drape while strictly adhering to the rules.
+${constraint}
+${strict ? stricter : ''}
+OUTPUT: One high-quality portrait of the person dressed ONLY in the flat lay items, with no extra additions.`;
+
     const parts: any[] = [
       { inlineData: { data: person.base64, mimeType: person.mimeType } },
       { inlineData: { data: flatLay.base64, mimeType: flatLay.mimeType } },
-      { text: `Using only the products shown in the flat lay image, replace all of the clothing the person is wearing. Ensure realistic fit, drape, and proportions. Preserve the person's original face and background exactly. Maintain body pose and consistent lighting. Avoid artifacts around edges and hands. Output a single high-quality portrait of the person fully dressed in the flat lay outfit.` },
+      { text: instruction },
     ];
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image-preview',

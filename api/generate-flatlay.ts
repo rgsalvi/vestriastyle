@@ -23,7 +23,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // and arrange them into one clean overhead flat lay.
     const parts: any[] = [
       { inlineData: { data: source.base64, mimeType: source.mimeType } },
-      { text: `Extract all clothing products visible in this image (even if worn by a model). Remove the person/model entirely. Isolate each product with accurate masks and arrange them into a single overhead flat lay on a neutral light cloth/texture background with soft realistic shadows. Avoid brand logos or text overlays. Output one square, high-quality flat lay image that includes every extracted product.` }
+      { text: `TASK: Create a single overhead flat lay image containing ONLY the clothing products that are actually visible in the provided photo.
+
+STRICT REQUIREMENTS:
+- If a model/person is present, remove them completely; keep only the garments.
+- Do NOT invent, add, or alter any items. No accessories unless clearly present. No hallucinated logos, graphics, or extra details.
+- Preserve each product's exact color, pattern/print, silhouette, and material appearance.
+- If parts of an item are occluded, keep the occlusion (do not reconstruct hidden parts).
+- Place the items neatly on a neutral, light cloth/textured background with soft realistic shadows.
+- Keep a square aspect ratio and high quality.
+
+OUTPUT: One square flat lay image including all and only the extracted products.` }
     ];
 
     const response = await ai.models.generateContent({
