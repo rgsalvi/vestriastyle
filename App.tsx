@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { lazy, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { ImageUploader } from './components/ImageUploader';
 import { RecommendationDisplay } from './components/RecommendationDisplay';
 import { BodyTypeSelector } from './components/BodyTypeSelector';
@@ -206,6 +207,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
   }, []);
 
   return (
+  <>
   <header className="relative p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20 flex justify-between items-center">
     <Logo className="h-24 w-auto" />
 
@@ -262,9 +264,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
               <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
               <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
               <div className="h-px bg-platinum/20 my-1"></div>
-              {/* Meet The Founders section */}
+              {/* The Founders section */}
               <div className="px-3 py-1">
-                <p className="text-[11px] uppercase tracking-widest text-platinum/50 mb-1">Meet The Founders</p>
+                <p className="text-[11px] uppercase tracking-widest text-platinum/50 mb-1">The Founders</p>
                 <div className="flex flex-col gap-0.5">
                   {(['tanvi','muskaan','riddhi'] as const).map((id) => {
                     const f = foundersMap[id];
@@ -301,17 +303,19 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
         </button>
       )}
     </div>
-    {/* Founder Bio Modal rendered at header root so it works logged-in or out */}
-    <Suspense fallback={null}>
-      {founderModalOpen && (
-        <FounderBioModal
-          isOpen={founderModalOpen}
-          onClose={() => setFounderModalOpen(false)}
-          founder={activeFounder}
-        />
-      )}
-    </Suspense>
   </header>
+  {/* Portal modal to body to avoid clipping within sticky header/backdrop filters */}
+  {founderModalOpen && createPortal(
+    <Suspense fallback={null}>
+      <FounderBioModal
+        isOpen={founderModalOpen}
+        onClose={() => setFounderModalOpen(false)}
+        founder={activeFounder}
+      />
+    </Suspense>,
+    document.body
+  )}
+  </>
   );
 };
 
@@ -334,13 +338,10 @@ const HeaderFoundersEntry: React.FC<{ onSelect: (f: { id: 'tanvi'|'muskaan'|'rid
     <div className="relative" ref={wrapRef}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
+        className="hidden sm:inline-flex items-center px-2 py-1 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
         aria-haspopup="true"
       >
-        <span className="text-sm tracking-wide">Meet The Founders</span>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 opacity-80">
-          <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-        </svg>
+        <span className="text-sm tracking-wide">The Founders</span>
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-56 bg-[#1F2937] rounded-xl shadow-lg p-2 border border-platinum/20 z-30">
