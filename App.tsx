@@ -380,6 +380,13 @@ const App: React.FC = () => {
   // Track if we already triggered immediate onboarding to prevent duplicate flicker
   const immediateOnboardingRef = useRef(false);
 
+  // Scroll to top when navigating to content pages like About or Partner
+  useEffect(() => {
+    if (currentPage === 'partner' || currentPage === 'about') {
+      try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
+    }
+  }, [currentPage]);
+
   // Utility: prevent indefinite hangs by timing out slow promises
   const withTimeout = useCallback(async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
     return await new Promise<T>((resolve, reject) => {

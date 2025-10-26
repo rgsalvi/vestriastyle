@@ -55,7 +55,7 @@ const PartnerPage: React.FC<PartnerPageProps> = ({ onBack }) => {
         <section className="mt-10 md:mt-14">
           <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
             <a
-              href="mailto:partnerships@vestriastyle.com?subject=Partnership%20Inquiry"
+              href="mailto:support@vestria.style?subject=Partnership%20Inquiry"
               className="inline-flex items-center justify-center px-5 py-3 rounded-full bg-platinum text-dark-blue font-semibold shadow hover:opacity-90"
             >
               Contact Partnerships
