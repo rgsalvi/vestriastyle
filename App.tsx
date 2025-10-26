@@ -18,6 +18,7 @@ import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
 import AboutUs from './components/AboutUs';
+import PartnerSection from './components/PartnerSection';
 import ProfilePage from './components/ProfilePage';
 const FounderBioModal = React.lazy(() => import('./components/FounderBioModal'));
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
@@ -1038,6 +1039,7 @@ const App: React.FC = () => {
                     />
                     <BodyTypeSelector selectedBodyType={bodyType} onBodyTypeChange={setBodyType} />
                     <div className="p-4 bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20">
+                <PartnerSection />
                       {error && <p className="text-red-400 text-center mb-4 font-medium">{error}</p>}
                       <button
                         onClick={handleGetAdvice}
