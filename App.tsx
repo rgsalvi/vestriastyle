@@ -1169,7 +1169,7 @@ const App: React.FC = () => {
                     <p className="mt-2 text-platinum/70 text-sm md:text-base">Choose a path below to get started.</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
+                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40">
                       <div>
                         <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
                           <Squares2X2Icon className="h-6 w-6" aria-hidden="true" />
@@ -1181,7 +1181,7 @@ const App: React.FC = () => {
                         <button onClick={() => setLandingMode('wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between">
+                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40">
                       <div>
                         <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
                           <SparklesIcon className="h-6 w-6" aria-hidden="true" />
