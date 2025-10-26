@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
   const foundersMap: Record<'tanvi'|'muskaan'|'riddhi', { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; bio?: string; signatureAesthetic?: string; highlights?: string[]; socials?: { [k: string]: string }; galleryPaths: string[] }> = React.useMemo(() => ({
     tanvi: {
       id: 'tanvi',
-      name: 'Tanvi',
+      name: 'Tanvi Sankhe',
       title: 'Co-founder & CTO',
       headshot: '/tanvi.jpg',
       bio: 'Tanvi leads the product and technology at Vestria Style. She blends practical engineering with a deep love for design to deliver magical wardrobe experiences that feel effortless and personal.',
@@ -149,7 +149,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
     },
     muskaan: {
       id: 'muskaan',
-      name: 'Muskaan',
+      name: 'Muskaan Datt',
       title: 'Co-founder & CEO',
       headshot: '/muskaan.jpg',
       bio: 'Muskaan drives the vision and brand of Vestria Style. She champions an inclusive, confidence-first approach where every wardrobe tells a story worth celebrating.',
@@ -164,7 +164,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
     },
     riddhi: {
       id: 'riddhi',
-      name: 'Riddhi',
+      name: 'Riddhi Jogani',
       title: 'Co-founder & Chief Stylist',
       headshot: '/riddhi.jpg',
       bio: 'Riddhi brings editorial styling sensibilities to everyday life. She’s passionate about creating looks that feel authentic, flattering, and truly wearable.',
@@ -330,9 +330,9 @@ const HeaderFoundersEntry: React.FC<{ onSelect: (f: { id: 'tanvi'|'muskaan'|'rid
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
   const founders = [
-    { id: 'tanvi' as const, name: 'Tanvi', title: 'Co-founder & CTO', headshot: '/tanvi.jpg' },
-    { id: 'muskaan' as const, name: 'Muskaan', title: 'Co-founder & CEO', headshot: '/muskaan.jpg' },
-    { id: 'riddhi' as const, name: 'Riddhi', title: 'Co-founder & Chief Stylist', headshot: '/riddhi.jpg' },
+    { id: 'tanvi' as const, name: 'Tanvi Sankhe', title: 'Co-founder & CTO', headshot: '/tanvi.jpg' },
+    { id: 'muskaan' as const, name: 'Muskaan Datt', title: 'Co-founder & CEO', headshot: '/muskaan.jpg' },
+    { id: 'riddhi' as const, name: 'Riddhi Jogani', title: 'Co-founder & Chief Stylist', headshot: '/riddhi.jpg' },
   ];
   return (
     <div className="relative" ref={wrapRef}>
