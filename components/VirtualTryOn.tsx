@@ -1,5 +1,5 @@
 import React from 'react';
-import { resizeImageToDataUrl, dataUrlToWebP, cropToUpperBody } from '../utils/imageProcessor';
+import { resizeImageToDataUrl, dataUrlToWebP, cropToUpperBody, cropToLowerBody } from '../utils/imageProcessor';
 import { generateFlatLay, generateTryOn, validateFullBody } from '../services/geminiService';
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
@@ -16,7 +16,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   const [isGeneratingTryOn, setIsGeneratingTryOn] = React.useState(false);
   const [tryOnDataUrl, setTryOnDataUrl] = React.useState<string | null>(null);
   const [outputSize, setOutputSize] = React.useState<'1024x1536' | '768x1024'>('1024x1536');
-  const [topOnly, setTopOnly] = React.useState<boolean>(false);
+  const [region, setRegion] = React.useState<'full' | 'upper' | 'lower'>('full');
   const [warningShown, setWarningShown] = React.useState(false);
   const [validator, setValidator] = React.useState<{ ok: boolean; reasons: string[]; tips?: string[] } | null>(null);
   
@@ -68,15 +68,13 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   if (!flatLayDataUrl) throw new Error('No flat lay yet');
   const flatLay = { base64: flatLayDataUrl.split(',')[1], mimeType: flatLayDataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg' };
   const size = outputSize === '1024x1536' ? { width: 1024, height: 1536 } : { width: 768, height: 1024 };
-      const result = await generateTryOn({ person, flatLay, size, strict: true, region: topOnly ? 'upper' : 'full' });
+      const result = await generateTryOn({ person, flatLay, size, strict: true, region });
       const mime = result.mimeType || 'image/jpeg';
       const rawDataUrl = `data:${mime};base64,${result.base64Image}`;
       const [w, h] = outputSize === '1024x1536' ? [1024, 1536] : [768, 1024];
       let webp = await dataUrlToWebP(rawDataUrl, w, h, 0.92);
-      if (topOnly) {
-        // Present an upper-body crop to avoid showing lower garments that weren't provided
-        webp = await cropToUpperBody(webp);
-      }
+      if (region === 'upper') webp = await cropToUpperBody(webp);
+      if (region === 'lower') webp = await cropToLowerBody(webp);
       setTryOnDataUrl(webp);
       setStep(5);
     } catch (e) {
@@ -199,9 +197,12 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                     <option value="768x1024">768×1024 (WebP)</option>
                   </select>
                 </label>
-                <label className="inline-flex items-center gap-2">
-                  <input type="checkbox" className="accent-platinum" checked={topOnly} onChange={e => setTopOnly(e.target.checked)} />
-                  Top-only mode (upper body)
+                <label className="inline-flex items-center gap-2">Try-on area:
+                  <select className="bg-black/20 border border-platinum/30 rounded-md px-2 py-1" value={region} onChange={e => setRegion(e.target.value as any)}>
+                    <option value="full">Full body</option>
+                    <option value="upper">Upper body (tops/jackets)</option>
+                    <option value="lower">Lower body (pants/skirts/shorts)</option>
+                  </select>
                 </label>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">

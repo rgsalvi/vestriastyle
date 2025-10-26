@@ -193,3 +193,43 @@ export async function cropToUpperBody(dataUrl: string): Promise<string> {
         return dataUrl;
     }
 }
+
+// Crop to lower body for bottom-only try-on preview.
+export async function cropToLowerBody(dataUrl: string): Promise<string> {
+    try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const bmp = await createImageBitmap(blob);
+        let x = 0, y = Math.floor(bmp.height * 0.35), w = bmp.width, h = Math.floor(bmp.height * 0.65);
+        try {
+            const detector = await getModel();
+            const faces = await detector.estimateFaces(bmp as any, { flipHorizontal: false });
+            if (faces && faces.length > 0) {
+                // Use face position to infer torso start; crop from just below torso to feet
+                const face = faces.sort((a,b) => (b.box.width*b.box.height) - (a.box.width*a.box.height))[0];
+                const fy = Math.max(0, Math.floor(face.box.yMin));
+                const fh = Math.floor(face.box.height);
+                const top = Math.min(bmp.height - 1, fy + Math.floor(fh * 3.0));
+                y = Math.max(0, top);
+                x = 0;
+                w = bmp.width;
+                h = Math.max(1, bmp.height - y);
+            }
+        } catch {
+            // fallback keeps defaults
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            bmp.close();
+            return dataUrl;
+        }
+        ctx.drawImage(bmp, x, y, w, h, 0, 0, w, h);
+        const out = canvas.toDataURL('image/webp', 0.92);
+        bmp.close();
+        return out;
+    } catch {
+        return dataUrl;
+    }
+}

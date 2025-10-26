@@ -203,7 +203,7 @@ export async function generateFlatLay(params: { source: { base64: string; mimeTy
   }
 }
 
-export async function generateTryOn(params: { person: { base64: string; mimeType: string }, flatLay: { base64: string; mimeType: string }, size?: { width: number; height: number }, strict?: boolean, region?: 'full' | 'upper' }): Promise<{ base64Image: string; mimeType: string }> {
+export async function generateTryOn(params: { person: { base64: string; mimeType: string }, flatLay: { base64: string; mimeType: string }, size?: { width: number; height: number }, strict?: boolean, region?: 'full' | 'upper' | 'lower' }): Promise<{ base64Image: string; mimeType: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => { try { controller.abort(); } catch {} }, 60000);
   try {
