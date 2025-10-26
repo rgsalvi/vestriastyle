@@ -41,12 +41,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const outParts = candidates?.[0]?.content?.parts as Array<any> | undefined;
       let next: ImageRef | null = null;
       if (Array.isArray(outParts)) {
-        for (const p of outParts) {
-          if (p?.inlineData?.data) {
-            next = { base64: p.inlineData.data as string, mimeType: p.inlineData.mimeType || 'image/jpeg' };
-            break;
-          }
-        }
+        // Prefer a generated image that is not identical to any input image
+        const inputs = new Set([current.base64, g.base64]);
+        const images = outParts.filter(p => p?.inlineData?.data).map(p => ({ base64: p.inlineData.data as string, mimeType: p.inlineData.mimeType || 'image/jpeg' }));
+        // Filter out inputs
+        const candidatesOut = images.filter(img => !inputs.has(img.base64));
+        next = candidatesOut[candidatesOut.length - 1] || images[images.length - 1] || null;
       }
       if (!next) throw new Error('Missing intermediate image during layering');
       current = next;

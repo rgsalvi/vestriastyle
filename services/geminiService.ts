@@ -217,3 +217,17 @@ export async function generateTryOn(params: { person: { base64: string; mimeType
     clearTimeout(timeout);
   }
 }
+
+// Validate that an uploaded person photo is suitable (full-length, front-facing)
+export async function validateFullBody(params: { base64: string; mimeType: string }): Promise<{ ok: boolean; reasons: string[]; tips?: string[] }> {
+  try {
+    const res = await fetch('/api/validate-full-body', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    if (!res.ok) throw new Error('validator error');
+    return await res.json();
+  } catch {
+    return { ok: true, reasons: [] };
+  }
+}

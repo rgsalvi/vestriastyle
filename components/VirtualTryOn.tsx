@@ -1,6 +1,6 @@
 import React from 'react';
 import { resizeImageToDataUrl, dataUrlToWebP } from '../utils/imageProcessor';
-import { generateFlatLay, generateTryOn } from '../services/geminiService';
+import { generateFlatLay, generateTryOn, validateFullBody } from '../services/geminiService';
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -17,10 +17,20 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   const [tryOnDataUrl, setTryOnDataUrl] = React.useState<string | null>(null);
   const [outputSize, setOutputSize] = React.useState<'1024x1536' | '768x1024'>('1024x1536');
   const [warningShown, setWarningShown] = React.useState(false);
+  const [validator, setValidator] = React.useState<{ ok: boolean; reasons: string[]; tips?: string[] } | null>(null);
+  const [extracted, setExtracted] = React.useState<Array<{ id: string; dataUrl: string; mimeType: string }>>([]);
 
   const onPickPerson = async (file: File) => {
     const dataUrl = await resizeImageToDataUrl(file, MAX_DIMENSION, 0.9);
     setPersonDataUrl(dataUrl);
+    // Kick off validator (non-blocking)
+    try {
+      const base64 = dataUrl.split(',')[1];
+      const mimeType = dataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg';
+      const v = await validateFullBody({ base64, mimeType });
+      setValidator(v);
+      if (!v.ok) setWarningShown(true);
+    } catch {}
   };
 
   const onPickProducts = async (files: FileList | null) => {
@@ -43,7 +53,8 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
   const handleGenerateFlatLay = async () => {
     setIsGeneratingFlatLay(true);
     try {
-      const garments = products.map(p => ({ base64: p.dataUrl.split(',')[1], mimeType: p.mimeType }));
+      const source = extracted.length > 0 ? extracted : products;
+      const garments = source.map(p => ({ base64: p.dataUrl.split(',')[1], mimeType: p.mimeType }));
       const result = await generateFlatLay({ garments });
       setFlatLayDataUrl(`data:${result.mimeType};base64,${result.base64Image}`);
       setStep(4); // move to try-on step
@@ -117,8 +128,10 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                 <input type="file" accept="image/*" title="Upload person photo" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
                 {personDataUrl && <img src={personDataUrl} alt="person preview" className="h-24 rounded-lg border border-platinum/20" />}
               </div>
-              {!warningShown && personDataUrl && (
-                <div className="mt-3 text-xs text-amber-200/90 bg-amber-400/10 border border-amber-400/40 rounded-lg px-3 py-2">If your photo isn&apos;t front-facing or full-length, results may vary. Proceed?</div>
+              {personDataUrl && validator && !validator.ok && (
+                <div className="mt-3 text-xs text-amber-200/90 bg-amber-400/10 border border-amber-400/40 rounded-lg px-3 py-2">
+                  This photo may not be optimal: {validator.reasons?.join('; ') || 'general quality concerns'}. You can proceed anyway, but results may vary.
+                </div>
               )}
               <div className="mt-4 flex gap-3">
                 <button onClick={() => { ensurePersonWarning(); setStep(2); }} disabled={!personDataUrl} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">Next</button>
@@ -134,7 +147,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
             <div className="rounded-xl border border-platinum/20 bg-white/5 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-platinum/80">Upload product images you want to try on (add multiple).</p>
-                <label className="inline-flex items-center px-3 py-2 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:bg-white/5 cursor-pointer">
+                <label className="inline-flex items-center px-3 py-2 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:bg-white/5 cursor-pointer" aria-label="Add product images">
                   <input type="file" accept="image/*" multiple className="hidden" onChange={e => onPickProducts(e.target.files)} />
                   Add Images
                 </label>
@@ -147,7 +160,34 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                   </div>
                 ))}
               </div>
+              {extracted.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-platinum/70 mb-2">Extracted previews (used for flat lay):</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {extracted.map(p => (
+                      <img key={p.id} src={p.dataUrl} alt="extracted" className="w-full aspect-square object-cover rounded-lg border border-platinum/20" />
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="mt-4 flex gap-3">
+                <button onClick={async () => {
+                  // Extract background-removed previews via editOutfitImage per garment
+                  const next: Array<{ id: string; dataUrl: string; mimeType: string }> = [];
+                  for (const p of products) {
+                    try {
+                      const base64 = p.dataUrl.split(',')[1];
+                      const prompt = 'Remove background to transparent if possible, center the garment on neutral cloth or very light backdrop, square crop, high fidelity.';
+                      const edited = await (await import('../services/geminiService')).editOutfitImage(base64, p.mimeType, prompt);
+                      const mime = p.mimeType || 'image/png';
+                      next.push({ id: `x-${p.id}`, dataUrl: `data:${mime};base64,${edited}`, mimeType: mime });
+                    } catch (e) {
+                      // fallback to original
+                      next.push(p);
+                    }
+                  }
+                  setExtracted(next);
+                }} disabled={!canProceedFlatLay} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Extract Previews</button>
                 <button onClick={() => setStep(3)} disabled={!canProceedFlatLay} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">Next</button>
                 <button onClick={() => setStep(1)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>

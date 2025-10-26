@@ -8,6 +8,34 @@ This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1KD9RaiPmc8ZuHrA6oNXrQ6ez4pDpHzP8
 
+## Deploy on Vercel
+
+This repo is configured for Vercel out of the box:
+
+- Build: `vite build`
+- Output: `dist/`
+- API routes: `/api/*.ts` (Node.js Serverless Functions)
+
+Before deploying, set this environment variable in your Vercel project (Project Settings → Environment Variables):
+
+- `API_KEY` — Google GenAI API key used by serverless endpoints (`/api/generate-flatlay`, `/api/generate-tryon`, `/api/validate-full-body`, etc.).
+
+Optional (but recommended) function settings are already present in `vercel.json`:
+
+- `functions.api/*.ts.maxDuration = 60` (use up to 60s execution if your plan allows it)
+- `functions.api/*.ts.memory = 1536`
+
+Notes:
+
+- On the Hobby plan, Serverless Functions are limited to ~10s. The Virtual Try-On endpoints may take longer. If you see timeouts, either upgrade the plan or simplify prompts to keep execution under the plan limit.
+- No client secret is exposed in the browser — the `API_KEY` lives only on the serverless side.
+
+Quick start:
+
+1) Push this repo to GitHub and import it into Vercel.
+2) Add `API_KEY` in Project Settings → Environment Variables (apply to Preview and Production).
+3) Deploy. Your app will serve the static site from `dist/` and handle API calls via `/api/*`.
+
 ## Run Locally
 
 **Prerequisites:**
