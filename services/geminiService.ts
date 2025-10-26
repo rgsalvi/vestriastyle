@@ -186,3 +186,34 @@ export const initiateChatSession = async (analysisContext: AiResponse, newItemCo
     throw error;
   }
 };
+
+// New: Virtual Try-On helpers
+export async function generateFlatLay(params: { garments: Array<{ base64: string; mimeType: string }> }): Promise<{ base64Image: string; mimeType: string }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => { try { controller.abort(); } catch {} }, 60000);
+  try {
+    const res = await fetch('/api/generate-flatlay', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params), signal: controller.signal,
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Flat lay failed');
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function generateTryOn(params: { person: { base64: string; mimeType: string }, garments: Array<{ base64: string; mimeType: string }>, size: { width: number; height: number } }): Promise<{ base64Image: string; mimeType: string }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => { try { controller.abort(); } catch {} }, 60000);
+  try {
+    const res = await fetch('/api/generate-tryon', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params), signal: controller.signal,
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Try-on failed');
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}

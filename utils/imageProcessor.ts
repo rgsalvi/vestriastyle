@@ -120,3 +120,29 @@ const fileToDataUrl = (file: File): Promise<string> => new Promise((resolve, rej
     reader.onerror = reject;
     reader.readAsDataURL(file);
 });
+
+export async function dataUrlToWebP(dataUrl: string, targetWidth: number, targetHeight: number, quality = 0.9): Promise<string> {
+    // Draw input to canvas then export as WebP at desired size
+    const blob = await (await fetch(dataUrl)).blob();
+    const bmp = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        bmp.close();
+        return dataUrl; // fallback
+    }
+    // Fit image within target bounds, preserving aspect ratio and centering
+    const scale = Math.min(targetWidth / bmp.width, targetHeight / bmp.height);
+    const drawW = Math.floor(bmp.width * scale);
+    const drawH = Math.floor(bmp.height * scale);
+    const dx = Math.floor((targetWidth - drawW) / 2);
+    const dy = Math.floor((targetHeight - drawH) / 2);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+    ctx.drawImage(bmp, dx, dy, drawW, drawH);
+    const out = canvas.toDataURL('image/webp', quality);
+    bmp.close();
+    return out;
+}
