@@ -453,7 +453,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
   });
 };
 
-type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon';
+type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon' | 'recipes';
 
 // No global Google object required with Firebase Email/Password
 
@@ -501,7 +501,7 @@ const App: React.FC = () => {
 
   // Scroll to top when navigating to content pages like About or Partner
   useEffect(() => {
-    if (currentPage === 'partner' || currentPage === 'about') {
+    if (currentPage === 'partner' || currentPage === 'about' || currentPage === 'recipes') {
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
     }
   }, [currentPage]);
@@ -1157,6 +1157,12 @@ const App: React.FC = () => {
         return <PartnerPage onBack={() => setCurrentPage('main')} />;
       case 'tryon':
         return <VirtualTryOn onBack={() => setCurrentPage('main')} onOpenChat={handleOpenChat} />;
+      case 'recipes':
+        return (
+          <main className="container mx-auto p-4 md:p-8">
+            <StyleRecipes isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
+          </main>
+        );
       case 'main':
       default:
         return (
@@ -1372,12 +1378,7 @@ const App: React.FC = () => {
             setTimeout(() => setProfileSavedBanner(null), 5000);
           }}
           onNavigateAbout={() => setCurrentPage('about')}
-          onNavigateRecipes={() => {
-            setCurrentPage('main');
-            setTimeout(() => {
-              try { document.getElementById('style-recipes')?.scrollIntoView({ behavior: 'smooth' }); } catch {}
-            }, 0);
-          }}
+          onNavigateRecipes={() => { setCurrentPage('recipes'); setLandingMode('none'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
           onNavigateTryOn={() => setCurrentPage('tryon')}
           onNavigatePartner={() => {
             setCurrentPage('partner');
@@ -1386,7 +1387,7 @@ const App: React.FC = () => {
           onWardrobeClick={handleWardrobeClick}
           onEditProfile={() => setCurrentPage('profile')}
           activePage={currentPage}
-          recipesActive={recipesInView}
+          recipesActive={recipesInView || currentPage === 'recipes'}
         />
         {renderPage()}
       </div>
