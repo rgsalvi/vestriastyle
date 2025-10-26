@@ -43,7 +43,7 @@ const availableStylists = [
             'Celebrity styling for ads and web series'
         ],
         socials: {
-            Instagram: 'https://instagram.com/',
+            Instagram: 'https://www.instagram.com/tanvi_sankhe/',
             Pinterest: 'https://pinterest.com/'
         }
     },
@@ -60,7 +60,7 @@ const availableStylists = [
             'Short-film costume and on-set coordination'
         ],
         socials: {
-            Instagram: 'https://instagram.com/',
+            Instagram: 'https://www.instagram.com/_muskaandatt_/',
             Pinterest: 'https://pinterest.com/'
         }
     },
@@ -77,7 +77,7 @@ const availableStylists = [
             'Assistant stylist experience across diverse formats'
         ],
         socials: {
-            Instagram: 'https://instagram.com/',
+            Instagram: 'https://www.instagram.com/riddhi_jogani_/',
             Pinterest: 'https://pinterest.com/'
         }
     },
