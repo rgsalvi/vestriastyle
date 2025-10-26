@@ -50,7 +50,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
       if (!outfitSource) throw new Error('No outfit image uploaded');
       const result = await generateFlatLay({ source: { base64: outfitSource.dataUrl.split(',')[1], mimeType: outfitSource.mimeType } });
       setFlatLayDataUrl(`data:${result.mimeType};base64,${result.base64Image}`);
-      setStep(4); // move to try-on step
+      // Stay on this step to allow the user to review and explicitly accept the flat lay
     } catch (e) {
       console.error('flat lay failed', e);
       alert('We had trouble generating the flat lay. Please try again.');
@@ -175,6 +175,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
               )}
               <div className="mt-4 flex flex-wrap gap-3">
                 <button onClick={handleGenerateFlatLay} disabled={isGeneratingFlatLay || !canProceedFlatLay} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingFlatLay ? 'Generating…' : 'Generate Flat Lay'}</button>
+                <button onClick={() => setStep(4)} disabled={!flatLayDataUrl} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80 disabled:opacity-50">Accept Flat Lay</button>
                 <button onClick={() => setStep(2)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>
             </div>
