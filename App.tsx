@@ -179,12 +179,14 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   const onClickAbout = () => { setMobileNavOpen(false); onNavigateAbout(); };
   const onClickRecipes = () => { setMobileNavOpen(false); onNavigateRecipes(); };
   const onClickPartner = () => { setMobileNavOpen(false); onNavigatePartner(); };
-  const onClickTryOn = () => { setMobileNavOpen(false); onNavigateTryOn(); };
+  // Removed Virtual Try-On from navigation; no longer needed
+  // const onClickTryOn = () => { setMobileNavOpen(false); onNavigateTryOn(); };
   const onClickChatNav = () => { setMobileNavOpen(false); onChatNav(); };
 
   const aboutActive = activePage === 'about';
   const partnerActive = activePage === 'partner';
-  const tryOnActive = activePage === 'tryon';
+  // Removed since Try-On is no longer a top-level nav item
+  // const tryOnActive = activePage === 'tryon';
   const navLinkBase = "group relative px-3 py-1.5 rounded-md text-sm tracking-[0.06em] text-platinum/75 hover:text-white transition-colors";
   const navUnderlineBase = "after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-px after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-transparent after:via-platinum/60 after:to-transparent after:transition-all after:duration-200 group-hover:after:w-full focus-visible:after:w-full";
 
@@ -232,9 +234,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
           <button onClick={onClickRecipes} className={`${navLinkBase} ${navUnderlineBase} ${recipesActive ? 'after:w-full text-platinum' : ''}`}>
             #VestriaStyleRecipes
           </button>
-          <button onClick={onClickTryOn} className={`${navLinkBase} ${navUnderlineBase} ${tryOnActive ? 'after:w-full text-platinum' : ''}`}>
-            Virtual Try-On
-          </button>
+          {/* Virtual Try-On removed from primary navigation */}
           <button onClick={onClickPartner} className={`${navLinkBase} ${navUnderlineBase} ${partnerActive ? 'after:w-full text-platinum' : ''}`}>
             Partner With Us
           </button>
@@ -327,7 +327,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             {/* Founders collapsible */}
             <MobileFoundersMenu onSelect={(f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths?: string[] }) => { const full = foundersMap[f.id as FounderId]; setActiveFounder(full); setFounderModalOpen(true); setMobileNavOpen(false); }} />
             <button onClick={onClickRecipes} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">#VestriaStyleRecipes</button>
-            <button onClick={onClickTryOn} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">Virtual Try-On</button>
+            {/* Virtual Try-On removed from mobile navigation */}
             <button onClick={onClickPartner} className="text-left px-3 py-3 text-platinum/90 hover:text-white hover:bg-white/5 rounded-xl">Partner With Us</button>
             <div className="pt-2 space-y-2">
               <button onClick={onClickChatNav} className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Chat With A Stylist</button>
@@ -1363,7 +1363,7 @@ const App: React.FC = () => {
           onSignOut={handleSignOut} 
           onSignIn={() => setShowLogin(true)}
           onOpenLogin={(mode) => { setShowLogin(true); /* store mode in state below */ setLoginInitialMode(mode); }}
-          onNavigateHome={() => { setCurrentPage('main'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
+          onNavigateHome={() => { setCurrentPage('main'); setLandingMode('none'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
           onChatNav={() => {
             if (!user) { setLoginInitialMode('signin'); setShowLogin(true); return; }
             if (!styleProfile || !isProfileComplete(styleProfile)) { setShowOnboarding(true); setOnboardingGateBanner(true); return; }
