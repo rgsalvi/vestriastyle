@@ -129,6 +129,55 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
     name: string; title: string; headshot: string; bio?: string; signatureAesthetic?: string; highlights?: string[]; socials?: { [k: string]: string }; galleryPaths?: string[];
   }>(null);
 
+  // Centralized founder content used across header entry and user menu
+  const foundersMap: Record<'tanvi'|'muskaan'|'riddhi', { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; bio?: string; signatureAesthetic?: string; highlights?: string[]; socials?: { [k: string]: string }; galleryPaths: string[] }> = React.useMemo(() => ({
+    tanvi: {
+      id: 'tanvi',
+      name: 'Tanvi',
+      title: 'Co-founder & CTO',
+      headshot: '/tanvi.jpg',
+      bio: 'Tanvi leads the product and technology at Vestria Style. She blends practical engineering with a deep love for design to deliver magical wardrobe experiences that feel effortless and personal.',
+      signatureAesthetic: 'Minimalism with intelligent tailoring — elevated staples that work hard and look polished.',
+      highlights: [
+        'Architected our AI-driven wardrobe engine',
+        'Obsessed with fast UX and thoughtful details',
+        'Believes great style should feel easy and empowering',
+      ],
+      socials: { Instagram: '#', Pinterest: '#' },
+      galleryPaths: ['/founders/tanvi/work-01.jpg','/founders/tanvi/work-02.jpg','/founders/tanvi/work-03.jpg']
+    },
+    muskaan: {
+      id: 'muskaan',
+      name: 'Muskaan',
+      title: 'Co-founder & CEO',
+      headshot: '/muskaan.jpg',
+      bio: 'Muskaan drives the vision and brand of Vestria Style. She champions an inclusive, confidence-first approach where every wardrobe tells a story worth celebrating.',
+      signatureAesthetic: 'Modern romantic with clean silhouettes and luxe textures.',
+      highlights: [
+        'Shaped Vestria’s customer-first philosophy',
+        'Always-on curator of timeless yet fresh looks',
+        'Leads partnerships and brand experiences',
+      ],
+      socials: { Instagram: '#', Pinterest: '#' },
+      galleryPaths: ['/founders/muskaan/work-01.jpg','/founders/muskaan/work-02.jpg','/founders/muskaan/work-03.jpg']
+    },
+    riddhi: {
+      id: 'riddhi',
+      name: 'Riddhi',
+      title: 'Co-founder & Chief Stylist',
+      headshot: '/riddhi.jpg',
+      bio: 'Riddhi brings editorial styling sensibilities to everyday life. She’s passionate about creating looks that feel authentic, flattering, and truly wearable.',
+      signatureAesthetic: 'Elevated everyday — sculpted shapes, smart proportions, and quiet luxury.',
+      highlights: [
+        'Styled hundreds of real-world wardrobes',
+        'Translates runway ideas into daily outfits',
+        'Specialist in body-type smart dressing',
+      ],
+      socials: { Instagram: '#', Pinterest: '#' },
+      galleryPaths: ['/founders/riddhi/work-01.jpg','/founders/riddhi/work-02.jpg','/founders/riddhi/work-03.jpg']
+    }
+  }), []);
+
   const greetingFirstName = React.useMemo(() => {
     if (!user) return null;
     try {
@@ -167,6 +216,12 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
     </div>
 
     <div className="flex items-center space-x-4">
+      {/* Always-visible founders dropdown trigger */}
+      <HeaderFoundersEntry onSelect={(f) => {
+        const full = foundersMap[f.id];
+        setActiveFounder(full);
+        setFounderModalOpen(true);
+      }} />
       {user && showWardrobeButton && (
           <button
             onClick={onWardrobeClick}
@@ -216,34 +271,22 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
               <div className="px-3 py-1">
                 <p className="text-[11px] uppercase tracking-widest text-platinum/50 mb-1">Meet The Founders</p>
                 <div className="flex flex-col gap-0.5">
-                  {[
-                    { id: 'tanvi', name: 'Tanvi', title: 'Co-founder & CTO', headshot: '/tanvi.jpg', bio: undefined },
-                    { id: 'muskaan', name: 'Muskaan', title: 'Co-founder & CEO', headshot: '/muskaan.jpg', bio: undefined },
-                    { id: 'riddhi', name: 'Riddhi', title: 'Co-founder & Chief Stylist', headshot: '/riddhi.jpg', bio: undefined },
-                  ].map((f) => (
+                  {(['tanvi','muskaan','riddhi'] as const).map((id) => {
+                    const f = foundersMap[id];
+                    return (
                     <button
-                      key={f.id}
+                      key={id}
                       role="menuitem"
                       className="w-full text-left text-sm text-platinum/90 px-0 py-1 rounded-md hover:text-white"
                       onClick={() => {
-                        // Hardcoded minimal data; modal will render gallery based on public paths convention
-                        setActiveFounder({
-                          id: f.id as any,
-                          name: f.name,
-                          title: f.title,
-                          headshot: f.headshot,
-                          bio: undefined,
-                          signatureAesthetic: undefined,
-                          highlights: undefined,
-                          socials: undefined,
-                          galleryPaths: [`/founders/${f.id}/work-01.jpg`, `/founders/${f.id}/work-02.jpg`, `/founders/${f.id}/work-03.jpg`],
-                        });
+                        setActiveFounder(f);
                         setFounderModalOpen(true);
                       }}
                     >
                       {f.name}
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               <div className="h-px bg-platinum/20 my-1"></div>
@@ -274,6 +317,49 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, showWardrobe
       )}
     </div>
   </header>
+  );
+};
+
+// Small helper for a compact, always-visible "Meet The Founders" entry with a dropdown of names
+const HeaderFoundersEntry: React.FC<{ onSelect: (f: { id: 'tanvi'|'muskaan'|'riddhi'; name: string; title: string; headshot: string; galleryPaths: string[] }) => void }>
+  = ({ onSelect }) => {
+  const [open, setOpen] = React.useState(false);
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const onDoc = (e: MouseEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+  const founders = [
+    { id: 'tanvi' as const, name: 'Tanvi', title: 'Co-founder & CTO', headshot: '/tanvi.jpg' },
+    { id: 'muskaan' as const, name: 'Muskaan', title: 'Co-founder & CEO', headshot: '/muskaan.jpg' },
+    { id: 'riddhi' as const, name: 'Riddhi', title: 'Co-founder & Chief Stylist', headshot: '/riddhi.jpg' },
+  ];
+  return (
+    <div className="relative" ref={wrapRef}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="hidden sm:inline-flex items-center px-3 py-1.5 bg-platinum/10 text-platinum font-semibold rounded-full shadow-sm hover:bg-platinum/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/30"
+        aria-haspopup="true"
+      >
+        Meet The Founders
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-56 bg-[#1F2937] rounded-xl shadow-lg p-2 border border-platinum/20">
+          <p className="text-[11px] uppercase tracking-widest text-platinum/50 px-3 pb-1">Founders</p>
+          {founders.map(f => (
+            <button
+              key={f.id}
+              className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10"
+              onClick={() => {
+                onSelect({ ...f, galleryPaths: [`/founders/${f.id}/work-01.jpg`, `/founders/${f.id}/work-02.jpg`, `/founders/${f.id}/work-03.jpg`] });
+                setOpen(false);
+              }}
+            >{f.name}</button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
