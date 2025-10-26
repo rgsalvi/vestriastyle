@@ -39,6 +39,7 @@ interface HeaderProps {
   showWardrobeButton: boolean;
   onWardrobeClick: () => void;
   onEditProfile: () => void;
+  activePage: Page;
 }
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
@@ -131,7 +132,7 @@ const EditProfileModal: React.FC<{
 };
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile, activePage }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [founderModalOpen, setFounderModalOpen] = React.useState(false);
@@ -174,6 +175,11 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   const onClickPartner = () => onNavigatePartner();
   const onClickChatNav = () => { onChatNav(); };
 
+  const aboutActive = activePage === 'about';
+  const partnerActive = activePage === 'partner';
+  const navLinkBase = "group relative px-3 py-1.5 rounded-md text-sm tracking-[0.06em] text-platinum/75 hover:text-white transition-colors";
+  const navUnderlineBase = "after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-px after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-transparent after:via-platinum/60 after:to-transparent after:transition-all after:duration-200 group-hover:after:w-full focus-visible:after:w-full";
+
   return (
   <>
   <header className="relative p-4 md:p-6 bg-dark-blue/80 backdrop-blur-lg sticky top-0 z-20 border-b border-platinum/20">
@@ -182,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
       <div className="flex items-center gap-6 min-w-0">
         <Logo className="h-24 w-auto flex-shrink-0" />
         <nav aria-label="Primary" className="hidden md:flex items-center gap-2">
-          <button onClick={onClickAbout} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
+          <button onClick={onClickAbout} className={`${navLinkBase} ${navUnderlineBase} ${aboutActive ? 'after:w-full text-platinum' : ''}`}>
             About Us
           </button>
           <HeaderFoundersEntry founders={foundersArray} onSelect={(f) => {
@@ -190,14 +196,14 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             setActiveFounder(full);
             setFounderModalOpen(true);
           }} />
-          <button onClick={onClickRecipes} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
+          <button onClick={onClickRecipes} className={`${navLinkBase} ${navUnderlineBase}`}>
             #VestriaStyleRecipes
           </button>
-          <button onClick={onClickChatNav} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
-            Chat With A Stylist
-          </button>
-          <button onClick={onClickPartner} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
+          <button onClick={onClickPartner} className={`${navLinkBase} ${navUnderlineBase} ${partnerActive ? 'after:w-full text-platinum' : ''}`}>
             Partner With Us
+          </button>
+          <button onClick={onClickChatNav} className="ml-1 inline-flex items-center px-3.5 py-1.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum">
+            Chat With A Stylist
           </button>
         </nav>
       </div>
@@ -1218,6 +1224,7 @@ const App: React.FC = () => {
           showWardrobeButton={currentPage === 'main'}
           onWardrobeClick={handleWardrobeClick}
           onEditProfile={() => setCurrentPage('profile')}
+          activePage={currentPage}
         />
         {renderPage()}
       </div>
