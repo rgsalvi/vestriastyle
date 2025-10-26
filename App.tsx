@@ -296,6 +296,8 @@ const HeaderFoundersEntry: React.FC<{ founders: Array<{ id: 'tanvi'|'muskaan'|'r
   = ({ founders, onSelect }) => {
   const [open, setOpen] = React.useState(false);
   const wrapRef = React.useRef<HTMLDivElement>(null);
+  const hoverTimer = React.useRef<number | null>(null);
+  const clearHoverTimer = () => { if (hoverTimer.current !== null) { clearTimeout(hoverTimer.current); hoverTimer.current = null; } };
   React.useEffect(() => {
     const onDoc = (e: MouseEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener('mousedown', onDoc);
@@ -305,12 +307,12 @@ const HeaderFoundersEntry: React.FC<{ founders: Array<{ id: 'tanvi'|'muskaan'|'r
     <div
       className="relative"
       ref={wrapRef}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={() => { clearHoverTimer(); setOpen(true); }}
+      onMouseLeave={() => { clearHoverTimer(); hoverTimer.current = window.setTimeout(() => setOpen(false), 150); }}
     >
       <button
         onClick={() => setOpen(v => !v)}
-        onFocus={() => setOpen(true)}
+        onFocus={() => { clearHoverTimer(); setOpen(true); }}
         className="hidden sm:inline-flex items-center px-2 py-1 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
         aria-haspopup="true"
       >
