@@ -40,6 +40,7 @@ interface HeaderProps {
   onWardrobeClick: () => void;
   onEditProfile: () => void;
   activePage: Page;
+  recipesActive: boolean;
 }
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
@@ -132,7 +133,7 @@ const EditProfileModal: React.FC<{
 };
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile, activePage }) => {
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile, activePage, recipesActive }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [founderModalOpen, setFounderModalOpen] = React.useState(false);
@@ -196,7 +197,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             setActiveFounder(full);
             setFounderModalOpen(true);
           }} />
-          <button onClick={onClickRecipes} className={`${navLinkBase} ${navUnderlineBase}`}>
+          <button onClick={onClickRecipes} className={`${navLinkBase} ${navUnderlineBase} ${recipesActive ? 'after:w-full text-platinum' : ''}`}>
             #VestriaStyleRecipes
           </button>
           <button onClick={onClickPartner} className={`${navLinkBase} ${navUnderlineBase} ${partnerActive ? 'after:w-full text-platinum' : ''}`}>
@@ -398,12 +399,28 @@ const App: React.FC = () => {
   const [pendingChatRetry, setPendingChatRetry] = useState<{ context: AiResponse; newItem: AnalysisItem | null } | null>(null);
   // Track if we already triggered immediate onboarding to prevent duplicate flicker
   const immediateOnboardingRef = useRef(false);
+  const [recipesInView, setRecipesInView] = useState(false);
 
   // Scroll to top when navigating to content pages like About or Partner
   useEffect(() => {
     if (currentPage === 'partner' || currentPage === 'about') {
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
     }
+  }, [currentPage]);
+
+  // Track when Style Recipes section is in view on the main page
+  useEffect(() => {
+    if (currentPage !== 'main') {
+      setRecipesInView(false);
+      return;
+    }
+    const el = document.getElementById('style-recipes');
+    if (!el) { setRecipesInView(false); return; }
+    const observer = new IntersectionObserver(([entry]) => {
+      setRecipesInView(entry.isIntersecting);
+    }, { root: null, rootMargin: '-30% 0px -60% 0px', threshold: 0.01 });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [currentPage]);
 
   // Utility: prevent indefinite hangs by timing out slow promises
@@ -1225,6 +1242,7 @@ const App: React.FC = () => {
           onWardrobeClick={handleWardrobeClick}
           onEditProfile={() => setCurrentPage('profile')}
           activePage={currentPage}
+          recipesActive={recipesInView}
         />
         {renderPage()}
       </div>
