@@ -33,6 +33,7 @@ interface HeaderProps {
   onSignIn: () => void; // legacy; use onOpenLogin for explicit mode
   onOpenLogin: (mode: 'signin' | 'signup') => void;
   onChatNav: () => void;
+  onNavigateHome: () => void;
   onNavigateAbout: () => void;
   onNavigateRecipes: () => void;
   onNavigatePartner: () => void;
@@ -133,7 +134,7 @@ const EditProfileModal: React.FC<{
 };
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile, activePage, recipesActive }) => {
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateHome, onNavigateAbout, onNavigateRecipes, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile, activePage, recipesActive }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [founderModalOpen, setFounderModalOpen] = React.useState(false);
@@ -187,7 +188,13 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
     <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
       {/* Left: Logo + primary nav */}
       <div className="flex items-center gap-6 min-w-0">
-        <Logo className="h-24 w-auto flex-shrink-0" />
+        <button
+          onClick={onNavigateHome}
+          aria-label="Go to home"
+          className="rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
+        >
+          <Logo className="h-24 w-auto flex-shrink-0" />
+        </button>
         <nav aria-label="Primary" className="hidden md:flex items-center gap-2">
           <button onClick={onClickAbout} className={`${navLinkBase} ${navUnderlineBase} ${aboutActive ? 'after:w-full text-platinum' : ''}`}>
             About Us
@@ -1221,6 +1228,7 @@ const App: React.FC = () => {
           onSignOut={handleSignOut} 
           onSignIn={() => setShowLogin(true)}
           onOpenLogin={(mode) => { setShowLogin(true); /* store mode in state below */ setLoginInitialMode(mode); }}
+          onNavigateHome={() => { setCurrentPage('main'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
           onChatNav={() => {
             if (!user) { setLoginInitialMode('signin'); setShowLogin(true); return; }
             if (!styleProfile || !isProfileComplete(styleProfile)) { setShowOnboarding(true); setOnboardingGateBanner(true); return; }
