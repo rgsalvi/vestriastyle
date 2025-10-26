@@ -302,9 +302,15 @@ const HeaderFoundersEntry: React.FC<{ founders: Array<{ id: 'tanvi'|'muskaan'|'r
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
   return (
-    <div className="relative" ref={wrapRef}>
+    <div
+      className="relative"
+      ref={wrapRef}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <button
         onClick={() => setOpen(v => !v)}
+        onFocus={() => setOpen(true)}
         className="hidden sm:inline-flex items-center px-2 py-1 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
         aria-haspopup="true"
       >
