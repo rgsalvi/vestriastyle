@@ -34,6 +34,9 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
             <p className="mt-4 leading-relaxed text-platinum/80">
               Together, our team brings over fifteen years of combined experience—grounded in formal training and work across red carpets, designer collections, campaigns, and private clients. Our shared belief is simple: style isn’t about trends; it’s about aligning what you wear with who you are.
             </p>
+            <p className="mt-4 leading-relaxed text-platinum/80">
+              At its heart, Vestria Style is about connection: between people and their wardrobes, between brands and their audiences, and between technology and creativity. We exist to make style more thoughtful, more personal, and more powerful.
+            </p>
           </div>
         </section>
 
@@ -61,13 +64,7 @@ export const AboutUs: React.FC<AboutUsProps> = ({ onBack }) => {
           </div>
         </section>
 
-        <section className="mt-10 md:mt-14">
-          <div className="rounded-2xl border border-platinum/20 bg-gradient-to-br from-white/5 to-white/0 p-6 md:p-8">
-            <p className="leading-relaxed text-platinum/85">
-              At its heart, Vestria Style is about connection: between people and their wardrobes, between brands and their audiences, and between technology and creativity. We exist to make style more thoughtful, more personal, and more powerful.
-            </p>
-          </div>
-        </section>
+        
 
         <section className="mt-10 md:mt-14">
           <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">A Note From The Founders</h2>
