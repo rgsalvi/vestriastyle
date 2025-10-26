@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-  const { person, flatLay, size, strict } = req.body as { person?: ImageRef; flatLay?: ImageRef; size?: { width: number; height: number }; strict?: boolean };
+  const { person, flatLay, size, strict, region } = req.body as { person?: ImageRef; flatLay?: ImageRef; size?: { width: number; height: number }; strict?: boolean; region?: 'full' | 'upper' };
     if (!person?.base64 || !person?.mimeType) {
       return res.status(400).json({ message: 'person image is required' });
     }
@@ -40,7 +40,11 @@ ADDITIONAL STRICTNESS:
 - If uncertain, prefer leaving an area unchanged instead of adding or modifying it.
 `;
 
-    const instruction = `Using only the garments in the flat lay image, replace all visible clothing on the person. Ensure realistic fit and drape while strictly adhering to the rules.
+    const regionScope = region === 'upper'
+      ? 'LIMIT EDITS TO UPPER-BODY GARMENTS ONLY (tops, jackets). Do not modify any lower-body garments.'
+      : 'Replace all visible clothing.';
+
+    const instruction = `Using only the garments in the flat lay image, ${regionScope} Ensure realistic fit and drape while strictly adhering to the rules.
 ${constraint}
 ${strict ? stricter : ''}
 OUTPUT: One high-quality portrait of the person dressed ONLY in the flat lay items, with no extra additions.`;

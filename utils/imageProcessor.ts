@@ -146,3 +146,50 @@ export async function dataUrlToWebP(dataUrl: string, targetWidth: number, target
     bmp.close();
     return out;
 }
+
+// Crop to upper body for top-only try-on preview.
+// Strategy: Attempt face detection to anchor the crop; fallback to cropping the top ~60% of the image.
+export async function cropToUpperBody(dataUrl: string): Promise<string> {
+    try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const bmp = await createImageBitmap(blob);
+        let x = 0, y = 0, w = bmp.width, h = Math.floor(bmp.height * 0.6);
+        try {
+            const detector = await getModel();
+            const faces = await detector.estimateFaces(bmp as any, { flipHorizontal: false });
+            if (faces && faces.length > 0) {
+                // Use the largest face (closest subject)
+                const face = faces.sort((a,b) => (b.box.width*b.box.height) - (a.box.width*a.box.height))[0];
+                const fx = Math.max(0, Math.floor(face.box.xMin));
+                const fy = Math.max(0, Math.floor(face.box.yMin));
+                const fw = Math.floor(face.box.width);
+                const fh = Math.floor(face.box.height);
+                // Define an upper-body crop window based on face box
+                const top = Math.max(0, fy - Math.floor(fh * 0.6));
+                const left = Math.max(0, fx - Math.floor(fw * 1.0));
+                const right = Math.min(bmp.width, fx + Math.floor(fw * 2.0));
+                const bottom = Math.min(bmp.height, fy + Math.floor(fh * 4.0));
+                x = left;
+                y = top;
+                w = Math.max(1, right - left);
+                h = Math.max(1, bottom - top);
+            }
+        } catch {
+            // fall back to default crop defined above
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            bmp.close();
+            return dataUrl;
+        }
+        ctx.drawImage(bmp, x, y, w, h, 0, 0, w, h);
+        const out = canvas.toDataURL('image/webp', 0.92);
+        bmp.close();
+        return out;
+    } catch {
+        return dataUrl;
+    }
+}
