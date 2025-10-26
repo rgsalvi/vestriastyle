@@ -17,6 +17,7 @@ import { RefundPolicy } from './components/RefundPolicy';
 import { LoginPage } from './components/LoginPage';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
+import AboutUs from './components/AboutUs';
 import ProfilePage from './components/ProfilePage';
 const FounderBioModal = React.lazy(() => import('./components/FounderBioModal'));
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
@@ -31,6 +32,8 @@ interface HeaderProps {
   onSignIn: () => void; // legacy; use onOpenLogin for explicit mode
   onOpenLogin: (mode: 'signin' | 'signup') => void;
   onChatNav: () => void;
+  onNavigateAbout: () => void;
+  onNavigatePartner: () => void;
   showWardrobeButton: boolean;
   onWardrobeClick: () => void;
   onEditProfile: () => void;
@@ -126,7 +129,7 @@ const EditProfileModal: React.FC<{
 };
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateAbout, onNavigatePartner, showWardrobeButton, onWardrobeClick, onEditProfile }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const [founderModalOpen, setFounderModalOpen] = React.useState(false);
@@ -164,16 +167,8 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
-  const onClickAbout = () => {
-    // Placeholder: navigate to #about
-    try { document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }); }
-    catch { window.location.hash = '#about'; }
-  };
-  const onClickPartner = () => {
-    // Placeholder: navigate to #partner
-    try { document.getElementById('partner')?.scrollIntoView({ behavior: 'smooth' }); }
-    catch { window.location.hash = '#partner'; }
-  };
+  const onClickAbout = () => onNavigateAbout();
+  const onClickPartner = () => onNavigatePartner();
   const onClickChatNav = () => { onChatNav(); };
 
   return (
@@ -341,7 +336,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
   });
 };
 
-type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile';
+type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about';
 
 // No global Google object required with Firebase Email/Password
 
@@ -1007,6 +1002,18 @@ const App: React.FC = () => {
         return <TermsOfService onBack={() => setCurrentPage('main')} />;
       case 'refund':
         return <RefundPolicy onBack={() => setCurrentPage('main')} />;
+      case 'about':
+        return (
+          <AboutUs
+            onBack={() => setCurrentPage('main')}
+            onGoPartner={() => {
+              setCurrentPage('main');
+              setTimeout(() => {
+                try { document.getElementById('partner')?.scrollIntoView({ behavior: 'smooth' }); } catch {}
+              }, 0);
+            }}
+          />
+        );
       case 'main':
       default:
         return (
@@ -1177,6 +1184,13 @@ const App: React.FC = () => {
             if (!styleProfile.isPremium) { setShowPremiumUpsell(true); return; }
             setProfileSavedBanner('Upload an item and get style advice to start a chat with a stylist.');
             setTimeout(() => setProfileSavedBanner(null), 5000);
+          }}
+          onNavigateAbout={() => setCurrentPage('about')}
+          onNavigatePartner={() => {
+            setCurrentPage('main');
+            setTimeout(() => {
+              try { document.getElementById('partner')?.scrollIntoView({ behavior: 'smooth' }); } catch {}
+            }, 0);
           }}
           showWardrobeButton={currentPage === 'main'}
           onWardrobeClick={handleWardrobeClick}
