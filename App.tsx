@@ -1081,7 +1081,7 @@ const App: React.FC = () => {
                           <Squares2X2Icon className="h-6 w-6" aria-hidden="true" />
                         </div>
                         <h2 className="text-2xl font-extrabold tracking-tight">Wardrobe Check</h2>
-                        <p className="mt-2 text-platinum/80">See how a new item pairs with what you already own.</p>
+                        <p className="mt-2 text-platinum/80">Get styling tips for items in your wardobe.</p>
                       </div>
                       <div className="mt-6">
                         <button onClick={() => setLandingMode('wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
