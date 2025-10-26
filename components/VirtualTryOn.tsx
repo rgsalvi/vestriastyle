@@ -92,7 +92,7 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
     <main className="container mx-auto p-4 md:p-8">
       <div className="max-w-4xl mx-auto bg-dark-blue/80 backdrop-blur-lg rounded-2xl shadow-lg border border-platinum/20 p-6 md:p-10">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Virtual Try-On</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Fit Check</h1>
           {onBack && (
             <button onClick={onBack} className="hidden md:inline-flex px-4 py-2 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:bg-white/5">Back</button>
           )}
@@ -119,20 +119,23 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
         {/* Step 2: Person photo */}
         {step === 1 && (
           <section className="mt-6">
-            <div className="rounded-xl border border-platinum/20 bg-white/5 p-4">
-              <p className="text-platinum/80">Upload a full-length photo of yourself. If the photo is not optimal, we&apos;ll warn you that results may be compromised and let you proceed anyway.</p>
-              <div className="mt-4 flex items-center gap-3">
-                <input type="file" accept="image/*" title="Upload person photo" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
-                {personDataUrl && <img src={personDataUrl} alt="person preview" className="h-24 rounded-lg border border-platinum/20" />}
+            <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center">
+              <p className="text-platinum/90 text-base">Upload a full-length photo of yourself with a plain background.</p>
+              <div className="mt-5 flex flex-col items-center justify-center gap-4">
+                <label className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer">
+                  <input type="file" accept="image/*" className="hidden" aria-label="Upload person photo" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
+                  Select Photo
+                </label>
+                {personDataUrl && <img src={personDataUrl} alt="person preview" className="h-40 rounded-xl border border-platinum/20 object-cover" />}
               </div>
               {personDataUrl && validator && !validator.ok && (
-                <div className="mt-3 text-xs text-amber-200/90 bg-amber-400/10 border border-amber-400/40 rounded-lg px-3 py-2">
+                <div className="mt-4 mx-auto max-w-md text-xs text-amber-200/90 bg-amber-400/10 border border-amber-400/40 rounded-lg px-3 py-2">
                   This photo may not be optimal: {validator.reasons?.join('; ') || 'general quality concerns'}. You can proceed anyway, but results may vary.
                 </div>
               )}
-              <div className="mt-4 flex gap-3">
-                <button onClick={() => { ensurePersonWarning(); setStep(2); }} disabled={!personDataUrl} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">Next</button>
-                <button onClick={() => setStep(0)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button onClick={() => { ensurePersonWarning(); setStep(2); }} disabled={!personDataUrl} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">Next</button>
+                <button onClick={() => setStep(0)} className="px-5 py-2.5 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>
             </div>
           </section>
@@ -141,26 +144,20 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
         {/* Step 3: Outfit source image (single) */}
         {step === 2 && (
           <section className="mt-6">
-            <div className="rounded-xl border border-platinum/20 bg-white/5 p-4">
-              <div className="flex items-center justify-between">
-                <p className="text-platinum/80">Upload a single image that contains all products you want to try on (it can have a model wearing them). We will extract the products into a clean flat lay.</p>
-                <label className="inline-flex items-center px-3 py-2 rounded-full border border-platinum/30 text-sm text-platinum/80 hover:text-white hover:bg-white/5 cursor-pointer" aria-label="Upload outfit source image">
+            <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center">
+              <p className="text-platinum/90 text-base">Upload a single image that contains all products you want to try on. No problem if they&apos;re on a model.</p>
+              <div className="mt-5 flex flex-col items-center justify-center gap-4">
+                <label className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer" aria-label="Upload outfit source image">
                   <input type="file" accept="image/*" className="hidden" onChange={e => onPickOutfitSource(e.target.files?.[0] || null)} />
-                  Upload Image
+                  Select Image
                 </label>
+                {outfitSource && (
+                  <img src={outfitSource.dataUrl} alt="outfit source" className="w-full max-w-md rounded-xl border border-platinum/20 object-cover" />
+                )}
               </div>
-              <div className="mt-2 text-xs text-platinum/70">
-                Hint: Use one image only and ensure all items are clearly visible. It’s okay if a model is wearing them — we’ll remove the person and keep just the clothes.
-              </div>
-              {outfitSource && (
-                <div className="mt-4">
-                  <p className="text-sm text-platinum/70 mb-2">Selected image:</p>
-                  <img src={outfitSource.dataUrl} alt="outfit source" className="w-full max-w-md rounded-lg border border-platinum/20" />
-                </div>
-              )}
-              <div className="mt-4 flex gap-3">
-                <button onClick={() => setStep(3)} disabled={!canProceedFlatLay} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">Next</button>
-                <button onClick={() => setStep(1)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <button onClick={() => setStep(3)} disabled={!canProceedFlatLay} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">Next</button>
+                <button onClick={() => setStep(1)} className="px-5 py-2.5 rounded-full border border-platinum/30 text-platinum/80">Back</button>
               </div>
             </div>
           </section>
