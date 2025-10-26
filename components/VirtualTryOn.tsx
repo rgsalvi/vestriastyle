@@ -205,9 +205,14 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void }>
                   </select>
                 </label>
               </div>
-              <p className="mt-2 text-xs text-platinum/60">
-                Help: Full replaces all garments. Upper affects only tops/jackets (bottoms stay the same). Lower affects only pants/skirts/shorts; if you’re wearing a dress or one‑piece, only the lower part is replaced and no top is added.
-              </p>
+              <div className="mt-2 inline-flex items-start gap-2 rounded-md border border-sky-400/30 bg-sky-400/10 px-3 py-2 text-[12px] text-sky-100/90">
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-[2px] h-4 w-4 flex-shrink-0 text-sky-300">
+                  <path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10.012 10.012 0 0 0 12 2Zm0 14a1 1 0 0 1-1-1v-4a1 1 0 0 1 2 0v4a1 1 0 0 1-1 1Zm0-8a1.25 1.25 0 1 1 1.25-1.25A1.25 1.25 0 0 1 12 8Z"/>
+                </svg>
+                <span>
+                  Full replaces all garments. Upper affects only tops/jackets (bottoms stay the same). Lower affects only pants/skirts/shorts; if you’re wearing a dress or one‑piece, only the lower part is replaced and no top is added.
+                </span>
+              </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 <button onClick={handleGenerateTryOn} disabled={!canProceedTryOn || isGeneratingTryOn} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGeneratingTryOn ? 'Generating…' : 'Generate Try-On'}</button>
                 <button onClick={() => setStep(3)} className="px-4 py-2 rounded-full border border-platinum/30 text-platinum/80">Back</button>
