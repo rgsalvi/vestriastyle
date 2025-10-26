@@ -191,7 +191,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
             setFounderModalOpen(true);
           }} />
           <button onClick={onClickRecipes} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
-            #VestriaStyleRecipe
+            #VestriaStyleRecipes
           </button>
           <button onClick={onClickChatNav} className="px-3 py-1.5 rounded-md text-platinum/80 hover:text-white hover:bg-white/5 transition text-sm tracking-wide">
             Chat With A Stylist
