@@ -233,3 +233,25 @@ export async function cropToLowerBody(dataUrl: string): Promise<string> {
         return dataUrl;
     }
 }
+
+// Convert any input data URL to a PNG base64 (no data URL prefix) for chat compatibility
+export async function dataUrlToPNGBase64(dataUrl: string): Promise<string> {
+    try {
+        const blob = await (await fetch(dataUrl)).blob();
+        const bmp = await createImageBitmap(blob);
+        const canvas = document.createElement('canvas');
+        canvas.width = bmp.width;
+        canvas.height = bmp.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            bmp.close();
+            return dataUrl.split(',')[1] || '';
+        }
+        ctx.drawImage(bmp, 0, 0);
+        const pngDataUrl = canvas.toDataURL('image/png');
+        bmp.close();
+        return pngDataUrl.split(',')[1] || '';
+    } catch {
+        return dataUrl.split(',')[1] || '';
+    }
+}

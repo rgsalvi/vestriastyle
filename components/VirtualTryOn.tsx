@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AiResponse, AnalysisItem } from '../types';
-import { resizeImageToDataUrl, dataUrlToWebP, cropToUpperBody, cropToLowerBody } from '../utils/imageProcessor';
+import { resizeImageToDataUrl, dataUrlToWebP, cropToUpperBody, cropToLowerBody, dataUrlToPNGBase64 } from '../utils/imageProcessor';
 import { generateFlatLay, generateTryOn, validateFullBody } from '../services/geminiService';
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
@@ -119,16 +119,21 @@ export const VirtualTryOn: React.FC<{ onBack?: () => void; onOpenChat?: (context
     setOutputSize('1024x1536');
   };
 
-  const handleChatWithStylist = () => {
+  const handleChatWithStylist = async () => {
     if (!onOpenChat) return;
+    let images: string[] = [];
+    try {
+      if (tryOnDataUrl) {
+        const pngBase64 = await dataUrlToPNGBase64(tryOnDataUrl);
+        if (pngBase64) images = [pngBase64];
+      }
+    } catch {}
     const context: AiResponse = {
       compatibility: 'N/A',
       outfits: [],
       advice: 'Fit Check result is ready. The user would like a stylist review of the try-on for fit, proportion, and styling tweaks.',
       verdict: 'Fit Check completed',
-      // Optional: include generated image as base64 for stylist context if desired
-      // Note: Chat UI assumes PNG; if using WebP here, the image may not render in all clients.
-      generatedOutfitImages: [],
+      generatedOutfitImages: images,
     };
     onOpenChat(context, null);
   };
