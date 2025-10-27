@@ -108,11 +108,11 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="recipe-tryon-title">
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true"></div>
       <div className={`relative z-10 w-full max-w-5xl transform transition-all duration-200 ${animateIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-        <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl max-h-[90vh] flex flex-col">
+  <div className="relative rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl max-h-[90vh] flex flex-col">
           <button ref={closeRef} onClick={onClose} className="absolute top-4 right-4 z-20 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/30 text-platinum/80 hover:bg-black/50 hover:text-white transition" aria-label="Close try-on modal"><CloseIcon /></button>
           <div className="sticky top-0 z-10 px-4 sm:px-8 pt-6 pb-3 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
             <div className="mx-auto max-w-5xl">
-              <h3 id="recipe-tryon-title" className="text-2xl font-extrabold tracking-tight">Virtual Try-On</h3>
+              <h3 id="recipe-tryon-title" className="text-2xl font-extrabold tracking-tight">{title ? `${title} — Virtual Try-On` : 'Virtual Try-On'}</h3>
             </div>
             <div className="mx-auto mt-3 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
           </div>
@@ -122,28 +122,36 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
             <h4 className="text-xl font-semibold">Upload Your Photo</h4>
             <p className="mt-1 text-sm text-platinum/70">Full-length, front-facing, good lighting, plain background for best results.</p>
             <div
-              className={`mt-4 rounded-xl transition-colors ${dragActive ? 'bg-white/10' : 'bg-white/5'}`}
+              className={`relative mt-4 rounded-xl overflow-hidden transition-colors ${dragActive ? 'bg-white/10' : 'bg-white/5'}`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
               onDrop={(e) => { e.preventDefault(); setDragActive(false); const f = e.dataTransfer.files?.[0]; if (f && f.type.startsWith('image/')) onPickPerson(f); }}
             >
-              <label className={`block cursor-pointer`}> 
-                <div className={`flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
-                  <UploadIcon />
-                  <div className="mt-2 text-sm text-platinum/80">
-                    <span className="font-medium">Upload full-length photo</span>
-                  </div>
-                  <input type="file" accept="image/*" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
-                  <p className="mt-1 text-xs text-platinum/60">PNG or JPG up to 10MB</p>
+              <label className={`block cursor-pointer`}>
+                <input type="file" accept="image/*" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
+                <div className={`relative flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
+                  {!personDataUrl && (
+                    <>
+                      <UploadIcon />
+                      <div className="mt-2 text-sm text-platinum/80">
+                        <span className="font-medium">Upload full-length photo</span>
+                      </div>
+                      <p className="mt-1 text-xs text-platinum/60">PNG or JPG up to 10MB</p>
+                    </>
+                  )}
+                  {personDataUrl && (
+                    <>
+                      <img src={personDataUrl} alt="person" className="absolute inset-0 w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                      <span className="sr-only">Change photo</span>
+                      <div className="absolute top-3 right-3">
+                        <div className="px-3 py-1.5 rounded-full bg-black/40 text-platinum/90 text-xs font-medium border border-white/10">Change photo</div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </label>
-
-              {personDataUrl && (
-                <div className="px-2 pb-4">
-                  <img src={personDataUrl} alt="person" className="mt-3 w-full max-w-xs mx-auto rounded-lg border border-platinum/20 object-cover" />
-                </div>
-              )}
               {validator && !validator.ok && (
                 <div className="mt-3 text-xs text-amber-200/90 bg-amber-400/10 border border-amber-400/40 rounded-lg px-3 py-2">
                   This photo may not be optimal: {validator.reasons?.join('; ') || 'general quality concerns'}.
@@ -181,6 +189,23 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
             <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-platinum/30 text-platinum/80 hover:bg-white/5">Cancel</button>
             <button onClick={onGenerate} disabled={!personDataUrl || isGenerating} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGenerating ? 'Generating…' : 'Try It On!'}</button>
           </div>
+          {/* Full overlay for generating/result hero */}
+          {(isGenerating || resultDataUrl) && (
+            <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+              {!resultDataUrl && (
+                <div className="text-center">
+                  <div className="mx-auto h-12 w-12 border-4 border-platinum/30 border-t-platinum rounded-full animate-spin" />
+                  <p className="mt-4 text-platinum/80">Generating your try-on…</p>
+                </div>
+              )}
+              {resultDataUrl && (
+                <>
+                  <button onClick={onClose} className="absolute top-4 right-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/50 text-platinum/80 hover:text-white hover:bg-black/70" aria-label="Close result overlay"><CloseIcon /></button>
+                  <img src={resultDataUrl} alt="try-on result hero" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl" />
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
