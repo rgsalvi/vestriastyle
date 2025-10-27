@@ -1,4 +1,5 @@
 import React from 'react';
+import RecipeTryOnModal from './RecipeTryOnModal';
 
 type WeekMeta = {
   date: string; // Friday start, ISO string e.g. 2025-10-31
@@ -122,6 +123,7 @@ export const RecipeCarousel: React.FC = () => {
   const basePath = activeSlug ? `/recipes/${activeSlug}` : '';
   const flatlay = activeMeta?.flatlay ? `${basePath}/${activeMeta.flatlay}` : (activeSlug ? `${basePath}/flatlay.webp` : '');
   const model = activeMeta?.model ? `${basePath}/${activeMeta.model}` : (activeSlug ? `${basePath}/model.webp` : '');
+  const [tryOnOpen, setTryOnOpen] = React.useState(false);
 
   const fontClassFor = (px: number) => {
     switch (px) {
@@ -277,10 +279,13 @@ export const RecipeCarousel: React.FC = () => {
       </div>
 
       {/* CTAs */}
-      <div className="mt-8 flex items-center justify-center gap-3">
+        <div className="mt-8 flex items-center justify-center gap-3">
         <button className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Chat With A Stylist</button>
-        <button className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold hover:bg-platinum/30">Try It On!</button>
+          <button onClick={() => setTryOnOpen(true)} className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold hover:bg-platinum/30">Try It On!</button>
       </div>
+        {tryOnOpen && activeSlug && (
+          <RecipeTryOnModal isOpen={tryOnOpen} onClose={() => setTryOnOpen(false)} flatlayUrl={flatlay} />
+        )}
       </div>
       </>
       )}
