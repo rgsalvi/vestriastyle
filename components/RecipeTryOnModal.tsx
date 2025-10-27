@@ -120,7 +120,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
           {/* Left: instructions + person upload */}
           <div className="p-6 md:p-8">
             <div
-              className={`relative mt-4 rounded-xl overflow-hidden transition-colors ${dragActive ? 'bg-white/10' : 'bg-white/5'}`}
+              className={`relative rounded-xl overflow-hidden transition-colors ${dragActive ? 'bg-white/10' : 'bg-white/5'}`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
