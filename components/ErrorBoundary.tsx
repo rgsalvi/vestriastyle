@@ -21,6 +21,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, 
 
   render() {
     if (this.state.hasError) {
+      const [show, setShow] = [true, true]; // always show details for developer visibility in production
       return (
         <div className="min-h-screen bg-dark-blue text-platinum flex items-center justify-center p-6">
           <div className="max-w-xl w-full rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 shadow">
@@ -29,8 +30,11 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, 
             <div className="mt-4 flex gap-3">
               <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-full bg-platinum text-dark-blue font-semibold hover:opacity-90">Reload</button>
             </div>
-            {process.env.NODE_ENV !== 'production' && this.state.error && (
-              <pre className="mt-4 text-xs whitespace-pre-wrap text-platinum/60">{String(this.state.error?.stack || this.state.error)}</pre>
+            {this.state.error && (
+              <div className="mt-4">
+                <div className="text-sm font-semibold text-platinum/80">Error details</div>
+                <pre className="mt-2 text-xs whitespace-pre-wrap text-platinum/60 border border-platinum/10 rounded p-3 bg-black/30">{String((this.state.error && (this.state.error.stack || this.state.error.message)) || this.state.error)}</pre>
+              </div>
             )}
           </div>
         </div>
