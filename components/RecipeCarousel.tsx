@@ -47,7 +47,24 @@ export const RecipeCarousel: React.FC = () => {
           setSlugs([]);
           return;
         }
-        if (mounted) setSlugs(arr);
+        // Normalize order: sort by date ascending (oldest -> newest) based on slug prefix YYYY-MM-DD
+        const getDateFromSlug = (s: string) => {
+          const m = /^(\d{4}-\d{2}-\d{2})/.exec(s);
+          return m ? new Date(m[1]).getTime() : Number.NaN;
+        };
+        const sorted = [...arr].sort((a, b) => {
+          const da = getDateFromSlug(a);
+          const db = getDateFromSlug(b);
+          if (isNaN(da) && isNaN(db)) return 0;
+          if (isNaN(da)) return 1;
+          if (isNaN(db)) return -1;
+          return da - db;
+        });
+        if (mounted) {
+          setSlugs(sorted);
+          // Start on the latest week by default (last index when ascending)
+          setCurrent(Math.max(0, sorted.length - 1));
+        }
       } catch (e) {
         console.warn('Failed to load recipes index', e);
         if (mounted) setSlugs([]);
