@@ -177,6 +177,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
 
   const aboutActive = activePage === 'about';
   const partnerActive = activePage === 'partner';
+  const launchBonusActive = Date.now() < LAUNCH_BONUS_END.getTime();
   // Removed since Try-On is no longer a top-level nav item
   // const tryOnActive = activePage === 'tryon';
   // Navbar styling tokens
@@ -281,6 +282,12 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 >
                   <p className="font-semibold text-sm px-3 py-1 text-platinum truncate">{user.name}</p>
                   <p className="text-xs px-3 text-platinum/60 truncate mb-1">{user.email}</p>
+                  {launchBonusActive && (
+                    <div className="mx-2 mb-2 px-2 py-1 rounded-full text-[11px] font-semibold inline-flex items-center gap-1 bg-platinum/10 text-platinum border border-platinum/20">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-platinum shadow-[0_0_6px_rgba(194,190,186,0.7)]" />
+                      Launch bonus: Premium unlocked
+                    </div>
+                  )}
                   <div className="h-px bg-platinum/20 my-1"></div>
                   <button onClick={onEditProfile} className="w-full text-left text-sm text-platinum px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">Edit Profile</button>
                   <button onClick={onSignOut} className="w-full text-left text-sm text-red-400 px-3 py-2 rounded-md hover:bg-platinum/10" role="menuitem">
@@ -366,6 +373,8 @@ type FitDoodleVariant = 'drape-sparkle' | 'mannequin-star' | 'runway-lines';
 // Easy switches for what to show right now
 const WARDROBE_DOODLE_VARIANT: WardrobeDoodleVariant = 'button-stitch';
 const FIT_DOODLE_VARIANT: FitDoodleVariant = 'runway-lines';
+// Launch bonus window (badge shown while active)
+const LAUNCH_BONUS_END = new Date('2025-11-30T23:59:59Z');
 
 const WardrobeDoodle: React.FC<{ className?: string; variant?: WardrobeDoodleVariant }> = ({ className = '', variant = 'hanger-grid' }) => {
   switch (variant) {
@@ -524,6 +533,12 @@ const App: React.FC = () => {
   useEffect(() => {
     if (['/partner', '/about', '/recipes', '/privacy', '/terms', '/refund', '/profile', '/tryon'].includes(pathname)) {
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
+    }
+  }, [pathname]);
+  // Track chat landing views
+  useEffect(() => {
+    if (pathname === '/chat') {
+      try { trackEvent('chat_landing_view'); } catch {}
     }
   }, [pathname]);
 
@@ -1181,36 +1196,36 @@ const App: React.FC = () => {
                 <>
                   <p className="text-platinum/80">Sign in to start messaging with a Vestria stylist.</p>
                   <div className="flex justify-center">
-                    <button onClick={() => { setLoginInitialMode('signin'); setShowLogin(true); }} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Sign In</button>
+                    <button onClick={() => { try { trackEvent('chat_landing_sign_in_click'); } catch {} ; setLoginInitialMode('signin'); setShowLogin(true); }} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Sign In</button>
                   </div>
                 </>
               ) : !styleProfile || !isProfileComplete(styleProfile) ? (
                 <>
                   <p className="text-platinum/80">Complete your style profile so we can personalize your consultation.</p>
                   <div className="flex justify-center gap-2">
-                    <button onClick={() => setShowOnboarding(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Complete Profile</button>
+                    <button onClick={() => { try { trackEvent('chat_landing_complete_profile_click'); } catch {} ; setShowOnboarding(true); }} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Complete Profile</button>
                   </div>
                 </>
               ) : !styleProfile.isPremium ? (
                 <>
                   <p className="text-platinum/80">Chat is a premium feature. Upgrade to continue.</p>
                   <div className="flex justify-center">
-                    <button onClick={() => setShowPremiumUpsell(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Unlock Premium</button>
+                    <button onClick={() => { try { trackEvent('chat_landing_unlock_premium_click'); } catch {} ; setShowPremiumUpsell(true); }} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Unlock Premium</button>
                   </div>
                 </>
               ) : chatContext ? (
                 <>
                   <p className="text-platinum/80">We’ll open your chat with the latest outfit and item context.</p>
                   <div className="flex justify-center">
-                    <button onClick={() => setIsChatOpen(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Open Chat</button>
+                    <button onClick={() => { try { trackEvent('chat_landing_open_chat_click'); } catch {} ; setIsChatOpen(true); }} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Open Chat</button>
                   </div>
                 </>
               ) : (
                 <>
                   <p className="text-platinum/80">First, generate style advice so your stylist has context. Then we’ll start your chat.</p>
                   <div className="flex justify-center gap-3">
-                    <button onClick={() => navigate('/wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Start Wardrobe Check</button>
-                    <button onClick={() => navigate('/tryon')} className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold rounded-full hover:bg-platinum/30">Start Fit Check</button>
+                    <button onClick={() => { try { trackEvent('chat_landing_start_wardrobe_click'); } catch {} ; navigate('/wardrobe'); }} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Start Wardrobe Check</button>
+                    <button onClick={() => { try { trackEvent('chat_landing_start_fit_click'); } catch {} ; navigate('/tryon'); }} className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold rounded-full hover:bg-platinum/30">Start Fit Check</button>
                   </div>
                 </>
               )}
