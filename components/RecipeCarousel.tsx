@@ -230,7 +230,7 @@ export const RecipeCarousel: React.FC = () => {
             <img
               src={flatlay}
               alt={activeMeta?.flatlayAlt || 'Flat lay'}
-              className="max-h-full max-w-full object-contain"
+              className="w-full h-full object-cover object-center"
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-flatlay.svg'; }}
               loading="lazy"
             />
@@ -268,7 +268,7 @@ export const RecipeCarousel: React.FC = () => {
             <img
               src={model}
               alt={activeMeta?.modelAlt || 'Styled model'}
-              className="max-h-full max-w-full object-contain"
+              className="w-full h-full object-cover object-center"
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-model.svg'; }}
               loading="lazy"
             />
