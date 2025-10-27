@@ -130,7 +130,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
             >
               <label className={`block cursor-pointer`}>
                 <input type="file" accept="image/*" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
-                <div className={`relative flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
+                <div className={`relative flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl h-64 md:h-[480px] ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
                   {!personDataUrl && (
                     <>
                       <UploadIcon />
@@ -160,28 +160,12 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
               {errorMsg && <div className="mt-3 text-xs text-red-300">{errorMsg}</div>}
             </div>
           </div>
-          {/* Right: flat lay preview and result */}
-          <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-platinum/20 bg-white/5 overflow-y-auto">
-            <div className="text-sm tracking-widest uppercase text-platinum/60">{title || 'This Week\'s Products'}</div>
-            <div className="mt-2 rounded-xl overflow-hidden border border-platinum/20 image-bg-soft">
+          {/* Right: flat lay fills the column */}
+          <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-platinum/20 bg-white/5">
+            <div className="rounded-xl overflow-hidden border border-platinum/20 image-bg-soft relative h-64 md:h-[480px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={flatlayUrl} alt="flat lay" className="w-full h-56 object-cover" />
+              <img src={flatlayUrl} alt="flat lay products" className="absolute inset-0 w-full h-full object-cover" />
             </div>
-            <div className="mt-6">
-              <div className="text-sm tracking-widest uppercase text-platinum/60">Your Fit Check</div>
-              <div className="mt-2 rounded-xl overflow-hidden border border-platinum/20 min-h-56 flex items-center justify-center bg-black/20">
-                {resultDataUrl ? (
-                  <img src={resultDataUrl} alt="try-on result" className="w-full object-contain" />
-                ) : (
-                  <div className="text-platinum/50 text-sm">Result will appear here after generation</div>
-                )}
-              </div>
-            </div>
-            {resultDataUrl && (
-              <div className="mt-4 flex justify-end">
-                <button onClick={onClose} className="px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold">Close</button>
-              </div>
-            )}
           </div>
           </div>
           {/* Footer actions */}
