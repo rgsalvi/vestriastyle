@@ -119,8 +119,6 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0">
           {/* Left: instructions + person upload */}
           <div className="p-6 md:p-8">
-            <h4 className="text-xl font-semibold">Upload Your Photo</h4>
-            <p className="mt-1 text-sm text-platinum/70">Full-length, front-facing, good lighting, plain background for best results.</p>
             <div
               className={`relative mt-4 rounded-xl overflow-hidden transition-colors ${dragActive ? 'bg-white/10' : 'bg-white/5'}`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
@@ -130,13 +128,17 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
             >
               <label className={`block cursor-pointer`}>
                 <input type="file" accept="image/*" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
-                <div className={`relative flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl h-56 md:h-[42vh] lg:h-[48vh] ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
+                <div className={`relative flex flex-col items-center justify-center px-6 pt-16 pb-6 border-2 rounded-xl h-56 md:h-[42vh] lg:h-[48vh] ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
+                  {!personDataUrl && (
+                    <div className="absolute top-3 left-3 right-3 text-left">
+                      <p className="text-sm font-semibold">Upload Your Photo</p>
+                      <p className="mt-0.5 text-xs text-platinum/70">Full-length, front-facing, good lighting, plain background for best results.</p>
+                    </div>
+                  )}
                   {!personDataUrl && (
                     <>
                       <UploadIcon />
-                      <div className="mt-2 text-sm text-platinum/80">
-                        <span className="font-medium">Upload full-length photo</span>
-                      </div>
+                      {/* Keep file type note subtle below icon */}
                       <p className="mt-1 text-xs text-platinum/60">PNG or JPG up to 10MB</p>
                     </>
                   )}
