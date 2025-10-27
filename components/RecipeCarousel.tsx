@@ -201,25 +201,29 @@ export const RecipeCarousel: React.FC = () => {
 
       {hasSlugs && (
       <>
-      {/* Arrows */}
-      <button
-        type="button"
-        onClick={onPrev}
-        disabled={current === 0}
-        aria-label="Previous recipe"
-        className="absolute -left-3 md:-left-5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/30 border border-platinum/30 text-platinum/80 hover:text-white hover:bg-black/50 disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <ChevronLeft />
-      </button>
-      <button
-        type="button"
-        onClick={onNext}
-        disabled={slugs && current === slugs.length - 1}
-        aria-label="Next recipe"
-        className="absolute -right-3 md:-right-5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/30 border border-platinum/30 text-platinum/80 hover:text-white hover:bg-black/50 disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <ChevronRight />
-      </button>
+      {/* Top navigation controls */}
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={current === 0}
+          aria-label="Previous recipe"
+          className="btn-luxe-ghost inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Previous</span>
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={slugs ? current === slugs.length - 1 : true}
+          aria-label="Next recipe"
+          className="btn-luxe-ghost inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <span>Next</span>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
 
       <div key={activeSlug || 'empty'} className={`${hasMountedRef.current ? (dir > 0 ? 'animate-slide-in-right' : 'animate-slide-in-left') : ''} motion-reduce:animate-none`}>
         {/* Header: Week + Title + Founder byline */}
