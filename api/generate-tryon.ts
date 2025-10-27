@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-  const { person, flatLay, size, strict, region, cleanup } = req.body as { person?: ImageRef; flatLay?: ImageRef; size?: { width: number; height: number }; strict?: boolean; region?: 'full' | 'upper' | 'lower'; cleanup?: boolean };
+  const { person, flatLay, size, strict, region, cleanup, modesty } = req.body as { person?: ImageRef; flatLay?: ImageRef; size?: { width: number; height: number }; strict?: boolean; region?: 'full' | 'upper' | 'lower'; cleanup?: boolean; modesty?: boolean };
     if (!person?.base64 || !person?.mimeType) {
       return res.status(400).json({ message: 'person image is required' });
     }
@@ -33,7 +33,8 @@ RULES (NO EXCEPTIONS):
 - Preserve the person's original face, hair, skin, and background exactly.
 - Maintain body pose and lighting; avoid edge artifacts (hands, neckline, hems).
 - If a body region has no corresponding flat lay item, do NOT invent a garment for it; leave the original region unmodified where feasible rather than adding anything new.
-- Ensure there is NO double-layering. Where the new garment reveals skin (e.g., shorts replacing trousers), REMOVE the original garment entirely within that region and synthesize realistic, consistent skin and edges matching the person's tone and lighting.`;
+- Ensure there is NO double-layering. Where the new garment reveals skin (e.g., shorts replacing trousers), REMOVE the original garment entirely within that region and synthesize realistic, consistent skin and edges matching the person's tone and lighting.
+- Do NOT add any censoring, modesty coverings, blurs, stickers, or opaque layers to cover skin. If garments reveal skin, render natural, realistic skin consistent with the person's tone and lighting.`;
 
     const stricter = `
 ADDITIONAL STRICTNESS:
@@ -50,6 +51,7 @@ ADDITIONAL STRICTNESS:
   const instruction = `Using only the garments in the flat lay image, ${regionScope} Ensure realistic fit and drape while strictly adhering to the rules.
 ${constraint}
 ${strict ? stricter : ''}
+${modesty === false ? 'MODERATION OVERRIDE: Do NOT add censorship or any modesty coverings. Skin visibility should match what the garments imply, without fabricated coverage.' : ''}
 OUTPUT FORMAT (MANDATORY):
 - Output ONLY a single edited portrait photo.
 - DO NOT include side-by-side comparisons, before/after, grids, frames, borders, picture-in-picture, or any duplication of the original image within the output.
@@ -87,7 +89,8 @@ OUTPUT FORMAT (MANDATORY):
 - Ensure there is no double-layering under the new items.
 - Smooth and blend edges; maintain skin continuity where revealed, matching tone and lighting.
 - Preserve all current garments as they are, the person's face, hair, skin features, and the background exactly.
-- Do NOT change colors, prints, or shapes of garments present.` }
+- Do NOT change colors, prints, or shapes of garments present.
+- Do NOT add any coverage or censorship; if skin is visible due to the garments, keep it as-is and do not fabricate modesty layers.` }
         ];
         const refine = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image-preview',

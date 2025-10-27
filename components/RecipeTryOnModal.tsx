@@ -91,7 +91,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
       const person = { base64: personDataUrl.split(',')[1], mimeType: personDataUrl.match(/^data:(.*?);/)?.[1] ?? 'image/jpeg' };
       const flat = await urlToDataUrl(flatlayUrl);
       const flatLay = { base64: flat.dataUrl.split(',')[1], mimeType: flat.mimeType };
-      const result = await generateTryOn({ person, flatLay, region: 'full', strict: true, size: { width: 1024, height: 1536 } });
+  const result = await generateTryOn({ person, flatLay, region: 'full', strict: true, size: { width: 1024, height: 1536 }, modesty: false });
       const mime = result.mimeType || 'image/jpeg';
       setResultDataUrl(`data:${mime};base64,${result.base64Image}`);
     } catch (e) {
