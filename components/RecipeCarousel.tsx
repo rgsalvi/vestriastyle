@@ -166,11 +166,25 @@ export const RecipeCarousel: React.FC = () => {
           />
         </div>
         {/* Center: Description */}
-        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-6">
-          {activeMeta?.description?.map((p, idx) => (
-            <p key={idx} className={`text-platinum/85 leading-relaxed ${idx === 0 ? '' : 'mt-3'}`}>{p}</p>
-          )) || (
-            <p className="text-platinum/60">Detailed styling notes will appear here.</p>
+        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-5">
+          {activeMeta?.description?.map((p, idx) => {
+            const m = /^([^:]+):(.*)$/.exec(p);
+            const lead = m ? m[1].trim() : null;
+            const rest = m ? m[2].trim() : null;
+            return (
+              <p key={idx} className={`text-sm md:text-[15px] text-platinum/85 leading-normal ${idx === 0 ? '' : 'mt-2.5'}`}>
+                {lead ? (
+                  <>
+                    <span className="font-semibold">{lead}</span>
+                    {rest ? <>: {rest}</> : null}
+                  </>
+                ) : (
+                  p
+                )}
+              </p>
+            );
+          }) || (
+            <p className="text-sm text-platinum/60">Detailed styling notes will appear here.</p>
           )}
         </div>
         {/* Right: Model */}
