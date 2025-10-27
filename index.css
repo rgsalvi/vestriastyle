@@ -156,3 +156,16 @@
   pointer-events: none;
   z-index: 10;
 }
+
+/* Luxe pill buttons */
+@layer components {
+  .btn-luxe {
+    @apply inline-flex items-center justify-center rounded-full px-4 md:px-5 py-2 text-[13px] md:text-sm font-semibold text-platinum bg-white/10 backdrop-blur-md ring-1 ring-platinum/30 shadow-sm transition-all duration-200 ease-out hover:bg-white/15 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/50;
+  }
+  .btn-luxe-ghost {
+    @apply inline-flex items-center justify-center rounded-full px-4 md:px-5 py-2 text-[13px] md:text-sm font-medium text-platinum/85 bg-transparent ring-1 ring-platinum/30 backdrop-blur-md transition-all duration-200 ease-out hover:bg-white/5 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/50;
+  }
+  .btn-disabled {
+    @apply opacity-50 pointer-events-none;
+  }
+}

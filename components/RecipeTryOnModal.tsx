@@ -170,8 +170,8 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
           </div>
           {/* Footer actions */}
           <div className="border-t border-platinum/20 bg-black/20 px-6 md:px-8 py-4 flex items-center justify-between">
-            <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-platinum/30 text-platinum/80 hover:bg-white/5">Cancel</button>
-            <button onClick={onGenerate} disabled={!personDataUrl || isGenerating} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGenerating ? 'Generating…' : 'Try It On!'}</button>
+            <button onClick={onClose} className="btn-luxe-ghost">Cancel</button>
+            <button onClick={onGenerate} disabled={!personDataUrl || isGenerating} className="btn-luxe disabled:opacity-50 disabled:pointer-events-none">{isGenerating ? 'Generating…' : 'Try It On!'}</button>
           </div>
           {/* Full overlay for generating/result hero */}
           {(isGenerating || resultDataUrl) && (

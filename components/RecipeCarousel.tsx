@@ -280,11 +280,11 @@ export const RecipeCarousel: React.FC = () => {
 
       {/* CTAs */}
     <div className="mt-8 flex items-center justify-center gap-3">
-    <button aria-label="Chat with a live stylist about this look" title="Chat with a live stylist about this look" className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 inline-flex items-center">
+        <button aria-label="Chat with a live stylist about this look" title="Chat with a live stylist about this look" className="btn-luxe inline-flex items-center">
       <span>Chat About This Look</span>
       <span className="ml-2 inline-block bg-dark-blue text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">LIVE</span>
     </button>
-          <button onClick={() => setTryOnOpen(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Try It On!</button>
+          <button onClick={() => setTryOnOpen(true)} className="btn-luxe">Try It On!</button>
       </div>
         {tryOnOpen && activeSlug && (
           <RecipeTryOnModal isOpen={tryOnOpen} onClose={() => setTryOnOpen(false)} flatlayUrl={flatlay} title={activeMeta?.title} />
