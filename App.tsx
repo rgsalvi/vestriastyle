@@ -487,7 +487,6 @@ const App: React.FC = () => {
   const [pendingChatRetry, setPendingChatRetry] = useState<{ context: AiResponse; newItem: AnalysisItem | null } | null>(null);
   // Track if we already triggered immediate onboarding to prevent duplicate flicker
   const immediateOnboardingRef = useRef(false);
-  const [recipesInView, setRecipesInView] = useState(false);
   // Landing mode selector: none shows two-box choice, 'wardrobe' shows existing flow
   const [landingMode, setLandingMode] = useState<'none' | 'wardrobe'>('none');
 
@@ -498,20 +497,7 @@ const App: React.FC = () => {
     }
   }, [currentPage]);
 
-  // Track when Style Recipes section is in view on the main page
-  useEffect(() => {
-    if (currentPage !== 'main') {
-      setRecipesInView(false);
-      return;
-    }
-    const el = document.getElementById('style-recipes');
-    if (!el) { setRecipesInView(false); return; }
-    const observer = new IntersectionObserver(([entry]) => {
-      setRecipesInView(entry.isIntersecting);
-    }, { root: null, rootMargin: '-30% 0px -60% 0px', threshold: 0.01 });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [currentPage]);
+  // Style Recipes now lives only on its own page, not within the Wardrobe flow.
 
   // Utility: prevent indefinite hangs by timing out slow promises
   const withTimeout = useCallback(async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
@@ -1247,16 +1233,13 @@ const App: React.FC = () => {
               )}
             </main>
             {landingMode === 'wardrobe' && (
-              <>
-                <WardrobeManager
-                  user={user}
-                  items={managedWardrobe}
-                  onAddItems={handleAddItemsToWardrobe}
-                  onSaveItem={handleSaveWardrobeItem}
-                  onDeleteItem={handleDeleteWardrobeItem}
-                />
-                <StyleRecipes isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
-              </>
+              <WardrobeManager
+                user={user}
+                items={managedWardrobe}
+                onAddItems={handleAddItemsToWardrobe}
+                onSaveItem={handleSaveWardrobeItem}
+                onDeleteItem={handleDeleteWardrobeItem}
+              />
             )}
           </>
         );
@@ -1383,7 +1366,7 @@ const App: React.FC = () => {
           onWardrobeClick={handleWardrobeClick}
           onEditProfile={() => setCurrentPage('profile')}
           activePage={currentPage}
-          recipesActive={recipesInView || currentPage === 'recipes'}
+          recipesActive={currentPage === 'recipes'}
         />
         {renderPage()}
       </div>
