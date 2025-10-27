@@ -1225,7 +1225,7 @@ const App: React.FC = () => {
                         <div className="text-left">
                           <ul className="list-disc list-inside space-y-2 text-platinum/85">
                             <li><span className="font-medium">Personalized guidance:</span> a stylist reviews your outfit context and goals before replying.</li>
-                            <li><span className="font-medium">Timely responses from a human stylist:</span> real experts reply directly — no bots.</li>
+                            <li><span className="font-medium">Live chat with human expert stylists:</span> plus optional video to get the best from your session.</li>
                             <li><span className="font-medium">Iterations welcomed:</span> ask for alternatives, swaps, or budget‑friendly picks.</li>
                             <li><span className="font-medium">Save and revisit:</span> your conversation and recommendations stay available.</li>
                             <li><span className="font-medium">Respectful pacing:</span> expect thoughtful follow‑ups, not notifications overload.</li>
