@@ -227,7 +227,7 @@ export const RecipeCarousel: React.FC = () => {
           <div className="text-sm tracking-widest uppercase text-platinum/60">{activeMeta ? formatWeek(activeMeta.date) : '\u00A0'}</div>
           <div className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight">{activeMeta?.title || '\u00A0'}</div>
           {activeFounder && (
-            <div className="mt-3 flex items-center justify-center">
+            <div className="mt-3 flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={() => setFounderOpen(true)}
@@ -241,6 +241,20 @@ export const RecipeCarousel: React.FC = () => {
                 </span>
                 <span className="text-sm"><span className="opacity-60">By</span> <span className="font-semibold">{activeFounder.name}</span></span>
               </button>
+              {activeFounder.socials?.Instagram && (
+                <a
+                  href={activeFounder.socials.Instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Visit ${activeFounder.name}'s Instagram`}
+                  title="Instagram"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-full text-platinum/80 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-platinum/40 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                    <path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm0 2h10a3 3 0 013 3v10a3 3 0 01-3 3H7a3 3 0 01-3-3V7a3 3 0 013-3zm11 1a1 1 0 100 2 1 1 0 000-2zM12 7a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6z" />
+                  </svg>
+                </a>
+              )}
             </div>
           )}
         </div>
