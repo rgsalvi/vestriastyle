@@ -302,13 +302,13 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
           <div className="flex items-center gap-2">
             <button
               onClick={() => onOpenLogin('signup')}
-              className="hidden sm:inline-flex px-4 py-2 bg-platinum text-dark-blue font-semibold rounded-full shadow hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum"
+              className="hidden sm:inline btn-luxe"
             >
               Sign Up
             </button>
             <button
               onClick={() => onOpenLogin('signin')}
-              className="px-4 py-2 bg-dark-blue text-platinum font-semibold rounded-full shadow-md hover:bg-[#1F2937] transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum ring-1 ring-platinum/50"
+              className="btn-luxe-ghost"
             >
               Sign In
             </button>
