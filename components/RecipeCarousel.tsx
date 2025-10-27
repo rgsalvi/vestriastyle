@@ -281,7 +281,7 @@ export const RecipeCarousel: React.FC = () => {
       {/* CTAs */}
         <div className="mt-8 flex items-center justify-center gap-3">
         <button className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Chat With A Stylist</button>
-          <button onClick={() => setTryOnOpen(true)} className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold hover:bg-platinum/30">Try It On!</button>
+          <button onClick={() => setTryOnOpen(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Try It On!</button>
       </div>
         {tryOnOpen && activeSlug && (
           <RecipeTryOnModal isOpen={tryOnOpen} onClose={() => setTryOnOpen(false)} flatlayUrl={flatlay} title={activeMeta?.title} />
