@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { RecommendationDisplay } from './components/RecommendationDisplay';
@@ -354,7 +355,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
   });
 };
 
-type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon' | 'recipes';
+type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon' | 'recipes' | 'chat';
 
 // No global Google object required with Firebase Email/Password
 
@@ -450,7 +451,36 @@ const FitDoodle: React.FC<{ className?: string; variant?: FitDoodleVariant }> = 
 };
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>('main');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const pathname = location.pathname || '/';
+  const currentPage: Page = (() => {
+    switch (pathname) {
+      case '/':
+      case '/wardrobe':
+        return 'main';
+      case '/about':
+        return 'about';
+      case '/partner':
+        return 'partner';
+      case '/tryon':
+        return 'tryon';
+      case '/recipes':
+        return 'recipes';
+      case '/chat':
+        return 'chat';
+      case '/privacy':
+        return 'privacy';
+      case '/terms':
+        return 'terms';
+      case '/refund':
+        return 'refund';
+      case '/profile':
+        return 'profile';
+      default:
+        return 'main';
+    }
+  })();
   const [newItem, setNewItem] = useState<AnalysisItem | null>(null);
   const [wardrobeItems, setWardrobeItems] = useState<AnalysisItem[]>([]);
   const [bodyType, setBodyType] = useState<BodyType>('None');
@@ -488,14 +518,14 @@ const App: React.FC = () => {
   // Track if we already triggered immediate onboarding to prevent duplicate flicker
   const immediateOnboardingRef = useRef(false);
   // Landing mode selector: none shows two-box choice, 'wardrobe' shows existing flow
-  const [landingMode, setLandingMode] = useState<'none' | 'wardrobe'>('none');
+  const landingMode: 'none' | 'wardrobe' = pathname === '/wardrobe' ? 'wardrobe' : 'none';
 
-  // Scroll to top when navigating to content pages like About or Partner
+  // Scroll to top on route change for content pages
   useEffect(() => {
-    if (currentPage === 'partner' || currentPage === 'about' || currentPage === 'recipes') {
+    if (['/partner', '/about', '/recipes', '/privacy', '/terms', '/refund', '/profile', '/tryon'].includes(pathname)) {
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
     }
-  }, [currentPage]);
+  }, [pathname]);
 
   // Style Recipes now lives only on its own page, not within the Wardrobe flow.
 
@@ -1039,8 +1069,8 @@ const App: React.FC = () => {
     return (
       <LoginPage 
         onBack={() => setShowLogin(false)}
-        onNavigateToTerms={() => setCurrentPage('terms')}
-        onNavigateToPrivacy={() => setCurrentPage('privacy')}
+        onNavigateToTerms={() => navigate('/terms')}
+        onNavigateToPrivacy={() => navigate('/privacy')}
         initialMode={loginInitialMode}
       />
     );
@@ -1055,7 +1085,7 @@ const App: React.FC = () => {
           <ProfilePage
             user={user}
             initialProfile={styleProfile}
-            onBack={() => setCurrentPage('main')}
+            onBack={() => navigate('/')}
             onSave={async (updatedUser, updatedProfile) => {
               let uploadedPath: string | undefined = undefined;
               let finalPictureUrl: string | undefined = undefined;
@@ -1110,35 +1140,80 @@ const App: React.FC = () => {
               } catch (e) { console.warn('Failed to sync display_name to Supabase', e); }
               // If ProfilePage captured DOB, it would be in a form-local state; since onSave signature doesn't include it, we cannot read it here without lifting state.
               // Optional follow-up: wire ProfilePage to send DOB via a context or extend onSave signature.
-              setCurrentPage('main');
+              navigate('/');
               setProfileSavedBanner('Profile updated');
               setTimeout(() => setProfileSavedBanner(null), 3000);
             }}
           />
         ) : null;
       case 'privacy':
-        return <PrivacyPolicy onBack={() => setCurrentPage('main')} />;
+        return <PrivacyPolicy onBack={() => navigate('/')} />;
       case 'terms':
-        return <TermsOfService onBack={() => setCurrentPage('main')} />;
+        return <TermsOfService onBack={() => navigate('/')} />;
       case 'refund':
-        return <RefundPolicy onBack={() => setCurrentPage('main')} />;
+        return <RefundPolicy onBack={() => navigate('/')} />;
       case 'about':
         return (
           <AboutUs
-            onBack={() => setCurrentPage('main')}
+            onBack={() => navigate('/')}
             onGoPartner={() => {
-              setCurrentPage('partner');
+              navigate('/partner');
             }}
           />
         );
       case 'partner':
-        return <PartnerPage onBack={() => setCurrentPage('main')} />;
+  return <PartnerPage onBack={() => navigate('/')} />;
       case 'tryon':
-        return <VirtualTryOn onBack={() => setCurrentPage('main')} onOpenChat={handleOpenChat} />;
+  return <VirtualTryOn onBack={() => navigate('/')} onOpenChat={handleOpenChat} />;
       case 'recipes':
         return (
           <main className="container mx-auto p-4 md:p-8">
             <StyleRecipes isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
+          </main>
+        );
+      case 'chat':
+        return (
+          <main className="container mx-auto p-4 md:p-8">
+            <div className="max-w-3xl mx-auto text-center space-y-4">
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Chat With A Stylist</h1>
+              {!user ? (
+                <>
+                  <p className="text-platinum/80">Sign in to start messaging with a Vestria stylist.</p>
+                  <div className="flex justify-center">
+                    <button onClick={() => { setLoginInitialMode('signin'); setShowLogin(true); }} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Sign In</button>
+                  </div>
+                </>
+              ) : !styleProfile || !isProfileComplete(styleProfile) ? (
+                <>
+                  <p className="text-platinum/80">Complete your style profile so we can personalize your consultation.</p>
+                  <div className="flex justify-center gap-2">
+                    <button onClick={() => setShowOnboarding(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Complete Profile</button>
+                  </div>
+                </>
+              ) : !styleProfile.isPremium ? (
+                <>
+                  <p className="text-platinum/80">Chat is a premium feature. Upgrade to continue.</p>
+                  <div className="flex justify-center">
+                    <button onClick={() => setShowPremiumUpsell(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Unlock Premium</button>
+                  </div>
+                </>
+              ) : chatContext ? (
+                <>
+                  <p className="text-platinum/80">We’ll open your chat with the latest outfit and item context.</p>
+                  <div className="flex justify-center">
+                    <button onClick={() => setIsChatOpen(true)} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Open Chat</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-platinum/80">First, generate style advice so your stylist has context. Then we’ll start your chat.</p>
+                  <div className="flex justify-center gap-3">
+                    <button onClick={() => navigate('/wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Start Wardrobe Check</button>
+                    <button onClick={() => navigate('/tryon')} className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold rounded-full hover:bg-platinum/30">Start Fit Check</button>
+                  </div>
+                </>
+              )}
+            </div>
           </main>
         );
       case 'main':
@@ -1164,7 +1239,7 @@ const App: React.FC = () => {
                         <p className="mt-2 text-platinum/80">Get styling tips for items in your wardrobe.</p>
                       </div>
                       <div className="mt-6 relative z-10">
-                        <button onClick={() => setLandingMode('wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
+                        <button onClick={() => navigate('/wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
                       </div>
                     </div>
                     <div className="relative group rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40 overflow-hidden">
@@ -1178,7 +1253,7 @@ const App: React.FC = () => {
                         <p className="mt-2 text-platinum/80">Try-on a product - preview fit, proportion, and vibe.</p>
                       </div>
                       <div className="mt-6 relative z-10">
-                        <button onClick={() => setCurrentPage('tryon')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Fit Check</button>
+                        <button onClick={() => navigate('/tryon')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Fit Check</button>
                       </div>
                     </div>
                   </div>
@@ -1212,7 +1287,7 @@ const App: React.FC = () => {
                           {isLoading ? 'Analyzing Your Style...' : 'Get Style Advice'}
                         </button>
                         <div className="mt-3 text-center">
-                          <button onClick={() => setLandingMode('none')} className="text-xs text-platinum/60 underline hover:text-platinum/80">Back to options</button>
+                          <button onClick={() => navigate('/')} className="text-xs text-platinum/60 underline hover:text-platinum/80">Back to options</button>
                         </div>
                       </div>
                     </div>
@@ -1348,32 +1423,26 @@ const App: React.FC = () => {
           onSignOut={handleSignOut} 
           onSignIn={() => setShowLogin(true)}
           onOpenLogin={(mode) => { setShowLogin(true); /* store mode in state below */ setLoginInitialMode(mode); }}
-          onNavigateHome={() => { setCurrentPage('main'); setLandingMode('none'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
-          onChatNav={() => {
-            if (!user) { setLoginInitialMode('signin'); setShowLogin(true); return; }
-            if (!styleProfile || !isProfileComplete(styleProfile)) { setShowOnboarding(true); setOnboardingGateBanner(true); return; }
-            if (!styleProfile.isPremium) { setShowPremiumUpsell(true); return; }
-            setProfileSavedBanner('Upload an item and get style advice to start a chat with a stylist.');
-            setTimeout(() => setProfileSavedBanner(null), 5000);
-          }}
-          onNavigateAbout={() => setCurrentPage('about')}
-          onNavigateRecipes={() => { setCurrentPage('recipes'); setLandingMode('none'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
-          onNavigateTryOn={() => setCurrentPage('tryon')}
+          onNavigateHome={() => { navigate('/'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
+          onChatNav={() => { navigate('/chat'); }}
+          onNavigateAbout={() => navigate('/about')}
+          onNavigateRecipes={() => { navigate('/recipes'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
+          onNavigateTryOn={() => navigate('/tryon')}
           onNavigatePartner={() => {
-            setCurrentPage('partner');
+            navigate('/partner');
           }}
           showWardrobeButton={currentPage === 'main'}
           onWardrobeClick={handleWardrobeClick}
-          onEditProfile={() => setCurrentPage('profile')}
+          onEditProfile={() => navigate('/profile')}
           activePage={currentPage}
           recipesActive={currentPage === 'recipes'}
         />
         {renderPage()}
       </div>
       <Footer 
-        onNavigateToPrivacy={() => setCurrentPage('privacy')}
-        onNavigateToTerms={() => setCurrentPage('terms')}
-        onNavigateToRefund={() => setCurrentPage('refund')}
+        onNavigateToPrivacy={() => navigate('/privacy')}
+        onNavigateToTerms={() => navigate('/terms')}
+        onNavigateToRefund={() => navigate('/refund')}
       />
       {activeUserForChat && (
         <StylistChatModal
