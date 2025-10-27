@@ -1075,27 +1075,50 @@ const App: React.FC = () => {
                     <p className="mt-2 text-platinum/70 text-sm md:text-base">Choose a path below to get started.</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40">
-                      <div>
+                    <div className="relative group rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40 overflow-hidden">
+                      {/* Wardrobe doodle: hanger + grid, faint in top-right */}
+                      <svg aria-hidden="true" className="hidden md:block absolute top-2 right-2 w-24 h-24 opacity-10 group-hover:opacity-20 text-platinum transition-opacity duration-200 pointer-events-none" viewBox="0 0 100 100" fill="none">
+                        {/* Hanger hook + bar */}
+                        <path d="M50 24c0-6 5-10 10-10 5 0 8 3 8 7 0 3-2 5-5 6-3 1-5 3-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M22 52c8-10 18-12 28-6 10-7 20-5 28 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M18 60h64" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        {/* Tiny grid of squares */}
+                        <g opacity="0.7" stroke="currentColor" strokeWidth="1">
+                          <rect x="68" y="8" width="6" height="6" rx="1"/>
+                          <rect x="78" y="8" width="6" height="6" rx="1"/>
+                          <rect x="68" y="18" width="6" height="6" rx="1"/>
+                          <rect x="78" y="18" width="6" height="6" rx="1"/>
+                        </g>
+                      </svg>
+                      <div className="relative z-10">
                         <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
                           <Squares2X2Icon className="h-6 w-6" aria-hidden="true" />
                         </div>
                         <h2 className="text-2xl font-extrabold tracking-tight">Wardrobe Check</h2>
                         <p className="mt-2 text-platinum/80">Get styling tips for items in your wardrobe.</p>
                       </div>
-                      <div className="mt-6">
+                      <div className="mt-6 relative z-10">
                         <button onClick={() => setLandingMode('wardrobe')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Wardrobe Check</button>
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40">
-                      <div>
+                    <div className="relative group rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40 overflow-hidden">
+                      {/* Fit doodle: flowing drape + sparkle, faint bottom-left and slightly off-canvas */}
+                      <svg aria-hidden="true" className="hidden md:block absolute -left-3 -bottom-2 w-28 h-28 opacity-10 group-hover:opacity-20 text-platinum transition-opacity duration-200 pointer-events-none" viewBox="0 0 120 120" fill="none">
+                        {/* Drape line */}
+                        <path d="M4 80 C 30 60, 60 100, 90 76 S 116 60, 116 90" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        {/* Small sparkle */}
+                        <g transform="translate(28,28)" opacity="0.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                          <path d="M6 0 L7 4 L10 6 L7 8 L6 12 L5 8 L2 6 L5 4 Z" fill="none"/>
+                        </g>
+                      </svg>
+                      <div className="relative z-10">
                         <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
                           <SparklesIcon className="h-6 w-6" aria-hidden="true" />
                         </div>
                         <h2 className="text-2xl font-extrabold tracking-tight">Fit Check</h2>
                         <p className="mt-2 text-platinum/80">Try-on a product - preview fit, proportion, and vibe.</p>
                       </div>
-                      <div className="mt-6">
+                      <div className="mt-6 relative z-10">
                         <button onClick={() => setCurrentPage('tryon')} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 active:scale-[0.99] transition-all">Start Fit Check</button>
                       </div>
                     </div>
