@@ -33,6 +33,8 @@ export const RecipeCarousel: React.FC = () => {
   const [current, setCurrent] = React.useState(0);
   const [metaCache, setMetaCache] = React.useState<Record<string, WeekMeta | null>>({});
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const centerCardRef = React.useRef<HTMLDivElement>(null);
+  const [descFontPx, setDescFontPx] = React.useState<number>(15);
   const touchStartX = React.useRef<number | null>(null);
 
   React.useEffect(() => {
@@ -114,6 +116,51 @@ export const RecipeCarousel: React.FC = () => {
   const flatlay = activeMeta?.flatlay ? `${basePath}/${activeMeta.flatlay}` : `${basePath}/flatlay.webp`;
   const model = activeMeta?.model ? `${basePath}/${activeMeta.model}` : `${basePath}/model.webp`;
 
+  const fontClassFor = (px: number) => {
+    switch (px) {
+      case 11: return 'text-[11px]';
+      case 12: return 'text-[12px]';
+      case 13: return 'text-[13px]';
+      case 14: return 'text-[14px]';
+      case 15: default: return 'text-[15px]';
+    }
+  };
+
+  // Fit description text to available height by shrinking font a bit if needed (down to 11px)
+  const fitDescription = React.useCallback(() => {
+    const el = centerCardRef.current;
+    if (!el) return;
+    // Reset to base size before measuring
+    let base = 15; // start target in px
+    el.className = `h-full overflow-hidden ${fontClassFor(base)}`;
+    // Allow layout flush
+    const maxShrink = 11;
+    // Loop to shrink until fits or min size reached
+    // Small safety to avoid long loops
+    for (let size = base; size >= maxShrink; size--) {
+      el.className = `h-full overflow-hidden ${fontClassFor(size)}`;
+      const fits = el.scrollHeight <= el.clientHeight + 1; // +1 for rounding
+      if (fits) {
+        setDescFontPx(size);
+        return;
+      }
+    }
+    setDescFontPx(maxShrink);
+  }, []);
+
+  React.useEffect(() => {
+    // Run after meta or slide changes
+    // Timeout to allow DOM paint
+    const t = setTimeout(() => fitDescription(), 0);
+    return () => clearTimeout(t);
+  }, [current, activeMeta?.slug, activeMeta?.description, fitDescription]);
+
+  React.useEffect(() => {
+    const onResize = () => { fitDescription(); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [fitDescription]);
+
   return (
     <div
       ref={containerRef}
@@ -155,24 +202,25 @@ export const RecipeCarousel: React.FC = () => {
       {/* Panels */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch transition-transform duration-300 ease-out">
         {/* Left: Flat lay */}
-        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 flex items-center justify-center overflow-hidden">
+        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 h-72 md:h-80 flex items-center justify-center overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={flatlay}
             alt={activeMeta?.flatlayAlt || 'Flat lay'}
-            className="max-h-72 md:max-h-80 w-auto object-contain"
+            className="h-full w-auto object-contain"
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-flatlay.svg'; }}
             loading="lazy"
           />
         </div>
         {/* Center: Description */}
-        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-5">
-          {activeMeta?.description?.map((p, idx) => {
+        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 md:p-5 h-72 md:h-80 overflow-hidden">
+          <div ref={centerCardRef} className={`h-full overflow-hidden ${fontClassFor(descFontPx)}`}>
+          {(activeMeta?.description || []).map((p, idx) => {
             const m = /^([^:]+):(.*)$/.exec(p);
             const lead = m ? m[1].trim() : null;
             const rest = m ? m[2].trim() : null;
             return (
-              <p key={idx} className={`text-sm md:text-[15px] text-platinum/85 leading-normal ${idx === 0 ? '' : 'mt-2.5'}`}>
+              <p key={idx} className={`text-platinum/85 leading-snug ${idx === 0 ? '' : 'mt-2'}`}>
                 {lead ? (
                   <>
                     <span className="font-semibold">{lead}</span>
@@ -183,17 +231,19 @@ export const RecipeCarousel: React.FC = () => {
                 )}
               </p>
             );
-          }) || (
+          })}
+          {(!activeMeta || !activeMeta.description || activeMeta.description.length === 0) && (
             <p className="text-sm text-platinum/60">Detailed styling notes will appear here.</p>
           )}
+          </div>
         </div>
         {/* Right: Model */}
-        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 flex items-center justify-center overflow-hidden">
+        <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 h-72 md:h-80 flex items-center justify-center overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={model}
             alt={activeMeta?.modelAlt || 'Styled model'}
-            className="max-h-72 md:max-h-80 w-auto object-contain"
+            className="h-full w-auto object-contain"
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-model.svg'; }}
             loading="lazy"
           />
