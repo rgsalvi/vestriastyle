@@ -182,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   // Minimal luxe: no pills, slightly bolder text, subtle underline on hover
   const navLinkBase = "group relative inline-flex items-center px-1.5 py-1 text-sm font-medium tracking-[0.04em] text-platinum/90 hover:text-white transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue focus-visible:ring-platinum/40";
   const navActive = "text-white after:opacity-100";
-  const navUnderlineBase = "after:content-[''] after:block after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-px after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-transparent after:via-platinum/60 after:to-transparent after:opacity-90 after:transition-all after:duration-200 group-hover:after:w-3/4 focus-visible:after:w-3/4";
+  const navUnderlineBase = "after:content-[''] after:block after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-px after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-transparent after:via-platinum/60 after:to-transparent after:opacity-90 after:transition-all after:duration-200 hover:after:w-3/4 focus-visible:after:w-3/4";
 
   return (
   <>
