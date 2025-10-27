@@ -1,5 +1,7 @@
 import React from 'react';
 import RecipeTryOnModal from './RecipeTryOnModal';
+import { foundersMap } from './founders';
+import { FounderBioModal, FounderData } from './FounderBioModal';
 
 type WeekMeta = {
   date: string; // Friday start, ISO string e.g. 2025-10-31
@@ -10,6 +12,7 @@ type WeekMeta = {
   slug: string;
   flatlay?: string; // optional file name if not default
   model?: string; // optional file name if not default
+  founderId?: 'tanvi' | 'muskaan' | 'riddhi';
 };
 
 const ChevronLeft: React.FC<{ className?: string }>=({ className }) => (
@@ -124,6 +127,8 @@ export const RecipeCarousel: React.FC = () => {
   const flatlay = activeMeta?.flatlay ? `${basePath}/${activeMeta.flatlay}` : (activeSlug ? `${basePath}/flatlay.webp` : '');
   const model = activeMeta?.model ? `${basePath}/${activeMeta.model}` : (activeSlug ? `${basePath}/model.webp` : '');
   const [tryOnOpen, setTryOnOpen] = React.useState(false);
+  const [founderOpen, setFounderOpen] = React.useState(false);
+  const activeFounder: FounderData | null = activeMeta?.founderId ? foundersMap[activeMeta.founderId] : null;
 
   const fontClassFor = (px: number) => {
     switch (px) {
@@ -217,10 +222,27 @@ export const RecipeCarousel: React.FC = () => {
       </button>
 
       <div key={activeSlug || 'empty'} className={`${hasMountedRef.current ? (dir > 0 ? 'animate-slide-in-right' : 'animate-slide-in-left') : ''} motion-reduce:animate-none`}>
-        {/* Header: Week + Title */}
+        {/* Header: Week + Title + Founder byline */}
         <div className="text-center">
           <div className="text-sm tracking-widest uppercase text-platinum/60">{activeMeta ? formatWeek(activeMeta.date) : '\u00A0'}</div>
           <div className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight">{activeMeta?.title || '\u00A0'}</div>
+          {activeFounder && (
+            <div className="mt-3 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setFounderOpen(true)}
+                className="group inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-platinum/80 hover:text-white hover:bg-white/5 border border-platinum/20 hover:border-platinum/40 transition"
+                aria-label={`About stylist ${activeFounder.name}`}
+                title={`About stylist ${activeFounder.name}`}
+              >
+                <span className="inline-flex w-7 h-7 rounded-full ring-1 ring-platinum/40 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={activeFounder.headshot} alt={activeFounder.name} className="w-full h-full object-cover" />
+                </span>
+                <span className="text-sm"><span className="opacity-60">By</span> <span className="font-semibold">{activeFounder.name}</span></span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Panels */}
@@ -288,6 +310,9 @@ export const RecipeCarousel: React.FC = () => {
       </div>
         {tryOnOpen && activeSlug && (
           <RecipeTryOnModal isOpen={tryOnOpen} onClose={() => setTryOnOpen(false)} flatlayUrl={flatlay} title={activeMeta?.title} />
+        )}
+        {founderOpen && activeFounder && (
+          <FounderBioModal isOpen={founderOpen} onClose={() => setFounderOpen(false)} founder={activeFounder} />
         )}
       </div>
       </>
