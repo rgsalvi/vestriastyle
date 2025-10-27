@@ -31,11 +31,13 @@ function formatWeek(dateIso: string): string {
 export const RecipeCarousel: React.FC = () => {
   const [slugs, setSlugs] = React.useState<string[] | null>(null);
   const [current, setCurrent] = React.useState(0);
+  const [dir, setDir] = React.useState<1 | -1>(1);
   const [metaCache, setMetaCache] = React.useState<Record<string, WeekMeta | null>>({});
   const containerRef = React.useRef<HTMLDivElement>(null);
   const centerCardRef = React.useRef<HTMLDivElement>(null);
   const [descFontPx, setDescFontPx] = React.useState<number>(15);
   const touchStartX = React.useRef<number | null>(null);
+  const hasMountedRef = React.useRef(false);
 
   React.useEffect(() => {
     let mounted = true;
@@ -94,8 +96,8 @@ export const RecipeCarousel: React.FC = () => {
     targets.forEach(s => { loadMeta(s); });
   }, [slugs, current, loadMeta]);
 
-  const onPrev = () => setCurrent(c => Math.max(0, c - 1));
-  const onNext = () => setCurrent(c => (slugs ? Math.min(slugs.length - 1, c + 1) : c));
+  const onPrev = () => { setDir(-1); setCurrent(c => Math.max(0, c - 1)); };
+  const onNext = () => { setDir(1); setCurrent(c => (slugs ? Math.min(slugs.length - 1, c + 1) : c)); };
 
   const onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
     if (e.key === 'ArrowLeft') onPrev();
@@ -166,6 +168,8 @@ export const RecipeCarousel: React.FC = () => {
     return () => window.removeEventListener('resize', onResize);
   }, [fitDescription]);
 
+  React.useEffect(() => { hasMountedRef.current = true; }, []);
+
   return (
     <div
       ref={containerRef}
@@ -210,14 +214,15 @@ export const RecipeCarousel: React.FC = () => {
         <ChevronRight />
       </button>
 
-      {/* Header: Week + Title */}
-      <div className="text-center">
-        <div className="text-sm tracking-widest uppercase text-platinum/60">{activeMeta ? formatWeek(activeMeta.date) : '\u00A0'}</div>
-        <div className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight">{activeMeta?.title || '\u00A0'}</div>
-      </div>
+      <div key={activeSlug || 'empty'} className={`${hasMountedRef.current ? (dir > 0 ? 'animate-slide-in-right' : 'animate-slide-in-left') : ''} motion-reduce:animate-none`}>
+        {/* Header: Week + Title */}
+        <div className="text-center">
+          <div className="text-sm tracking-widest uppercase text-platinum/60">{activeMeta ? formatWeek(activeMeta.date) : '\u00A0'}</div>
+          <div className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight">{activeMeta?.title || '\u00A0'}</div>
+        </div>
 
-      {/* Panels */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch transition-transform duration-300 ease-out">
+        {/* Panels */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* Left: Flat lay */}
         <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 h-72 md:h-80 flex items-center justify-center overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -271,6 +276,7 @@ export const RecipeCarousel: React.FC = () => {
       <div className="mt-8 flex items-center justify-center gap-3">
         <button className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Chat With A Stylist</button>
         <button className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold hover:bg-platinum/30">Try It On!</button>
+      </div>
       </div>
       </>
       )}

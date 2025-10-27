@@ -76,6 +76,24 @@
   animation: pulse-gentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Slide-in animations for carousel transitions */
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-slide-in-left { animation: slide-in-left 0.35s ease-out both; }
+.animate-slide-in-right { animation: slide-in-right 0.35s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in-left, .animate-slide-in-right { animation: none !important; }
+}
+
 /* Stardust Animation */
 @keyframes stardust-float {
   0% { transform: translateY(0px); opacity: 0; }
