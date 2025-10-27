@@ -5,11 +5,18 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   flatlayUrl: string; // absolute or root-relative URL to the recipe flat lay image
+  title?: string; // recipe title for the right panel heading
 };
 
 const CloseIcon: React.FC = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
+const UploadIcon: React.FC = () => (
+  <svg className="mx-auto h-12 w-12 text-platinum/40" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -27,13 +34,15 @@ async function urlToDataUrl(url: string): Promise<{ dataUrl: string; mimeType: s
   return { dataUrl, mimeType };
 }
 
-export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl }) => {
+export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl, title }) => {
   const [personDataUrl, setPersonDataUrl] = React.useState<string | null>(null);
   const [validator, setValidator] = React.useState<{ ok: boolean; reasons: string[] } | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [resultDataUrl, setResultDataUrl] = React.useState<string | null>(null);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [dragActive, setDragActive] = React.useState(false);
+  const [animateIn, setAnimateIn] = React.useState(false);
+  const closeRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -44,6 +53,15 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl 
       setResultDataUrl(null);
       setErrorMsg(null);
       setDragActive(false);
+      setAnimateIn(false);
+    }
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      const t = setTimeout(() => setAnimateIn(true), 10);
+      const f = setTimeout(() => closeRef.current?.focus(), 20);
+      return () => { clearTimeout(t); clearTimeout(f); };
     }
   }, [isOpen]);
 
@@ -87,45 +105,56 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="recipe-tryon-title">
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true"></div>
-      <div className="relative z-10 w-full max-w-3xl bg-[#1F2937] rounded-2xl border border-platinum/20 shadow-xl overflow-hidden">
-        <button onClick={onClose} className="absolute top-4 right-4 text-platinum/70 hover:text-white" aria-label="Close modal"><CloseIcon /></button>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+      <div className={`relative z-10 w-full max-w-5xl transform transition-all duration-200 ${animateIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className="rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl max-h-[90vh] flex flex-col">
+          <button ref={closeRef} onClick={onClose} className="absolute top-4 right-4 z-20 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/30 text-platinum/80 hover:bg-black/50 hover:text-white transition" aria-label="Close try-on modal"><CloseIcon /></button>
+          <div className="sticky top-0 z-10 px-4 sm:px-8 pt-6 pb-3 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
+            <div className="mx-auto max-w-5xl">
+              <h3 id="recipe-tryon-title" className="text-2xl font-extrabold tracking-tight">Virtual Try-On</h3>
+            </div>
+            <div className="mx-auto mt-3 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0">
           {/* Left: instructions + person upload */}
-          <div className="p-6 md:p-8">
-            <h3 className="text-xl font-semibold">Upload Your Photo</h3>
+          <div className="p-6 md:p-8 overflow-y-auto">
+            <h4 className="text-xl font-semibold">Upload Your Photo</h4>
             <p className="mt-1 text-sm text-platinum/70">Full-length, front-facing, good lighting, plain background for best results.</p>
             <div
-              className={`mt-4 rounded-xl border ${dragActive ? 'border-platinum/60 border-dashed bg-white/10' : 'border-platinum/20'} bg-white/5 p-4 text-center transition-colors`}
+              className={`mt-4 rounded-xl transition-colors ${dragActive ? 'bg-white/10' : 'bg-white/5'}`}
               onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
               onDragLeave={() => setDragActive(false)}
               onDrop={(e) => { e.preventDefault(); setDragActive(false); const f = e.dataTransfer.files?.[0]; if (f && f.type.startsWith('image/')) onPickPerson(f); }}
             >
-              <label className="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 cursor-pointer">
-                <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
-                Select Photo
+              <label className={`block cursor-pointer`}> 
+                <div className={`flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
+                  <UploadIcon />
+                  <div className="mt-2 text-sm text-platinum/80">
+                    <span className="font-medium">Upload full-length photo</span>
+                  </div>
+                  <input type="file" accept="image/*" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
+                  <p className="mt-1 text-xs text-platinum/60">PNG or JPG up to 10MB</p>
+                </div>
               </label>
-              {personDataUrl ? (
-                <img src={personDataUrl} alt="person" className="mt-3 w-full max-w-xs mx-auto rounded-lg border border-platinum/20 object-cover" />
-              ) : (
-                <p className="mt-2 text-xs text-platinum/60">or drag & drop here</p>
+
+              {personDataUrl && (
+                <div className="px-2 pb-4">
+                  <img src={personDataUrl} alt="person" className="mt-3 w-full max-w-xs mx-auto rounded-lg border border-platinum/20 object-cover" />
+                </div>
               )}
               {validator && !validator.ok && (
                 <div className="mt-3 text-xs text-amber-200/90 bg-amber-400/10 border border-amber-400/40 rounded-lg px-3 py-2">
                   This photo may not be optimal: {validator.reasons?.join('; ') || 'general quality concerns'}.
                 </div>
               )}
-              <div className="mt-4 flex justify-center">
-                <button onClick={onGenerate} disabled={!personDataUrl || isGenerating} className="px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGenerating ? 'Generating…' : 'Generate Try-On'}</button>
-              </div>
               {errorMsg && <div className="mt-3 text-xs text-red-300">{errorMsg}</div>}
             </div>
           </div>
           {/* Right: flat lay preview and result */}
-          <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-platinum/20 bg-white/5">
-            <div className="text-sm tracking-widest uppercase text-platinum/60">This Week&apos;s Products</div>
+          <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-platinum/20 bg-white/5 overflow-y-auto">
+            <div className="text-sm tracking-widest uppercase text-platinum/60">{title || 'This Week\'s Products'}</div>
             <div className="mt-2 rounded-xl overflow-hidden border border-platinum/20 image-bg-soft">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={flatlayUrl} alt="flat lay" className="w-full h-56 object-cover" />
@@ -145,6 +174,12 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl 
                 <button onClick={onClose} className="px-4 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold">Close</button>
               </div>
             )}
+          </div>
+          </div>
+          {/* Footer actions */}
+          <div className="border-t border-platinum/20 bg-black/20 px-6 md:px-8 py-4 flex items-center justify-between">
+            <button onClick={onClose} className="px-4 py-2.5 rounded-full border border-platinum/30 text-platinum/80 hover:bg-white/5">Cancel</button>
+            <button onClick={onGenerate} disabled={!personDataUrl || isGenerating} className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold disabled:opacity-50">{isGenerating ? 'Generating…' : 'Try It On!'}</button>
           </div>
         </div>
       </div>

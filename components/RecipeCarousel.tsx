@@ -284,7 +284,7 @@ export const RecipeCarousel: React.FC = () => {
           <button onClick={() => setTryOnOpen(true)} className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold hover:bg-platinum/30">Try It On!</button>
       </div>
         {tryOnOpen && activeSlug && (
-          <RecipeTryOnModal isOpen={tryOnOpen} onClose={() => setTryOnOpen(false)} flatlayUrl={flatlay} />
+          <RecipeTryOnModal isOpen={tryOnOpen} onClose={() => setTryOnOpen(false)} flatlayUrl={flatlay} title={activeMeta?.title} />
         )}
       </div>
       </>
