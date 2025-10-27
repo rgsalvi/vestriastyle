@@ -1201,8 +1201,46 @@ const App: React.FC = () => {
   return <VirtualTryOn onBack={() => navigate('/')} onOpenChat={handleOpenChat} />;
       case 'recipes':
         return (
-          <main className="container mx-auto p-4 md:p-8">
-            <StyleRecipes isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
+          <main className="container mx-auto">
+            <div className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16">
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">#VestriaStyleRecipes</h1>
+              </div>
+
+              <div className="mt-6 h-px bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
+
+              <section className="mt-10 md:mt-12">
+                <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">Outfit Formulas</h2>
+                <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
+                  <div className="max-w-3xl mx-auto text-center space-y-4">
+                    <p className="text-platinum/85">Curated combinations that make getting dressed simple and stylish—adaptable to your taste and wardrobe.</p>
+                    {!user ? (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => { setLoginInitialMode('signin'); setShowLogin(true); }}
+                          className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90"
+                        >
+                          Sign In
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => setShowPremiumUpsell(true)}
+                          className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90 inline-flex items-center"
+                        >
+                          Explore With A Stylist
+                          <span className="ml-2 inline-block bg-dark-blue text-platinum text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">PRO</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-8">
+                    <StyleRecipes variant="gridOnly" isLoggedIn={!!user} onRequireLogin={() => setShowLogin(true)} />
+                  </div>
+                </div>
+              </section>
+            </div>
           </main>
         );
       case 'chat':

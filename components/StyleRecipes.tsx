@@ -51,21 +51,60 @@ const ChatIcon: React.FC = () => (
 );
 
 
-export const StyleRecipes: React.FC<{ isLoggedIn?: boolean; onRequireLogin?: () => void }> = ({ isLoggedIn = false, onRequireLogin }) => {
+export const StyleRecipes: React.FC<{
+    isLoggedIn?: boolean;
+    onRequireLogin?: () => void;
+    variant?: 'full' | 'gridOnly';
+}> = ({ isLoggedIn = false, onRequireLogin, variant = 'full' }) => {
     const [isUpsellModalOpen, setIsUpsellModalOpen] = useState(false);
+
+    const Grid = (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {recipes.map((recipe) => (
+                <div
+                    key={recipe.title}
+                    className="bg-dark-blue/80 p-6 rounded-2xl shadow-lg border border-platinum/20 flex flex-col hover:shadow-platinum/10 hover:-translate-y-1 transition-all duration-300"
+                >
+                    <h3 className="text-xl font-semibold text-platinum">{recipe.title}</h3>
+                    <p className="text-sm text-platinum/60 mt-1 flex-grow">{recipe.description}</p>
+                    <ul className="mt-4 space-y-3">
+                        {recipe.items.map((item) => (
+                            <li key={item} className="flex items-start">
+                                <div className="flex-shrink-0 pt-0.5">
+                                    <CheckIcon />
+                                </div>
+                                <span className="ml-3 text-sm text-platinum/80">{item}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ))}
+        </div>
+    );
+
+    if (variant === 'gridOnly') {
+        return Grid;
+    }
 
     return (
         <>
-            <section id="style-recipes" className="mt-12 py-16 bg-black/20 border-t border-platinum/20 scroll-mt-32 md:scroll-mt-40">
+            <section
+                id="style-recipes"
+                className="mt-12 py-16 bg-black/20 border-t border-platinum/20 scroll-mt-32 md:scroll-mt-40"
+            >
                 <div className="container mx-auto px-4 md:px-8">
                     <div className="text-center mb-10">
                         <h2 className="text-3xl font-semibold text-platinum tracking-[0.2em] uppercase">Style Recipes</h2>
-                        <p className="mt-3 text-lg text-platinum/60 max-w-2xl mx-auto">Your go-to formulas for effortless, stylish outfits for any occasion.</p>
+                        <p className="mt-3 text-lg text-platinum/60 max-w-2xl mx-auto">
+                            Your go-to formulas for effortless, stylish outfits for any occasion.
+                        </p>
                     </div>
 
                     <div className="my-10 max-w-2xl mx-auto p-6 bg-dark-blue/80 rounded-2xl border border-platinum/20 text-center shadow-lg">
                         <h3 className="text-xl font-semibold text-platinum">Ready to bring these recipes to life?</h3>
-                        <p className="mt-2 text-platinum/60">Chat live with a professional stylist to see how you can adapt these to your unique wardrobe and body type.</p>
+                        <p className="mt-2 text-platinum/60">
+                            Chat live with a professional stylist to see how you can adapt these to your unique wardrobe and body type.
+                        </p>
                         <button
                             title={!isLoggedIn ? 'Sign in to chat with a stylist' : 'Premium feature'}
                             onClick={() => {
@@ -83,24 +122,7 @@ export const StyleRecipes: React.FC<{ isLoggedIn?: boolean; onRequireLogin?: () 
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {recipes.map((recipe) => (
-                            <div key={recipe.title} className="bg-dark-blue/80 p-6 rounded-2xl shadow-lg border border-platinum/20 flex flex-col hover:shadow-platinum/10 hover:-translate-y-1 transition-all duration-300">
-                                <h3 className="text-xl font-semibold text-platinum">{recipe.title}</h3>
-                                <p className="text-sm text-platinum/60 mt-1 flex-grow">{recipe.description}</p>
-                                <ul className="mt-4 space-y-3">
-                                    {recipe.items.map((item) => (
-                                        <li key={item} className="flex items-start">
-                                            <div className="flex-shrink-0 pt-0.5">
-                                                <CheckIcon />
-                                            </div>
-                                            <span className="ml-3 text-sm text-platinum/80">{item}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
+                    {Grid}
                 </div>
             </section>
             {isUpsellModalOpen && <PremiumUpsellModal onClose={() => setIsUpsellModalOpen(false)} />}
