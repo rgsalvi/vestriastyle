@@ -357,6 +357,97 @@ type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'par
 
 // No global Google object required with Firebase Email/Password
 
+// Luxe doodles: small inline SVG components with minimal stroke for a high-fashion vibe
+type WardrobeDoodleVariant = 'hanger-grid' | 'button-stitch' | 'tape-measure';
+type FitDoodleVariant = 'drape-sparkle' | 'mannequin-star' | 'runway-lines';
+
+// Easy switches for what to show right now
+const WARDROBE_DOODLE_VARIANT: WardrobeDoodleVariant = 'button-stitch';
+const FIT_DOODLE_VARIANT: FitDoodleVariant = 'runway-lines';
+
+const WardrobeDoodle: React.FC<{ className?: string; variant?: WardrobeDoodleVariant }> = ({ className = '', variant = 'hanger-grid' }) => {
+  switch (variant) {
+    case 'button-stitch':
+      return (
+        <svg aria-hidden="true" className={className} viewBox="0 0 100 100" fill="none">
+          {/* Large button outline with holes */}
+          <circle cx="70" cy="28" r="12" stroke="currentColor" strokeWidth="2" />
+          <circle cx="66" cy="24" r="1.6" fill="currentColor" />
+          <circle cx="74" cy="24" r="1.6" fill="currentColor" />
+          <circle cx="66" cy="32" r="1.6" fill="currentColor" />
+          <circle cx="74" cy="32" r="1.6" fill="currentColor" />
+          {/* Stitching dashes along a curved seam */}
+          <path d="M12 64 C 32 44, 58 52, 88 40" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="2 6" />
+        </svg>
+      );
+    case 'tape-measure':
+      return (
+        <svg aria-hidden="true" className={className} viewBox="0 0 120 120" fill="none">
+          {/* Curled tape measure */}
+          <path d="M16 72 C 36 52, 60 92, 90 68 S 118 56, 104 44" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          {/* Tick marks */}
+          <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M28 66 v-6" />
+            <path d="M38 60 v-8" />
+            <path d="M48 66 v-6" />
+            <path d="M58 62 v-8" />
+            <path d="M68 70 v-6" />
+          </g>
+        </svg>
+      );
+    case 'hanger-grid':
+    default:
+      return (
+        <svg aria-hidden="true" className={className} viewBox="0 0 100 100" fill="none">
+          <path d="M50 24c0-6 5-10 10-10 5 0 8 3 8 7 0 3-2 5-5 6-3 1-5 3-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M22 52c8-10 18-12 28-6 10-7 20-5 28 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M18 60h64" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <g opacity="0.7" stroke="currentColor" strokeWidth="1">
+            <rect x="68" y="8" width="6" height="6" rx="1"/>
+            <rect x="78" y="8" width="6" height="6" rx="1"/>
+            <rect x="68" y="18" width="6" height="6" rx="1"/>
+            <rect x="78" y="18" width="6" height="6" rx="1"/>
+          </g>
+        </svg>
+      );
+  }
+};
+
+const FitDoodle: React.FC<{ className?: string; variant?: FitDoodleVariant }> = ({ className = '', variant = 'drape-sparkle' }) => {
+  switch (variant) {
+    case 'mannequin-star':
+      return (
+        <svg aria-hidden="true" className={className} viewBox="0 0 120 120" fill="none">
+          {/* Minimal mannequin torso */}
+          <path d="M60 24c6 0 10 4 12 8 2 4 4 8 10 10-4 8-8 14-8 20 0 8 2 12 6 18H40c4-6 6-10 6-18 0-6-4-12-8-20 6-2 8-6 10-10 2-4 6-8 12-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          {/* Tiny sparkle */}
+          <g transform="translate(20,84)" opacity="0.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M6 0 L7 4 L10 6 L7 8 L6 12 L5 8 L2 6 L5 4 Z" fill="none"/>
+          </g>
+        </svg>
+      );
+    case 'runway-lines':
+      return (
+        <svg aria-hidden="true" className={className} viewBox="0 0 140 140" fill="none">
+          {/* Converging runway lines */}
+          <path d="M8 120 L70 20 L132 120" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M24 120 L70 40 L116 120" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
+          <path d="M40 120 L70 60 L100 120" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+        </svg>
+      );
+    case 'drape-sparkle':
+    default:
+      return (
+        <svg aria-hidden="true" className={className} viewBox="0 0 120 120" fill="none">
+          <path d="M4 80 C 30 60, 60 100, 90 76 S 116 60, 116 90" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <g transform="translate(28,28)" opacity="0.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M6 0 L7 4 L10 6 L7 8 L6 12 L5 8 L2 6 L5 4 Z" fill="none"/>
+          </g>
+        </svg>
+      );
+  }
+};
+
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('main');
   const [newItem, setNewItem] = useState<AnalysisItem | null>(null);
@@ -1076,20 +1167,8 @@ const App: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                     <div className="relative group rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40 overflow-hidden">
-                      {/* Wardrobe doodle: hanger + grid, faint in top-right */}
-                      <svg aria-hidden="true" className="hidden md:block absolute top-2 right-2 w-24 h-24 opacity-10 group-hover:opacity-20 text-platinum transition-opacity duration-200 pointer-events-none" viewBox="0 0 100 100" fill="none">
-                        {/* Hanger hook + bar */}
-                        <path d="M50 24c0-6 5-10 10-10 5 0 8 3 8 7 0 3-2 5-5 6-3 1-5 3-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        <path d="M22 52c8-10 18-12 28-6 10-7 20-5 28 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        <path d="M18 60h64" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        {/* Tiny grid of squares */}
-                        <g opacity="0.7" stroke="currentColor" strokeWidth="1">
-                          <rect x="68" y="8" width="6" height="6" rx="1"/>
-                          <rect x="78" y="8" width="6" height="6" rx="1"/>
-                          <rect x="68" y="18" width="6" height="6" rx="1"/>
-                          <rect x="78" y="18" width="6" height="6" rx="1"/>
-                        </g>
-                      </svg>
+                      {/* Wardrobe doodle (variant controlled above) */}
+                      <WardrobeDoodle className="hidden md:block absolute top-2 right-2 w-24 h-24 opacity-10 group-hover:opacity-20 text-platinum transition-opacity duration-200 pointer-events-none" variant={WARDROBE_DOODLE_VARIANT} />
                       <div className="relative z-10">
                         <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
                           <Squares2X2Icon className="h-6 w-6" aria-hidden="true" />
@@ -1102,15 +1181,8 @@ const App: React.FC = () => {
                       </div>
                     </div>
                     <div className="relative group rounded-2xl border border-platinum/20 bg-white/5 p-6 text-center flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-platinum/20 hover:border-platinum/40 overflow-hidden">
-                      {/* Fit doodle: flowing drape + sparkle, faint bottom-left and slightly off-canvas */}
-                      <svg aria-hidden="true" className="hidden md:block absolute -left-3 -bottom-2 w-28 h-28 opacity-10 group-hover:opacity-20 text-platinum transition-opacity duration-200 pointer-events-none" viewBox="0 0 120 120" fill="none">
-                        {/* Drape line */}
-                        <path d="M4 80 C 30 60, 60 100, 90 76 S 116 60, 116 90" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        {/* Small sparkle */}
-                        <g transform="translate(28,28)" opacity="0.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                          <path d="M6 0 L7 4 L10 6 L7 8 L6 12 L5 8 L2 6 L5 4 Z" fill="none"/>
-                        </g>
-                      </svg>
+                      {/* Fit doodle (variant controlled above) */}
+                      <FitDoodle className="hidden md:block absolute -left-3 -bottom-2 w-28 h-28 opacity-10 group-hover:opacity-20 text-platinum transition-opacity duration-200 pointer-events-none" variant={FIT_DOODLE_VARIANT} />
                       <div className="relative z-10">
                         <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/20 border border-platinum/20 text-platinum">
                           <SparklesIcon className="h-6 w-6" aria-hidden="true" />
