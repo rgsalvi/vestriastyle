@@ -580,7 +580,8 @@ const App: React.FC = () => {
             const cloudProfile = await loadUserProfile(mapped.id);
             if (cloudProfile) {
               console.log('[profile-load] source=cloud hasFlag=', !!cloudProfile.onboardingComplete);
-              if (fbUser.emailVerified && !cloudProfile.isPremium) {
+              // Launch bonus: grant Premium to all users
+              if (!cloudProfile.isPremium) {
                 try { await saveUserProfile(mapped.id, { isPremium: true }); cloudProfile.isPremium = true; } catch (e) { console.warn('Failed to auto-upgrade premium', e); }
               }
               // Derive header picture from storage path if present
@@ -604,9 +605,8 @@ const App: React.FC = () => {
               if (profileRaw) {
                 const localProf = JSON.parse(profileRaw);
                 console.log('[profile-load] source=local hasFlag=', !!localProf.onboardingComplete);
-                if (fbUser.emailVerified && !localProf.isPremium) {
-                  localProf.isPremium = true;
-                }
+                // Launch bonus: grant Premium locally as well
+                if (!localProf.isPremium) localProf.isPremium = true;
                 // Map local storage path to public URL for header
                 if ((localProf as any).avatar_url) {
                   mapped.picture = getSupabaseAvatarPublicUrl((localProf as any).avatar_url);
@@ -637,7 +637,7 @@ const App: React.FC = () => {
               if (profileRaw) {
                 const localProf = JSON.parse(profileRaw);
                 console.log('[profile-load] source=local-fallback hasFlag=', !!localProf.onboardingComplete);
-                if (fbUser.emailVerified && !localProf.isPremium) localProf.isPremium = true;
+                if (!localProf.isPremium) localProf.isPremium = true;
                 if ((localProf as any).avatar_url) {
                   mapped.picture = getSupabaseAvatarPublicUrl((localProf as any).avatar_url);
                 }
@@ -814,6 +814,7 @@ const App: React.FC = () => {
       // Only store storage path if upload succeeded; never store data URLs or absolute URLs
       avatar_url: photoURL || undefined,
       isOnboarded: true,
+      isPremium: true, // Launch bonus: all users are premium
       // Include identity fields to satisfy potential NOT NULL/unique constraints on first write
       email: user.email,
       display_name: user.name,
@@ -875,7 +876,7 @@ const App: React.FC = () => {
       }, 400);
     }
     if (user && !auth.currentUser?.emailVerified) {
-      setProfileSavedBanner('Check your email to verify your account (look in Spam) to unlock premium features.');
+      setProfileSavedBanner('Check your email to verify your account (look in Spam) so we can keep your experience secure.');
       setTimeout(() => setProfileSavedBanner(null), 8000);
     }
     try { trackEvent('onboarding_complete'); } catch {}
