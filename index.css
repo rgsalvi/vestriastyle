@@ -160,7 +160,7 @@
 /* Luxe pill buttons */
 @layer components {
   .btn-luxe {
-    @apply inline-flex items-center justify-center rounded-full px-4 md:px-5 py-2 text-[13px] md:text-sm font-semibold text-platinum bg-white/10 backdrop-blur-md ring-1 ring-platinum/30 shadow-sm transition-all duration-200 ease-out hover:bg-white/15 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/50;
+    @apply relative overflow-hidden inline-flex items-center justify-center rounded-full px-4 md:px-5 py-2 text-[13px] md:text-sm font-semibold text-platinum bg-white/10 backdrop-blur-md ring-1 ring-platinum/30 shadow-sm transition-all duration-200 ease-out hover:bg-white/15 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/50;
   }
   .btn-luxe-ghost {
     @apply inline-flex items-center justify-center rounded-full px-4 md:px-5 py-2 text-[13px] md:text-sm font-medium text-platinum/85 bg-transparent ring-1 ring-platinum/30 backdrop-blur-md transition-all duration-200 ease-out hover:bg-white/5 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/50;
@@ -168,4 +168,23 @@
   .btn-disabled {
     @apply opacity-50 pointer-events-none;
   }
+}
+
+/* Sheen effect on luxe buttons */
+.btn-luxe:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(194, 190, 186, 0.15) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-100%) skewX(-20deg);
+  animation: shimmer-effect 0.9s ease-out;
+  pointer-events: none;
 }
