@@ -116,7 +116,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
             </div>
             <div className="mx-auto mt-3 h-px w-24 bg-gradient-to-r from-transparent via-platinum/50 to-transparent" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {/* Left: instructions + person upload */}
           <div className="p-6 md:p-8">
             <div
@@ -164,14 +164,14 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
           </div>
           {/* Right: flat lay fills the column */}
           <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-platinum/20 bg-white/5">
-            <div className="rounded-xl overflow-hidden border border-platinum/20 image-bg-soft relative h-56 md:h-[42vh] lg:h-[48vh]">
+            <div className="relative z-0 rounded-xl overflow-hidden border border-platinum/20 image-bg-soft h-56 md:h-[42vh] lg:h-[48vh]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={flatlayUrl} alt="flat lay products" className="absolute inset-0 w-full h-full object-cover" />
             </div>
           </div>
           </div>
           {/* Footer actions */}
-          <div className="border-t border-platinum/20 bg-black/20 px-6 md:px-8 py-4 flex items-center justify-between">
+          <div className="relative z-10 border-t border-platinum/20 bg-black/20 px-6 md:px-8 py-4 flex items-center justify-between">
             <button onClick={onClose} className="btn-luxe-ghost">Cancel</button>
             <button onClick={onGenerate} disabled={!personDataUrl || isGenerating} className="btn-luxe disabled:opacity-50 disabled:pointer-events-none">{isGenerating ? 'Generating…' : 'Try It On!'}</button>
           </div>
