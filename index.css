@@ -28,6 +28,33 @@
     @apply text-3xl font-bold text-platinum tracking-tight mb-4;
 }
 
+/* Luxe image framing helpers for carousel */
+.image-frame {
+  position: relative;
+  border-radius: 0.75rem; /* matches rounded-xl */
+  overflow: hidden;
+}
+.image-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(194, 190, 186, 0.25), inset 0 0 40px rgba(0, 0, 0, 0.25);
+}
+.image-vignette::after {
+  content: '';
+  position: absolute;
+  inset: -2%;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,0.35) 100%);
+  mix-blend-mode: multiply;
+}
+.image-bg-soft {
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0) 80%);
+}
+
 .prose h2 {
     @apply text-2xl font-semibold text-platinum/90 tracking-tight mt-8 mb-4 border-b border-platinum/20 pb-2;
 }

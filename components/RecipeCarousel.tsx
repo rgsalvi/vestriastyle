@@ -225,14 +225,16 @@ export const RecipeCarousel: React.FC = () => {
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* Left: Flat lay */}
         <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 h-72 md:h-80 flex items-center justify-center overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={flatlay}
-            alt={activeMeta?.flatlayAlt || 'Flat lay'}
-            className="h-full w-auto object-contain"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-flatlay.svg'; }}
-            loading="lazy"
-          />
+          <div className="image-frame image-vignette image-bg-soft rounded-xl w-full h-full flex items-center justify-center transition-transform duration-300 will-change-transform hover:scale-[1.01]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={flatlay}
+              alt={activeMeta?.flatlayAlt || 'Flat lay'}
+              className="max-h-full max-w-full object-contain"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-flatlay.svg'; }}
+              loading="lazy"
+            />
+          </div>
         </div>
         {/* Center: Description */}
         <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 md:p-5 h-72 md:h-80 overflow-hidden">
@@ -261,14 +263,16 @@ export const RecipeCarousel: React.FC = () => {
         </div>
         {/* Right: Model */}
         <div className="rounded-2xl border border-platinum/20 bg-dark-blue/70 p-4 h-72 md:h-80 flex items-center justify-center overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={model}
-            alt={activeMeta?.modelAlt || 'Styled model'}
-            className="h-full w-auto object-contain"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-model.svg'; }}
-            loading="lazy"
-          />
+          <div className="image-frame image-vignette image-bg-soft rounded-xl w-full h-full flex items-center justify-center transition-transform duration-300 will-change-transform hover:scale-[1.01]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={model}
+              alt={activeMeta?.modelAlt || 'Styled model'}
+              className="max-h-full max-w-full object-contain"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/recipes/placeholder-model.svg'; }}
+              loading="lazy"
+            />
+          </div>
         </div>
       </div>
 
