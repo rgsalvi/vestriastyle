@@ -97,24 +97,12 @@ export const RecipeCarousel: React.FC = () => {
     touchStartX.current = null;
   };
 
-  if (!slugs) {
-    return (
-      <div className="py-10 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-platinum" />
-      </div>
-    );
-  }
-  if (slugs.length === 0) {
-    return (
-      <div className="py-8 text-center text-platinum/70">Weekly style recipes will appear here soon.</div>
-    );
-  }
-
-  const activeSlug = slugs[current];
-  const activeMeta = metaCache[activeSlug] || null;
-  const basePath = `/recipes/${activeSlug}`;
-  const flatlay = activeMeta?.flatlay ? `${basePath}/${activeMeta.flatlay}` : `${basePath}/flatlay.webp`;
-  const model = activeMeta?.model ? `${basePath}/${activeMeta.model}` : `${basePath}/model.webp`;
+  const hasSlugs = Array.isArray(slugs) && slugs.length > 0;
+  const activeSlug = hasSlugs ? slugs![current] : null;
+  const activeMeta = activeSlug ? (metaCache[activeSlug] || null) : null;
+  const basePath = activeSlug ? `/recipes/${activeSlug}` : '';
+  const flatlay = activeMeta?.flatlay ? `${basePath}/${activeMeta.flatlay}` : (activeSlug ? `${basePath}/flatlay.webp` : '');
+  const model = activeMeta?.model ? `${basePath}/${activeMeta.model}` : (activeSlug ? `${basePath}/model.webp` : '');
 
   const fontClassFor = (px: number) => {
     switch (px) {
@@ -173,6 +161,18 @@ export const RecipeCarousel: React.FC = () => {
       aria-roledescription="carousel"
       aria-label="Weekly Style Recipes"
     >
+      {/* Loading / empty states */}
+      {!slugs && (
+        <div className="py-10 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-platinum" />
+        </div>
+      )}
+      {slugs && slugs.length === 0 && (
+        <div className="py-8 text-center text-platinum/70">Weekly style recipes will appear here soon.</div>
+      )}
+
+      {hasSlugs && (
+      <>
       {/* Arrows */}
       <button
         type="button"
@@ -255,6 +255,8 @@ export const RecipeCarousel: React.FC = () => {
         <button className="px-5 py-2.5 rounded-full bg-platinum text-dark-blue font-semibold shadow-sm hover:opacity-90">Chat With A Stylist</button>
         <button className="px-5 py-2.5 rounded-full bg-platinum/20 text-platinum border border-platinum/40 font-semibold hover:bg-platinum/30">Try It On!</button>
       </div>
+      </>
+      )}
     </div>
   );
 };
