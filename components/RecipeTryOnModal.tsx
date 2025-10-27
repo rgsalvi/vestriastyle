@@ -110,7 +110,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
       <div className={`relative z-10 w-full max-w-5xl transform transition-all duration-200 ${animateIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
   <div className="relative rounded-3xl border border-platinum/30 shadow-2xl overflow-hidden bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl max-h-[90vh] flex flex-col">
           <button ref={closeRef} onClick={onClose} className="absolute top-4 right-4 z-20 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/30 text-platinum/80 hover:bg-black/50 hover:text-white transition" aria-label="Close try-on modal"><CloseIcon /></button>
-          <div className="sticky top-0 z-10 px-4 sm:px-8 pt-6 pb-3 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
+          <div className="sticky top-0 z-10 px-4 sm:px-8 pt-5 pb-2 bg-gradient-to-b from-black/20 to-transparent backdrop-blur-md">
             <div className="mx-auto max-w-5xl">
               <h3 id="recipe-tryon-title" className="text-2xl font-extrabold tracking-tight">{title ? `${title} — Virtual Try-On` : 'Virtual Try-On'}</h3>
             </div>
@@ -118,7 +118,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 flex-1 min-h-0">
           {/* Left: instructions + person upload */}
-          <div className="p-6 md:p-8 overflow-y-auto">
+          <div className="p-6 md:p-8">
             <h4 className="text-xl font-semibold">Upload Your Photo</h4>
             <p className="mt-1 text-sm text-platinum/70">Full-length, front-facing, good lighting, plain background for best results.</p>
             <div
@@ -130,7 +130,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
             >
               <label className={`block cursor-pointer`}>
                 <input type="file" accept="image/*" className="sr-only" onChange={e => { const f = e.target.files?.[0]; if (f) onPickPerson(f); }} />
-                <div className={`relative flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl h-64 md:h-[480px] ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
+                <div className={`relative flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 rounded-xl h-56 md:h-[42vh] lg:h-[48vh] ${dragActive ? 'border-platinum/50 border-dashed' : 'border-platinum/30 border-dashed hover:border-platinum/50'}`}>
                   {!personDataUrl && (
                     <>
                       <UploadIcon />
@@ -162,7 +162,7 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
           </div>
           {/* Right: flat lay fills the column */}
           <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-platinum/20 bg-white/5">
-            <div className="rounded-xl overflow-hidden border border-platinum/20 image-bg-soft relative h-64 md:h-[480px]">
+            <div className="rounded-xl overflow-hidden border border-platinum/20 image-bg-soft relative h-56 md:h-[42vh] lg:h-[48vh]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={flatlayUrl} alt="flat lay products" className="absolute inset-0 w-full h-full object-cover" />
             </div>
