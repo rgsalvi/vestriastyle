@@ -179,10 +179,10 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   // Removed since Try-On is no longer a top-level nav item
   // const tryOnActive = activePage === 'tryon';
   // Navbar styling tokens
-  // Glassy pill with platinum bar
-  const navLinkBase = "group relative px-3 py-1.5 rounded-full text-sm tracking-[0.06em] text-platinum/80 bg-white/4 backdrop-blur-sm ring-1 ring-inset ring-platinum/15 hover:text-white hover:bg-white/8 hover:ring-platinum/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/40 hover:shadow-[0_2px_8px_rgba(194,190,186,0.25)]";
-  const navActive = "text-platinum bg-white/12 ring-1 ring-inset ring-platinum/30 shadow-sm";
-  const navUnderlineBase = "after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:bg-gradient-to-r after:from-platinum/0 after:via-platinum/70 after:to-platinum/0 after:opacity-90 after:transition-all after:duration-200 group-hover:after:w-full focus-visible:after:w-full";
+  // Glassy pill with platinum bar: frosted base, glossy top highlight, animated platinum bar
+  const navLinkBase = "group relative inline-flex items-center px-4 py-2 rounded-full overflow-hidden text-sm tracking-[0.06em] text-platinum/85 bg-white/10 backdrop-blur-md backdrop-saturate-150 ring-1 ring-inset ring-platinum/20 transition-all duration-300 hover:text-white hover:bg-white/16 hover:ring-platinum/30 hover:shadow-[0_6px_18px_rgba(194,190,186,0.18)] hover:-translate-y-px focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/40";
+  const navActive = "text-platinum bg-white/16 ring-1 ring-inset ring-platinum/35 shadow-sm after:w-[90%]";
+  const navUnderlineBase = "before:pointer-events-none before:absolute before:inset-px before:rounded-[999px] before:bg-gradient-to-b before:from-white/25 before:to-white/0 before:opacity-70 after:pointer-events-none after:absolute after:left-1/2 after:bottom-0.5 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:bg-gradient-to-r after:from-platinum/0 after:via-platinum/80 after:to-platinum/0 after:opacity-95 after:transition-all after:duration-300 group-hover:after:w-[90%] focus-visible:after:w-[90%]";
 
   return (
   <>
