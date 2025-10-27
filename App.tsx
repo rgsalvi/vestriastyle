@@ -542,6 +542,24 @@ const App: React.FC = () => {
     }
   }, [pathname]);
 
+  // Auto-open chat modal on /chat when context exists and gating is satisfied
+  const chatAutoOpenRef = useRef(false);
+  useEffect(() => {
+    if (pathname !== '/chat') {
+      chatAutoOpenRef.current = false; // reset when navigating away
+      return;
+    }
+    if (chatAutoOpenRef.current) return;
+    if (isChatOpen) return;
+    if (!user) return;
+    if (!styleProfile || !isProfileComplete(styleProfile) || !styleProfile.isPremium) return;
+    if (!chatContext) return;
+    if (showOnboarding || showLogin) return;
+    try { trackEvent('chat_auto_open_on_landing'); } catch {}
+    setIsChatOpen(true);
+    chatAutoOpenRef.current = true;
+  }, [pathname, user, styleProfile, chatContext, isChatOpen, showOnboarding, showLogin]);
+
   // Style Recipes now lives only on its own page, not within the Wardrobe flow.
 
   // Utility: prevent indefinite hangs by timing out slow promises
@@ -1238,6 +1256,23 @@ const App: React.FC = () => {
                         </div>
                       </>
                     )}
+                  </div>
+                </div>
+              </section>
+
+              {/* Secondary info section: mirror card style used on About/Partner */}
+              <section className="mt-10 md:mt-14">
+                <h2 className="text-sm tracking-widest uppercase text-platinum/60 text-center">What To Expect In Chat</h2>
+                <div className="mt-4 rounded-2xl border border-platinum/20 bg-white/5 backdrop-blur-md p-6 md:p-8 shadow">
+                  <div className="max-w-3xl mx-auto text-left">
+                    <ul className="list-disc list-inside space-y-2 text-platinum/85">
+                      <li><span className="font-medium">Personalized guidance:</span> a stylist reviews your outfit context and goals before replying.</li>
+                      <li><span className="font-medium">Quick, human‑feeling responses:</span> crafted by pros and enhanced by AI for speed.</li>
+                      <li><span className="font-medium">Iterations welcomed:</span> ask for alternatives, swaps, or budget‑friendly picks.</li>
+                      <li><span className="font-medium">Save and revisit:</span> your conversation and recommendations stay available.</li>
+                      <li><span className="font-medium">Respectful pacing:</span> expect thoughtful follow‑ups, not notifications overload.</li>
+                    </ul>
+                    <p className="mt-4 text-sm text-platinum/60 text-center">You can return to this chat anytime—your history is saved.</p>
                   </div>
                 </div>
               </section>
