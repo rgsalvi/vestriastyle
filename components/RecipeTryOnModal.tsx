@@ -184,8 +184,8 @@ export const RecipeTryOnModal: React.FC<Props> = ({ isOpen, onClose, flatlayUrl,
               )}
               {resultDataUrl && (
                 <>
-                  <button onClick={onClose} className="absolute top-4 right-4 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/50 text-platinum/80 hover:text-white hover:bg-black/70" aria-label="Close result overlay"><CloseIcon /></button>
-                  <img src={resultDataUrl} alt="try-on result hero" className="absolute inset-0 w-full h-full object-cover" />
+                  <button onClick={onClose} className="absolute top-4 right-4 z-20 inline-flex items-center justify-center h-10 w-10 rounded-full bg-black/50 text-platinum/80 hover:text-white hover:bg-black/70" aria-label="Close result overlay"><CloseIcon /></button>
+                  <img src={resultDataUrl} alt="try-on result hero" className="absolute inset-0 w-full h-full object-contain" />
                 </>
               )}
             </div>
