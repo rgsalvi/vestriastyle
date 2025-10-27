@@ -476,6 +476,7 @@ const App: React.FC = () => {
       case '/tryon':
         return 'tryon';
       case '/recipes':
+      case '/style-recipes':
         return 'recipes';
       case '/chat':
         return 'chat';
@@ -532,7 +533,7 @@ const App: React.FC = () => {
 
   // Scroll to top on route change for content pages
   useEffect(() => {
-    if (['/partner', '/about', '/recipes', '/privacy', '/terms', '/refund', '/profile', '/tryon'].includes(pathname)) {
+    if (['/partner', '/about', '/recipes', '/style-recipes', '/privacy', '/terms', '/refund', '/profile', '/tryon'].includes(pathname)) {
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
     }
   }, [pathname]);
@@ -1498,7 +1499,7 @@ const App: React.FC = () => {
           onNavigateHome={() => { navigate('/'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
           onChatNav={() => { navigate('/chat'); }}
           onNavigateAbout={() => navigate('/about')}
-          onNavigateRecipes={() => { navigate('/recipes'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
+          onNavigateRecipes={() => { navigate('/style-recipes'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
           onNavigateTryOn={() => navigate('/tryon')}
           onNavigatePartner={() => {
             navigate('/partner');
