@@ -179,9 +179,10 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
   // Removed since Try-On is no longer a top-level nav item
   // const tryOnActive = activePage === 'tryon';
   // Navbar styling tokens
-  const navLinkBase = "group relative px-3 py-1.5 rounded-full text-sm tracking-[0.06em] text-platinum/80 bg-white/0 ring-1 ring-transparent hover:text-white hover:bg-white/5 hover:ring-platinum/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/40";
-  const navActive = "text-platinum bg-white/10 ring-1 ring-platinum/30 shadow-sm";
-  const navUnderlineBase = "after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-px after:w-0 after:-translate-x-1/2 after:bg-gradient-to-r after:from-transparent after:via-platinum/60 after:to-transparent after:transition-all after:duration-200 group-hover:after:w-full focus-visible:after:w-full";
+  // Glassy pill with platinum bar
+  const navLinkBase = "group relative px-3 py-1.5 rounded-full text-sm tracking-[0.06em] text-platinum/80 bg-white/4 backdrop-blur-sm ring-1 ring-inset ring-platinum/15 hover:text-white hover:bg-white/8 hover:ring-platinum/25 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-blue focus:ring-platinum/40 hover:shadow-[0_2px_8px_rgba(194,190,186,0.25)]";
+  const navActive = "text-platinum bg-white/12 ring-1 ring-inset ring-platinum/30 shadow-sm";
+  const navUnderlineBase = "after:pointer-events-none after:absolute after:left-1/2 after:bottom-0 after:h-[2px] after:w-0 after:-translate-x-1/2 after:rounded-full after:bg-gradient-to-r after:from-platinum/0 after:via-platinum/70 after:to-platinum/0 after:opacity-90 after:transition-all after:duration-200 group-hover:after:w-full focus-visible:after:w-full";
 
   return (
   <>
