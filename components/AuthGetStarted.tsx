@@ -236,7 +236,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   <button
                     type="button"
                     onClick={() => setShowPassword(s => !s)}
-                    className="absolute inset-y-0 right-2 my-1 inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 text-platinum/70 hover:text-platinum border border-white/10 backdrop-blur-sm transition"
+                    className="absolute inset-y-0 right-0 inline-flex items-center gap-1 px-4 text-xs font-medium text-platinum/70 hover:text-platinum focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? 'Hide' : 'Show'}
@@ -346,7 +346,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   <button
                     type="button"
                     onClick={() => setShowPassword(s => !s)}
-                    className="absolute inset-y-0 right-2 my-1 inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 text-platinum/70 hover:text-platinum border border-white/10 backdrop-blur-sm transition"
+                    className="absolute inset-y-0 right-0 inline-flex items-center gap-1 px-4 text-xs font-medium text-platinum/70 hover:text-platinum focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? 'Hide' : 'Show'}
