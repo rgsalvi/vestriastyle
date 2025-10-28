@@ -188,3 +188,18 @@
   animation: shimmer-effect 0.9s ease-out;
   pointer-events: none;
 }
+
+/* Neutralize browser autofill blue to match our dark inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #C2BEBA; /* platinum */
+  caret-color: #C2BEBA;
+  /* Paint our input background (bg-black/20) over Chromium's autofill */
+  -webkit-box-shadow: 0 0 0px 1000px rgba(0, 0, 0, 0.20) inset;
+  box-shadow: 0 0 0px 1000px rgba(0, 0, 0, 0.20) inset;
+  /* Prevent blue flash when autofill applies */
+  transition: background-color 9999s ease-out, color 9999s ease-out;
+}
