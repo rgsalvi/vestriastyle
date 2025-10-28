@@ -536,6 +536,12 @@ const App: React.FC = () => {
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch {}
     }
   }, [pathname]);
+  // If navigating to policy pages, ensure auth overlay is closed so content is visible
+  useEffect(() => {
+    if (['/privacy', '/terms', '/refund'].includes(pathname)) {
+      if (showLogin) setShowLogin(false);
+    }
+  }, [pathname, showLogin]);
   // Track chat landing views
   useEffect(() => {
     if (pathname === '/chat') {
@@ -1104,8 +1110,8 @@ const App: React.FC = () => {
         return (
       <AuthGetStarted
         onBack={() => setShowLogin(false)}
-        onNavigateToTerms={() => navigate('/terms')}
-        onNavigateToPrivacy={() => navigate('/privacy')}
+        onNavigateToTerms={() => { setShowLogin(false); navigate('/terms'); }}
+        onNavigateToPrivacy={() => { setShowLogin(false); navigate('/privacy'); }}
         onSignedIn={() => { setShowLogin(false); }}
         onSignedUp={() => { setShowLogin(false); setShowOnboarding(true); setOnboardingGateBanner(true); }}
       />
