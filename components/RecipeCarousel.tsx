@@ -206,34 +206,33 @@ export const RecipeCarousel: React.FC = () => {
 
       {hasSlugs && (
       <>
-      {/* Top navigation controls */}
-      <div className="mb-3 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onPrev}
-          disabled={current === 0}
-          aria-label="Previous recipe"
-          className="btn-luxe-ghost inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span>Previous</span>
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={slugs ? current === slugs.length - 1 : true}
-          aria-label="Next recipe"
-          className="btn-luxe-ghost inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <span>Next</span>
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
-
       <div key={activeSlug || 'empty'} className={`${hasMountedRef.current ? (dir > 0 ? 'animate-slide-in-right' : 'animate-slide-in-left') : ''} motion-reduce:animate-none`}>
         {/* Header: Week + Title + Founder byline */}
         <div className="text-center">
-          <div className="text-sm tracking-widest uppercase text-platinum/60">{activeMeta ? formatWeek(activeMeta.date) : '\u00A0'}</div>
+          {/* Date row with inline navigation to reduce whitespace */}
+          <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
+            <button
+              type="button"
+              onClick={onPrev}
+              disabled={current === 0}
+              aria-label="Previous recipe"
+              className="btn-luxe-ghost inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Previous</span>
+            </button>
+            <div className="text-sm tracking-widest uppercase text-platinum/60 text-center">{activeMeta ? formatWeek(activeMeta.date) : '\u00A0'}</div>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={slugs ? current === slugs.length - 1 : true}
+              aria-label="Next recipe"
+              className="btn-luxe-ghost inline-flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span>Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
           <div className="mt-1 text-2xl md:text-3xl font-extrabold tracking-tight">{activeMeta?.title || '\u00A0'}</div>
           {activeFounder && (
             <div className="mt-3 flex items-center justify-center">
