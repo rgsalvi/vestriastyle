@@ -302,25 +302,12 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
           </>
         ) : (
           <div className="flex items-center gap-2">
-            {/* Mobile: single CTA that opens auth with both options inside */}
+            {/* Single CTA across all breakpoints */}
             <button
               onClick={() => onOpenLogin('signup')}
-              className="sm:hidden btn-luxe"
+              className="btn-luxe"
             >
               Get Started
-            </button>
-            {/* Desktop: separate Sign Up / Sign In for clarity */}
-            <button
-              onClick={() => onOpenLogin('signup')}
-              className="hidden sm:inline btn-luxe"
-            >
-              Sign Up
-            </button>
-            <button
-              onClick={() => onOpenLogin('signin')}
-              className="hidden sm:inline btn-luxe-ghost"
-            >
-              Sign In
             </button>
           </div>
         )}
