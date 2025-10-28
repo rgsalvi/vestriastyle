@@ -10,9 +10,7 @@
   "functions": {
     "api/*.ts": {
       "maxDuration": 60,
-      "memory": 1536
-    },
-    "api/recipes-seed.ts": {
+      "memory": 1536,
       "includeFiles": "public/recipes/**"
     }
   }
