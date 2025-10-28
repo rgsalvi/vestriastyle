@@ -179,9 +179,9 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                 type="button"
                 onClick={handleChangeEmail}
                 className="text-sm text-platinum/60 hover:text-white underline decoration-platinum/40 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40 rounded"
-                aria-label="Use a different email"
+                aria-label="Change email"
               >
-                Not you?
+                Not you? Change email
               </button>
             </div>
             <p className="mt-2 text-lg text-platinum/60">Please enter your password to continue.</p>
@@ -229,9 +229,9 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                 type="button"
                 onClick={handleChangeEmail}
                 className="text-sm text-platinum/60 hover:text-white underline decoration-platinum/40 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40 rounded"
-                aria-label="Use a different email"
+                aria-label="Change email"
               >
-                Not you?
+                Not you? Change email
               </button>
             </div>
             <p className="mt-2 text-lg text-platinum/60">Let’s get your style journey started.</p>
