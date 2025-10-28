@@ -330,18 +330,28 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
               </div>
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Password</label>
-                <input
-                  aria-label="Password"
-                  title="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  name="new-password"
-                  autoComplete="new-password"
-                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
-                  required
-                  minLength={6}
-                />
+                <div className="relative group">
+                  <input
+                    aria-label="Password"
+                    title="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    type={showPassword ? 'text' : 'password'}
+                    name="new-password"
+                    autoComplete="new-password"
+                    className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 pr-24 text-platinum"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(s => !s)}
+                    className="absolute inset-y-0 right-2 my-1 inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium bg-white/5 hover:bg-white/10 text-platinum/70 hover:text-platinum border border-white/10 backdrop-blur-sm transition"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
               <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Creating account…' : 'Create Account'}</button>
             </form>
