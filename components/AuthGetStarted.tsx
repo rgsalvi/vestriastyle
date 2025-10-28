@@ -370,8 +370,8 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
         </p>
 
         {policyModal && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 md:p-8 bg-black/70">
-            <div className="w-full max-w-3xl bg-dark-blue/95 backdrop-blur-xl rounded-2xl border border-platinum/20 shadow-2xl overflow-hidden">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/70">
+            <div className="w-full max-w-6xl md:max-w-7xl max-h-[90vh] bg-dark-blue/95 backdrop-blur-xl rounded-2xl border border-platinum/20 shadow-2xl overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b border-platinum/20">
                 <h3 className="text-lg font-semibold text-platinum">
                   {policyModal === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
@@ -384,7 +384,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   ✕
                 </button>
               </div>
-              <div className="max-h-[70vh] overflow-y-auto p-5">
+              <div className="max-h-[80vh] overflow-y-auto overscroll-contain p-5 break-words">
                 {policyModal === 'terms' ? (
                   <TermsOfService onBack={() => setPolicyModal(null)} />
                 ) : (
