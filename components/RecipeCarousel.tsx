@@ -10,6 +10,9 @@ type WeekMeta = {
   flatlayAlt: string;
   modelAlt: string;
   slug: string;
+  // If present, absolute URLs for images (e.g., Supabase public URLs)
+  flatlayUrl?: string;
+  modelUrl?: string;
   flatlay?: string; // optional file name if not default
   model?: string; // optional file name if not default
   founderId?: 'tanvi' | 'muskaan' | 'riddhi';
@@ -124,8 +127,10 @@ export const RecipeCarousel: React.FC = () => {
   const activeSlug = hasSlugs ? slugs![current] : null;
   const activeMeta = activeSlug ? (metaCache[activeSlug] || null) : null;
   const basePath = activeSlug ? `/recipes/${activeSlug}` : '';
-  const flatlay = activeMeta?.flatlay ? `${basePath}/${activeMeta.flatlay}` : (activeSlug ? `${basePath}/flatlay.webp` : '');
-  const model = activeMeta?.model ? `${basePath}/${activeMeta.model}` : (activeSlug ? `${basePath}/model.webp` : '');
+  const flatlay = activeMeta?.flatlayUrl
+    || (activeMeta?.flatlay ? `${basePath}/${activeMeta.flatlay}` : (activeSlug ? `${basePath}/flatlay.webp` : ''));
+  const model = activeMeta?.modelUrl
+    || (activeMeta?.model ? `${basePath}/${activeMeta.model}` : (activeSlug ? `${basePath}/model.webp` : ''));
   const [tryOnOpen, setTryOnOpen] = React.useState(false);
   const [founderOpen, setFounderOpen] = React.useState(false);
   const activeFounder: FounderData | null = activeMeta?.founderId ? foundersMap[activeMeta.founderId] : null;

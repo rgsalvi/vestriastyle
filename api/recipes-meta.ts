@@ -8,6 +8,10 @@ type WeekMeta = {
   flatlayAlt: string;
   modelAlt: string;
   slug: string;
+  // Optional fields to help clients resolve image sources
+  // If provided, these are absolute URLs (e.g., Supabase public storage URLs)
+  flatlayUrl?: string;
+  modelUrl?: string;
   flatlay?: string;
   model?: string;
   founderId?: 'tanvi' | 'muskaan' | 'riddhi';
@@ -37,6 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       flatlayAlt: data.flatlay_alt || `Flat lay of ${data.title} outfit`,
       modelAlt: data.model_alt || `Model wearing the ${data.title} outfit styled from the flat lay`,
       slug: data.slug,
+      flatlayUrl: data.flatlay_url || undefined,
+      modelUrl: data.model_url || undefined,
       founderId: data.founder_id,
       // For backward compatibility, also include file names if needed
     };
