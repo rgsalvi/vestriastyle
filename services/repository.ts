@@ -178,3 +178,15 @@ export async function repositoryUpdateIdentity(args: { firstName?: string; lastN
     throw new Error(t?.message || `Failed to update identity (${resp.status})`);
   }
 }
+
+// Convenience: find a user by email to greet on sign-in stage
+export async function repositoryFindUserByEmail(email: string): Promise<{ display_name: string | null; first_name: string | null } | null> {
+  const sb = getSupabaseClient();
+  const { data, error } = await sb.from('users').select('display_name,first_name').eq('email', email).single();
+  if (error) {
+    if ((error as any).code === 'PGRST116') return null;
+    console.warn('[supabase] find user by email error', error);
+    return null;
+  }
+  return { display_name: (data as any)?.display_name ?? null, first_name: (data as any)?.first_name ?? null };
+}

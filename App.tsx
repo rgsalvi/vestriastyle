@@ -12,6 +12,7 @@ import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
 import { RefundPolicy } from './components/RefundPolicy';
 import { LoginPage } from './components/LoginPage';
+import AuthGetStarted from './components/AuthGetStarted';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
 import AboutUs from './components/AboutUs';
@@ -1113,12 +1114,13 @@ const App: React.FC = () => {
         return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-platinum"></div></div>;
     }
   if (showLogin) {
-    return (
-      <LoginPage 
+        return (
+      <AuthGetStarted
         onBack={() => setShowLogin(false)}
         onNavigateToTerms={() => navigate('/terms')}
         onNavigateToPrivacy={() => navigate('/privacy')}
-        initialMode={loginInitialMode}
+        onSignedIn={() => { setShowLogin(false); }}
+        onSignedUp={() => { setShowLogin(false); setShowOnboarding(true); setOnboardingGateBanner(true); }}
       />
     );
   }
@@ -1209,9 +1211,9 @@ const App: React.FC = () => {
           />
         );
       case 'partner':
-  return <PartnerPage onBack={() => navigate('/')} />;
+        return <PartnerPage onBack={() => navigate('/')} />;
       case 'tryon':
-  return <VirtualTryOn onBack={() => navigate('/')} onOpenChat={handleOpenChat} />;
+        return <VirtualTryOn onBack={() => navigate('/')} onOpenChat={handleOpenChat} />;
       case 'recipes':
         return (
           <main className="container mx-auto">
