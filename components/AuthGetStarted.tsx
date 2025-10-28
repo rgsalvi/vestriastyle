@@ -32,6 +32,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
   const [error, setError] = React.useState<string | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
+  const emailInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const validateEmail = (e: string) => /^(?:[A-Z0-9._%+-]+)@(?:[A-Z0-9.-]+)\.[A-Z]{2,}$/i.test(e.trim());
 
@@ -118,6 +119,29 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
     } finally { setLoading(false); }
   };
 
+  // Allow switching back to email step (used by "Not you?" affordance)
+  const handleChangeEmail = () => {
+    setError(null);
+    setMessage(null);
+    setPassword('');
+    setFirstName('');
+    setLastName('');
+    setDob('');
+    setGreetName(null);
+    setShowPassword(false);
+    setStage('email');
+  };
+
+  React.useEffect(() => {
+    if (stage === 'email' && emailInputRef.current) {
+      emailInputRef.current.focus();
+      // Place cursor at end for quick edits
+      const el = emailInputRef.current;
+      const val = el.value;
+      el.setSelectionRange(val.length, val.length);
+    }
+  }, [stage]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-dark-blue p-4 animate-fade-in">
       <div className="w-full max-w-md text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative">
@@ -140,7 +164,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
             <form onSubmit={handleEmailSubmit} className="mt-8 space-y-4 text-left">
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Email</label>
-                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="you@example.com" required />
+                <input ref={emailInputRef} value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="you@example.com" required />
               </div>
               <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait…' : 'Continue'}</button>
             </form>
@@ -149,7 +173,17 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
         {stage === 'signin' && (
           <>
-            <h2 className="text-3xl font-bold text-platinum tracking-tight mt-8">Welcome back{greetName ? `, ${greetName}` : ''}</h2>
+            <div className="mt-8 flex items-baseline justify-center gap-3">
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">Welcome back{greetName ? `, ${greetName}` : ''}</h2>
+              <button
+                type="button"
+                onClick={handleChangeEmail}
+                className="text-sm text-platinum/60 hover:text-white underline decoration-platinum/40 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40 rounded"
+                aria-label="Use a different email"
+              >
+                Not you?
+              </button>
+            </div>
             <p className="mt-2 text-lg text-platinum/60">Please enter your password to continue.</p>
             {error && (
               <div role="alert" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-white/5 text-platinum/90">{error}</div>
@@ -189,7 +223,17 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
         {stage === 'signup' && (
           <>
-            <h2 className="text-3xl font-bold text-platinum tracking-tight mt-8">Hey! We’re glad you’re here.</h2>
+            <div className="mt-8 flex items-baseline justify-center gap-3">
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">Hey! We’re glad you’re here.</h2>
+              <button
+                type="button"
+                onClick={handleChangeEmail}
+                className="text-sm text-platinum/60 hover:text-white underline decoration-platinum/40 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40 rounded"
+                aria-label="Use a different email"
+              >
+                Not you?
+              </button>
+            </div>
             <p className="mt-2 text-lg text-platinum/60">Let’s get your style journey started.</p>
             {message && (
               <div role="status" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-platinum/5 text-platinum">{message}</div>
