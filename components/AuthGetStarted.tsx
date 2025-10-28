@@ -134,11 +134,18 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
   React.useEffect(() => {
     if (stage === 'email' && emailInputRef.current) {
-      emailInputRef.current.focus();
-      // Place cursor at end for quick edits
       const el = emailInputRef.current;
-      const val = el.value;
-      el.setSelectionRange(val.length, val.length);
+      el.focus();
+      // Place cursor at end for quick edits; guard for input types that don't support selection
+      const val = el.value ?? '';
+      try {
+        if (typeof el.setSelectionRange === 'function') {
+          // Some browsers throw for types like 'email'; wrap in try/catch
+          el.setSelectionRange(val.length, val.length);
+        }
+      } catch {
+        // Ignore if selection is unsupported
+      }
     }
   }, [stage]);
 
