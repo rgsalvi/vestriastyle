@@ -1,5 +1,7 @@
 import React from 'react';
 import { auth, signUp, signIn } from '../services/firebase';
+import { TermsOfService } from './TermsOfService';
+import { PrivacyPolicy } from './PrivacyPolicy';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import { repositoryUpdateIdentity } from '../services/repository';
 import { getSupabaseClient } from '../services/supabaseClient';
@@ -33,6 +35,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
   const [message, setMessage] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
   const emailInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [policyModal, setPolicyModal] = React.useState<null | 'terms' | 'privacy'>(null);
 
   const validateEmail = (e: string) => /^(?:[A-Z0-9._%+-]+)@(?:[A-Z0-9.-]+)\.[A-Z]{2,}$/i.test(e.trim());
 
@@ -148,6 +151,16 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
       }
     }
   }, [stage]);
+
+  // Close modal on Escape
+  React.useEffect(() => {
+    if (!policyModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPolicyModal(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [policyModal]);
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-dark-blue px-4 pt-6 md:pt-10 pb-10 animate-fade-in">
@@ -351,10 +364,36 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
         <p className="mt-8 text-xs text-platinum/50">
           By continuing, you agree to our{' '}
-          <button onClick={onNavigateToTerms} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Terms of Service</button>
+          <button onClick={() => setPolicyModal('terms')} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Terms of Service</button>
           {' '}and{' '}
-          <button onClick={onNavigateToPrivacy} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Privacy Policy</button>.
+          <button onClick={() => setPolicyModal('privacy')} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Privacy Policy</button>.
         </p>
+
+        {policyModal && (
+          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 md:p-8 bg-black/70">
+            <div className="w-full max-w-3xl bg-dark-blue/95 backdrop-blur-xl rounded-2xl border border-platinum/20 shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-platinum/20">
+                <h3 className="text-lg font-semibold text-platinum">
+                  {policyModal === 'terms' ? 'Terms of Service' : 'Privacy Policy'}
+                </h3>
+                <button
+                  onClick={() => setPolicyModal(null)}
+                  className="text-platinum/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40 rounded"
+                  aria-label="Close policy"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="max-h-[70vh] overflow-y-auto p-5">
+                {policyModal === 'terms' ? (
+                  <TermsOfService onBack={() => setPolicyModal(null)} />
+                ) : (
+                  <PrivacyPolicy onBack={() => setPolicyModal(null)} />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
