@@ -150,16 +150,8 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
   }, [stage]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-dark-blue p-4 animate-fade-in">
-      <div className={`w-full ${stage === 'signup' ? 'max-w-xl' : 'max-w-md'} text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative`}>
-        <button
-          onClick={onBack}
-          className="absolute top-4 left-4 inline-flex items-center text-sm font-semibold text-platinum/80 hover:text-white transition-colors"
-          aria-label="Back to main application"
-        >
-          <BackArrowIcon />
-          Back
-        </button>
+    <div className="flex flex-col items-center justify-start min-h-screen bg-dark-blue px-4 pt-6 md:pt-10 pb-10 animate-fade-in">
+      <div className={`w-full ${stage === 'signup' ? 'max-w-2xl' : 'max-w-xl'} text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative`}>
 
         {stage === 'email' && (
           <>
@@ -170,7 +162,6 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
             )}
             <form onSubmit={handleEmailSubmit} className="mt-8 space-y-4 text-left" autoComplete="on">
               <div>
-                <label className="block text-sm text-platinum/70 mb-1">Email</label>
                 <input
                   ref={emailInputRef}
                   value={email}
