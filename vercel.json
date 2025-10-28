@@ -3,6 +3,8 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/recipes/index.json", "destination": "/api/recipes-index" },
+    { "source": "/recipes/:slug/meta.json", "destination": "/api/recipes-meta?slug=:slug" },
     { "source": "/((?!api|.*\\..*).*)", "destination": "/" }
   ],
   "functions": {

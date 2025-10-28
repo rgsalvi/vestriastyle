@@ -1,3 +1,25 @@
+-- Recipes table for weekly style recipes
+create table if not exists public.recipes (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  date date unique not null,
+  title text not null,
+  founder_id text check (founder_id in ('tanvi','muskaan','riddhi')) not null,
+  description jsonb not null, -- array of objects: [{lead: text, body: text}]
+  flatlay_url text not null,
+  model_url text not null,
+  flatlay_alt text,
+  model_alt text,
+  created_by text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists recipes_date_idx on public.recipes(date);
+create index if not exists recipes_slug_idx on public.recipes(slug);
+
+-- If using RLS, policies will be added later; service role bypasses RLS for serverless
+
 -- Supabase initial schema for vestriastyle
 -- Run via psql or Supabase SQL editor
 

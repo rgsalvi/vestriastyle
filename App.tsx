@@ -19,6 +19,7 @@ import PartnerPage from './components/PartnerPage';
 import ProfilePage from './components/ProfilePage';
 import VirtualTryOn from './components/VirtualTryOn';
 import RecipeCarousel from './components/RecipeCarousel';
+import RecipeAdminNew from './components/RecipeAdminNew';
 import { Squares2X2Icon, SparklesIcon } from '@heroicons/react/24/outline';
 // Removed header-level FounderBioModal usage; About page handles founders now
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
@@ -363,7 +364,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
   });
 };
 
-type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon' | 'recipes' | 'chat';
+type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon' | 'recipes' | 'chat' | 'recipes-admin-new';
 
 // No global Google object required with Firebase Email/Password
 
@@ -478,6 +479,8 @@ const App: React.FC = () => {
       case '/recipes':
       case '/style-recipes':
         return 'recipes';
+      case '/admin/recipes/new':
+        return 'recipes-admin-new';
       case '/chat':
         return 'chat';
       case '/privacy':
@@ -1207,6 +1210,9 @@ const App: React.FC = () => {
             <div className="max-w-5xl mx-auto px-4 md:px-8 py-12 md:py-16">
               <div className="flex items-start justify-between gap-4">
                 <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">#VestriaStyleRecipes</h1>
+                {user?.email && ['t@vestria.style','m@vestria.style','r@vestria.style','support@vestria.style'].includes(user.email.toLowerCase()) && (
+                  <button onClick={() => navigate('/admin/recipes/new')} className="btn-luxe-ghost">Add A Style Recipe</button>
+                )}
               </div>
 
               <div className="mt-6 h-px bg-gradient-to-r from-transparent via-platinum/40 to-transparent" />
@@ -1220,6 +1226,8 @@ const App: React.FC = () => {
             </div>
           </main>
         );
+      case 'recipes-admin-new':
+        return <RecipeAdminNew onBack={() => navigate('/style-recipes')} />;
       case 'chat':
         return (
           <main className="container mx-auto">
