@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "dev:vercel": "npx vercel dev",
-    "recipes:webp": "node scripts/convertToWebp.mjs"
+    "recipes:webp": "node scripts/convertToWebp.mjs",
+    "recipes:seed": "node scripts/seedRecipesFromPublic.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.19.0",
