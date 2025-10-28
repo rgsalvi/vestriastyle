@@ -151,7 +151,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-dark-blue p-4 animate-fade-in">
-      <div className="w-full max-w-md text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative">
+      <div className={`w-full ${stage === 'signup' ? 'max-w-xl' : 'max-w-md'} text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative`}>
         <button
           onClick={onBack}
           className="absolute top-4 left-4 inline-flex items-center text-sm font-semibold text-platinum/80 hover:text-white transition-colors"
@@ -168,10 +168,20 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
             {error && (
               <div role="alert" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-white/5 text-platinum/90">{error}</div>
             )}
-            <form onSubmit={handleEmailSubmit} className="mt-8 space-y-4 text-left">
+            <form onSubmit={handleEmailSubmit} className="mt-8 space-y-4 text-left" autoComplete="on">
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Email</label>
-                <input ref={emailInputRef} value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="you@example.com" required />
+                <input
+                  ref={emailInputRef}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                  placeholder="you@example.com"
+                  required
+                />
               </div>
               <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait…' : 'Continue'}</button>
             </form>
@@ -198,7 +208,15 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
             <form onSubmit={handleSignIn} className="mt-8 space-y-4 text-left">
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Email</label>
-                <input aria-label="Email" title="Email" value={email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
+                <input
+                  aria-label="Email"
+                  title="Email"
+                  value={email}
+                  readOnly
+                  name="email"
+                  autoComplete="email"
+                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70"
+                />
               </div>
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Password</label>
@@ -207,6 +225,8 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     type={showPassword ? 'text' : 'password'}
+                    name="current-password"
+                    autoComplete="current-password"
                     className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 pr-24 text-platinum tracking-wide focus:outline-none focus:ring-2 focus:ring-platinum/30 transition"
                     placeholder={showPassword ? 'Enter your password' : '••••••••'}
                     required
@@ -230,16 +250,8 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
         {stage === 'signup' && (
           <>
-            <div className="mt-8 flex items-baseline justify-center gap-3">
+            <div className="mt-8">
               <h2 className="text-3xl font-bold text-platinum tracking-tight">Hey! We’re glad you’re here.</h2>
-              <button
-                type="button"
-                onClick={handleChangeEmail}
-                className="text-sm text-platinum/60 hover:text-white underline decoration-platinum/40 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40 rounded"
-                aria-label="Change email"
-              >
-                Not you? Change email
-              </button>
             </div>
             <p className="mt-2 text-lg text-platinum/60">Let’s get your style journey started.</p>
             {message && (
@@ -251,26 +263,85 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
             <form onSubmit={handleSignUp} className="mt-8 space-y-4 text-left">
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Email</label>
-                <input aria-label="Email" title="Email" value={email} disabled className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70" />
+                <input
+                  aria-label="Email"
+                  title="Email"
+                  value={email}
+                  readOnly
+                  name="email"
+                  autoComplete="email"
+                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum/70"
+                />
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={handleChangeEmail}
+                    className="text-sm text-platinum/60 hover:text-white underline decoration-platinum/40 hover:decoration-white focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40 rounded"
+                    aria-label="Change email"
+                  >
+                    Not you? Change email
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-platinum/70 mb-1">First name</label>
-                  <input value={firstName} onChange={(e) => setFirstName(e.target.value)} type="text" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="Jane" required />
+                  <input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    type="text"
+                    name="given-name"
+                    autoComplete="given-name"
+                    className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                    placeholder="Jane"
+                    required
+                    autoCapitalize="words"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm text-platinum/70 mb-1">Last name</label>
-                  <input value={lastName} onChange={(e) => setLastName(e.target.value)} type="text" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" placeholder="Doe" required />
+                  <input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    type="text"
+                    name="family-name"
+                    autoComplete="family-name"
+                    className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                    placeholder="Doe"
+                    required
+                    autoCapitalize="words"
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Date of birth</label>
-                <input aria-label="Date of birth" title="Date of birth" value={dob} onChange={(e) => setDob(e.target.value)} type="date" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" required />
+                <input
+                  aria-label="Date of birth"
+                  title="Date of birth"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  type="date"
+                  name="bday"
+                  autoComplete="bday"
+                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                  required
+                />
                 <p className="mt-1 text-xs text-platinum/60">We use this to tailor your experience.</p>
               </div>
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Password</label>
-                <input aria-label="Password" title="Password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum" required minLength={6} />
+                <input
+                  aria-label="Password"
+                  title="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  name="new-password"
+                  autoComplete="new-password"
+                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                  required
+                  minLength={6}
+                />
               </div>
               <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Creating account…' : 'Create Account'}</button>
             </form>
