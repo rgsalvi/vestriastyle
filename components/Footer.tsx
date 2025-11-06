@@ -110,7 +110,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPrivacy, onNavigateT
                         <span className="text-platinum/40 hidden sm:inline">|</span>
                         <button onClick={onNavigateToRefund} className="text-platinum/60 hover:text-white transition-colors">Refund Policy</button>
                     </div>
-                    <p className="font-medium text-platinum/60">&copy; {new Date().getFullYear()} Gilded Technologies Pvt Ltd. All rights reserved.</p>
+                    <p className="font-medium text-platinum/60">&copy; {new Date().getFullYear()} Diva Organic Living Limited. All rights reserved.</p>
                 </div>
             </div>
         </footer>

@@ -26,7 +26,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
           <h1>Privacy Policy</h1>
           <p className="text-sm text-platinum/50">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
-          <p>Gilded Technologies Pvt Ltd ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Vestria Style application (the "Service").</p>
+          <p>Diva Organic Living Limited ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Vestria Style application (the "Service").</p>
 
           <h2>Information We Collect</h2>
           <p>We may collect information about you in a variety of ways. The information we may collect via the Service includes:</p>
