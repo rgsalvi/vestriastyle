@@ -24,6 +24,7 @@ interface ListModelsResponse {
   count: number;
   models: ListModelsItem[];
   timestamp: string;
+  probed?: { name: string; ok: boolean; status: number | null; error?: string }[];
 }
 
 const ADMIN_EMAIL = 'support@vestria.style';
@@ -161,25 +162,54 @@ const AdminModelStatusPage: React.FC<{ user: any }> = ({ user }) => {
           {listError && <p className="text-sm text-red-400">{listError}</p>}
           {listData && (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="text-left border-b border-platinum/20">
-                    <th className="py-2 pr-4 font-semibold">Name</th>
-                    <th className="py-2 pr-4 font-semibold">Display Name</th>
-                    <th className="py-2 pr-4 font-semibold">Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listData.models.map((m, idx) => (
-                    <tr key={(m.name || '') + idx} className="border-b border-platinum/10">
-                      <td className="py-2 pr-4 font-medium text-platinum/90">{m.name || '—'}</td>
-                      <td className="py-2 pr-4 text-platinum/80">{m.displayName || '—'}</td>
-                      <td className="py-2 pr-4 text-platinum/70 max-w-xl truncate" title={m.description || ''}>{m.description || ''}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="mt-4 text-xs text-platinum/50">Listed {listData.count} models at {new Date(listData.timestamp).toLocaleString()}</p>
+              {listData.count > 0 ? (
+                <>
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b border-platinum/20">
+                        <th className="py-2 pr-4 font-semibold">Name</th>
+                        <th className="py-2 pr-4 font-semibold">Display Name</th>
+                        <th className="py-2 pr-4 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listData.models.map((m, idx) => (
+                        <tr key={(m.name || '') + idx} className="border-b border-platinum/10">
+                          <td className="py-2 pr-4 font-medium text-platinum/90">{m.name || '—'}</td>
+                          <td className="py-2 pr-4 text-platinum/80">{m.displayName || '—'}</td>
+                          <td className="py-2 pr-4 text-platinum/70 max-w-xl truncate" title={m.description || ''}>{m.description || ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="mt-4 text-xs text-platinum/50">Listed {listData.count} models at {new Date(listData.timestamp).toLocaleString()}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-platinum/70">No models returned by the API for this key. Showing probe results for common IDs:</p>
+                  <table className="min-w-full text-sm mt-3">
+                    <thead>
+                      <tr className="text-left border-b border-platinum/20">
+                        <th className="py-2 pr-4 font-semibold">Model</th>
+                        <th className="py-2 pr-4 font-semibold">OK</th>
+                        <th className="py-2 pr-4 font-semibold">Status</th>
+                        <th className="py-2 pr-4 font-semibold">Error</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(listData.probed || []).map((p) => (
+                        <tr key={p.name} className="border-b border-platinum/10">
+                          <td className="py-2 pr-4 font-medium text-platinum/90">{p.name}</td>
+                          <td className="py-2 pr-4">{p.ok ? <span className="text-green-400 font-semibold">✔</span> : <span className="text-red-400 font-semibold">✕</span>}</td>
+                          <td className="py-2 pr-4 text-platinum/70">{p.status ?? '—'}</td>
+                          <td className="py-2 pr-4 text-platinum/60 max-w-xl truncate" title={p.error || ''}>{p.error || ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="mt-4 text-xs text-platinum/50">Probed at {new Date(listData.timestamp).toLocaleString()}</p>
+                </>
+              )}
             </div>
           )}
         </div>

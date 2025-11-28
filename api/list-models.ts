@@ -23,6 +23,11 @@ if (!getApps().length) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const ADMIN_EMAIL = 'support@vestria.style';
+const PROBE_MODELS = [
+  'imagen-4.0-generate-001',
+  'gemini-2.5-flash-image-preview',
+  'gemini-2.0-flash'
+];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -55,6 +60,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       displayName: m?.displayName,
       description: m?.description,
     }));
+
+    // If empty, fall back to probing a small set of known, stable IDs
+    if (!items.length) {
+      const probed: { name: string; ok: boolean; status: number | null; error?: string }[] = [];
+      for (const name of PROBE_MODELS) {
+        try {
+          await ai.models.get({ model: name });
+          probed.push({ name, ok: true, status: 200 });
+        } catch (e: any) {
+          const status = (e?.status as number) || null;
+          probed.push({ name, ok: false, status, error: e?.message || String(e) });
+        }
+      }
+      return res.status(200).json({
+        count: 0,
+        models: items,
+        probed,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     return res.status(200).json({
       count: models.length,
       models: items,
