@@ -16,6 +16,7 @@ import AuthGetStarted from './components/AuthGetStarted';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { StylistChatModal } from './components/StylistChatModal';
 import AboutUs from './components/AboutUs';
+import AdminModelStatusPage from './components/AdminModelStatusPage';
 import PartnerPage from './components/PartnerPage';
 import ProfilePage from './components/ProfilePage';
 import VirtualTryOn from './components/VirtualTryOn';
@@ -360,7 +361,7 @@ const fileToDataUrl = (file: File): Promise<string> => {
   });
 };
 
-type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon' | 'recipes' | 'chat' | 'recipes-admin-new';
+type Page = 'main' | 'privacy' | 'terms' | 'refund' | 'profile' | 'about' | 'partner' | 'tryon' | 'recipes' | 'chat' | 'recipes-admin-new' | 'admin-model-status';
 
 // No global Google object required with Firebase Email/Password
 
@@ -487,6 +488,8 @@ const App: React.FC = () => {
         return 'refund';
       case '/profile':
         return 'profile';
+      case '/admin-model-status':
+        return 'admin-model-status';
       default:
         return 'main';
     }
@@ -1401,6 +1404,10 @@ const App: React.FC = () => {
               />
             )}
           </>
+        );
+      case 'admin-model-status':
+        return (
+          <AdminModelStatusPage user={user} />
         );
     }
   };
