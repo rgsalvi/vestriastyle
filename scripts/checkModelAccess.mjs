@@ -2,6 +2,8 @@
 // Simple model access probe script.
 // Usage:
 //   node scripts/checkModelAccess.mjs --models imagen-4.0-generate-001,imagen-4.1-pro-001,gemini-2.5-flash-image-preview
+// Or list available models for your key:
+//   node scripts/checkModelAccess.mjs --list
 // Relies on API_KEY in env.
 
 import { GoogleGenAI } from '@google/genai';
@@ -12,6 +14,7 @@ if (!process.env.API_KEY) {
 }
 
 const argModels = process.argv.find(a => a.startsWith('--models='))?.split('=')[1];
+const shouldList = process.argv.includes('--list');
 const models = (argModels ? argModels.split(',').map(s => s.trim()).filter(Boolean) : [
   'imagen-4.0-generate-001',
   'imagen-4.1-pro-001',
@@ -36,6 +39,24 @@ async function probe(name) {
 (async () => {
   console.log('Model Access Probe');
   console.log('API Key: ******' );
+  if (shouldList) {
+    console.log('Listing models available to this API key...');
+    console.log('--------------------------------------------');
+    try {
+      const listResp = await ai.models.list();
+      const names = Array.isArray(listResp?.models) ? listResp.models.map(m => m.name) : [];
+      if (!names.length) {
+        console.log('No models returned. Your key may lack access to public generative models.');
+      } else {
+        for (const n of names) console.log(n);
+      }
+      return;
+    } catch (e) {
+      console.error('Failed to list models:', e?.message || String(e));
+      process.exit(3);
+    }
+  }
+
   console.log('Models:', models.join(', '));
   console.log('--------------------------------------------');
   const results = [];
