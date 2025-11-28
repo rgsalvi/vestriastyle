@@ -26,11 +26,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const DEFAULT_MODELS = [
   'imagen-4.0-generate-001',
-  'imagen-4.1-pro-001',
   'gemini-2.5-flash-image-preview',
-  'gemini-2.5-image-edit-001',
   'gemini-2.0-flash',
-  'gemini-2.0-pro'
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
