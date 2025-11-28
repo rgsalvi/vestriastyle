@@ -16,14 +16,16 @@ This repo is configured for Vercel out of the box:
 - Output: `dist/`
 - API routes: `/api/*.ts` (Node.js Serverless Functions)
 
-Before deploying, set this environment variable in your Vercel project (Project Settings → Environment Variables):
+Before deploying, set these environment variables in your Vercel project (Project Settings → Environment Variables):
 
 - `API_KEY` — Google GenAI API key used by serverless endpoints (`/api/generate-flatlay`, `/api/generate-tryon`, `/api/validate-full-body`, etc.).
+- `IMAGE_GENERATE_MODEL` (optional) — Model ID for product-style image generation. Defaults to `imagen-4.0-generate-001` if unset.
+- `IMAGE_EDIT_MODEL` (optional) — Model ID for image editing. Defaults to `gemini-2.5-flash-image-preview` if unset.
 
 Optional (but recommended) function settings are already present in `vercel.json`:
 
 - `functions.api/*.ts.maxDuration = 60` (use up to 60s execution if your plan allows it)
-- `functions.api/*.ts.memory = 1536`
+  (Note: the `memory` setting has been removed for Active CPU billing.)
 
 Notes:
 
@@ -33,7 +35,7 @@ Notes:
 Quick start:
 
 1) Push this repo to GitHub and import it into Vercel.
-2) Add `API_KEY` in Project Settings → Environment Variables (apply to Preview and Production).
+2) Add `API_KEY` (and optionally `IMAGE_GENERATE_MODEL`, `IMAGE_EDIT_MODEL`) in Project Settings → Environment Variables (apply to Preview and Production).
 3) Deploy. Your app will serve the static site from `dist/` and handle API calls via `/api/*`.
 
 ## Run Locally
@@ -58,6 +60,12 @@ VITE_FIREBASE_AUTH_DOMAIN=...        # yourapp.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=...
 VITE_FIREBASE_APP_ID=...
 VITE_FIREBASE_MESSAGING_SENDER_ID=...
+
+# Server-side (Node) env vars used by `/api/*` endpoints
+API_KEY=YOUR_GEMINI_KEY
+# Optional: switch model IDs without code changes
+# IMAGE_GENERATE_MODEL=imagen-4.1-pro-001
+# IMAGE_EDIT_MODEL=gemini-2.5-image-edit-001
 ```
 
 Only Firebase Auth is used; all application data is stored in Supabase (see architecture below).
@@ -66,6 +74,13 @@ Only Firebase Auth is used; all application data is stored in Supabase (see arch
 `npm run dev`
 
 Open the printed localhost URL in your browser.
+
+Tip (Windows PowerShell, temporary for session only):
+
+```powershell
+$env:IMAGE_GENERATE_MODEL = "imagen-4.1-pro-001"; $env:IMAGE_EDIT_MODEL = "gemini-2.5-image-edit-001"; npm run dev
+```
+
 
 ---
 

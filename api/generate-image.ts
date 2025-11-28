@@ -6,6 +6,7 @@ if (!process.env.API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const IMAGE_GENERATE_MODEL = (process.env.IMAGE_GENERATE_MODEL || 'imagen-4.0-generate-001').trim();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -20,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
+            model: IMAGE_GENERATE_MODEL,
             prompt: `A professional, clean studio photograph of a single clothing item: ${prompt}. Plain white or light gray background, fashion photography style.`,
             config: {
                 numberOfImages: 1,
