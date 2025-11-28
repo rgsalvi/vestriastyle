@@ -38,6 +38,20 @@ Quick start:
 2) Add `API_KEY` (and optionally `IMAGE_GENERATE_MODEL`, `IMAGE_EDIT_MODEL`) in Project Settings → Environment Variables (apply to Preview and Production).
 3) Deploy. Your app will serve the static site from `dist/` and handle API calls via `/api/*`.
 
+
+### Admin model status page
+
+To enable the admin-only page at `/admin-model-status` (which verifies Firebase ID tokens server-side), set these Firebase Admin credentials in your environment (Vercel → Project Settings → Environment Variables recommended):
+
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+
+Notes:
+
+- The private key can be provided with `\n` escapes; the server converts them to real newlines at runtime.
+- Access is restricted to the admin email `support@vestria.style`.
+
 ## Run Locally
 
 **Prerequisites:**
