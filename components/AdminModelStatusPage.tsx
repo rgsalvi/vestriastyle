@@ -14,12 +14,27 @@ interface ApiResponse {
   timestamp: string;
 }
 
+interface ListModelsItem {
+  name?: string;
+  displayName?: string;
+  description?: string;
+}
+
+interface ListModelsResponse {
+  count: number;
+  models: ListModelsItem[];
+  timestamp: string;
+}
+
 const ADMIN_EMAIL = 'support@vestria.style';
 
 const AdminModelStatusPage: React.FC<{ user: any }> = ({ user }) => {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [listData, setListData] = useState<ListModelsResponse | null>(null);
 
   const isAdmin = !!user && user.email === ADMIN_EMAIL;
 
@@ -53,6 +68,35 @@ const AdminModelStatusPage: React.FC<{ user: any }> = ({ user }) => {
     };
     fetchStatus();
   }, [isAdmin]);
+
+  const handleListModels = async () => {
+    if (!isAdmin) return;
+    setListLoading(true);
+    setListError(null);
+    setListData(null);
+    try {
+      const auth = getAuth();
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) {
+        setListError('No auth token available.');
+        setListLoading(false);
+        return;
+      }
+      const res = await fetch('/api/list-models', {
+        headers: { Authorization: `Bearer ${idToken}` }
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Request failed: ${res.status}`);
+      }
+      const json = await res.json();
+      setListData(json);
+    } catch (e: any) {
+      setListError(e.message || 'Failed to list models');
+    } finally {
+      setListLoading(false);
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -104,6 +148,41 @@ const AdminModelStatusPage: React.FC<{ user: any }> = ({ user }) => {
             <p className="mt-4 text-xs text-platinum/50">Generated at {new Date(data.timestamp).toLocaleString()}</p>
           </div>
         )}
+
+        <div className="mt-8 border-t border-platinum/20 pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Available Models (API Key)</h2>
+            <button
+              onClick={handleListModels}
+              className="px-3 py-1.5 rounded-full bg-platinum text-dark-blue text-sm font-semibold hover:opacity-90"
+            >List Models</button>
+          </div>
+          {listLoading && <p className="text-sm text-platinum/70">Listing models…</p>}
+          {listError && <p className="text-sm text-red-400">{listError}</p>}
+          {listData && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left border-b border-platinum/20">
+                    <th className="py-2 pr-4 font-semibold">Name</th>
+                    <th className="py-2 pr-4 font-semibold">Display Name</th>
+                    <th className="py-2 pr-4 font-semibold">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listData.models.map((m, idx) => (
+                    <tr key={(m.name || '') + idx} className="border-b border-platinum/10">
+                      <td className="py-2 pr-4 font-medium text-platinum/90">{m.name || '—'}</td>
+                      <td className="py-2 pr-4 text-platinum/80">{m.displayName || '—'}</td>
+                      <td className="py-2 pr-4 text-platinum/70 max-w-xl truncate" title={m.description || ''}>{m.description || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-4 text-xs text-platinum/50">Listed {listData.count} models at {new Date(listData.timestamp).toLocaleString()}</p>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );

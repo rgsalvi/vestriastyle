@@ -49,13 +49,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const listResp: any = await ai.models.list();
     const models = Array.isArray(listResp?.models) ? listResp.models : [];
-    // Return concise fields plus raw for debugging
+    // Return concise fields
     const items = models.map((m: any) => ({
       name: m?.name,
       displayName: m?.displayName,
       description: m?.description,
-      input: m?.input?,
-      output: m?.output?,
     }));
     return res.status(200).json({
       count: models.length,
