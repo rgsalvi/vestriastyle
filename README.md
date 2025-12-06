@@ -191,7 +191,15 @@ It upserts a test user, profile, and wardrobe items, then validates round-trips.
 | Profile not saving | Supabase RLS / missing anon key | Verify env vars & table policies |
 | Onboarding repeats | `isOnboarded` flag never persisted | Check network tab for `/users` upsert errors |
 
----
+## Security Note
+This app is a Vite + React SPA and does not use Next.js or React Server Components. The CVE-2025-55182 (Next.js RSC RCE) advisory does not apply to this repository. If you operate other Vercel projects on Next.js, upgrade those to a patched version (15.0.5, 15.1.9, 15.2.6, 15.3.6, 15.4.8, 15.5.7, or 16.0.7).
+
+Validated Google Generative AI models for this app:
+- `imagen-4.0-generate-001` (generation)
+- `gemini-2.5-flash-image-preview` (image + text editing)
+- `gemini-2.0-flash` (text/multimodal)
+
+Admin can verify live model availability at `/admin-model-status` via the “List Models” button.
 
 ## License
 Proprietary / Internal (adjust as needed).
