@@ -6,7 +6,7 @@ if (!process.env.API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const IMAGE_EDIT_MODEL = (process.env.IMAGE_EDIT_MODEL || 'gemini-2.5-flash-image-preview').trim();
+const IMAGE_EDIT_MODEL = (process.env.IMAGE_EDIT_MODEL || 'gemini-2.5-flash-image').trim();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {

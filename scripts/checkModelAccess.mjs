@@ -17,11 +17,8 @@ const argModels = process.argv.find(a => a.startsWith('--models='))?.split('=')[
 const shouldList = process.argv.includes('--list');
 const models = (argModels ? argModels.split(',').map(s => s.trim()).filter(Boolean) : [
   'imagen-4.0-generate-001',
-  'imagen-4.1-pro-001',
-  'gemini-2.5-flash-image-preview',
-  'gemini-2.5-image-edit-001',
-  'gemini-2.0-flash',
-  'gemini-2.0-pro'
+  'gemini-2.5-flash-image',
+  'gemini-2.0-flash'
 ]);
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
