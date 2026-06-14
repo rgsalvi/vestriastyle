@@ -48,6 +48,8 @@ interface HeaderProps {
   onEditProfile: () => void;
   activePage: Page;
   recipesActive: boolean;
+  hasCompletedStyleQuestionnaire: boolean;
+  setShowOnboarding: (show: boolean) => void;
 }
 
 const Logo: React.FC<{ className?: string }> = ({ className }) => (
@@ -140,7 +142,7 @@ const EditProfileModal: React.FC<{
 };
 
 
-const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateHome, onNavigateAbout, onNavigateRecipes, onNavigatePartner, onNavigateTryOn, showWardrobeButton, onWardrobeClick, onEditProfile, activePage, recipesActive }) => {
+const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin, onChatNav, onNavigateHome, onNavigateAbout, onNavigateRecipes, onNavigatePartner, onNavigateTryOn, showWardrobeButton, onWardrobeClick, onEditProfile, activePage, recipesActive, hasCompletedStyleQuestionnaire, setShowOnboarding }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -257,7 +259,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
-            {/* TODO: Add Complete Profile banner - hasCompletedStyleQuestionnaire not in scope here */}
+            {!hasCompletedStyleQuestionnaire && (
+              <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
+            )}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
@@ -1442,9 +1446,9 @@ const App: React.FC = () => {
             )}
           </div>
         )}
-        <Header 
-          user={user} 
-          onSignOut={handleSignOut} 
+        <Header
+          user={user}
+          onSignOut={handleSignOut}
           onSignIn={() => setShowLogin(true)}
           onOpenLogin={(mode) => { setShowLogin(true); /* store mode in state below */ setLoginInitialMode(mode); }}
           onNavigateHome={() => { navigate('/'); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }}
@@ -1460,6 +1464,8 @@ const App: React.FC = () => {
           onEditProfile={() => navigate('/profile')}
           activePage={currentPage}
           recipesActive={currentPage === 'recipes'}
+          hasCompletedStyleQuestionnaire={hasCompletedStyleQuestionnaire}
+          setShowOnboarding={setShowOnboarding}
         />
         {renderPage()}
       </div>
