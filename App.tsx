@@ -509,6 +509,7 @@ const App: React.FC = () => {
   // No more guest chat users; chat is premium-only
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasCompletedStyleQuestionnaire, setHasCompletedStyleQuestionnaire] = useState(true); // Default true to not show banner
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [onboardingSuccessToast, setOnboardingSuccessToast] = useState(false);
@@ -622,6 +623,21 @@ const App: React.FC = () => {
             } catch (e) {
               // Expected to fail on first sign-up when user doc doesn't exist yet
               console.debug('[auth-observer] identity lookup skipped', (e as any)?.message);
+            }
+            // Check if user has completed the style questionnaire (simple boolean check)
+            try {
+              const { doc: firestoreDoc, getDoc: getFirestoreDoc } = await import('firebase/firestore');
+              const { getFirestore } = await import('firebase/firestore');
+              const db = getFirestore();
+              const userDocRef = firestoreDoc(db, 'users', mapped.id);
+              const userDocSnap = await getFirestoreDoc(userDocRef);
+              if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                setHasCompletedStyleQuestionnaire(userData.has_completed_style_questionnaire ?? true);
+                console.log('[auth-observer] Questionnaire status:', userData.has_completed_style_questionnaire);
+              }
+            } catch (e) {
+              console.debug('[auth-observer] Could not check questionnaire status', (e as any)?.message);
             }
             // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)
             const cloudProfile = await loadUserProfile(mapped.id);
@@ -807,15 +823,16 @@ const App: React.FC = () => {
     console.log('[onboarding-save] start');
 
     try {
-      // Save profile to Firestore
+      // Save profile to Firestore and mark questionnaire as completed
       console.log('[onboarding-save] saving profile');
-      await saveUserProfile(user.id, { ...profile, isOnboarded: true });
+      await saveUserProfile(user.id, { ...profile, isOnboarded: true, has_completed_style_questionnaire: true });
       console.log('[onboarding-save] profile saved successfully');
 
       // Update local state
       const cloudProfile = { ...profile, isOnboarded: true };
       setStyleProfile(cloudProfile);
       setBodyType(cloudProfile.bodyType || 'None');
+      setHasCompletedStyleQuestionnaire(true); // Hide banner
 
       // Update localStorage
       try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
@@ -1437,7 +1454,7 @@ const App: React.FC = () => {
           activePage={currentPage}
           recipesActive={currentPage === 'recipes'}
         />
-        {user && styleProfile && !isProfileComplete(styleProfile) && !showOnboarding && (
+        {user && !hasCompletedStyleQuestionnaire && !showOnboarding && (
           <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
         )}
         {renderPage()}
