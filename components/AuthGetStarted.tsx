@@ -197,7 +197,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-dark-blue px-4 pt-6 md:pt-10 pb-10 animate-fade-in">
-      <div className={`w-full ${stage === 'signup' ? 'max-w-2xl' : 'max-w-xl'} text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative`}>
+      <div className={`w-full ${stage === 'signup' || stage === 'signup-optional' ? 'max-w-2xl' : 'max-w-xl'} text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative`}>
 
         {stage === 'email' && (
           <>
@@ -288,7 +288,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
         {stage === ‘signup’ && (
           <>
             <div className="mt-8">
-              <h2 className="text-3xl font-bold text-platinum tracking-tight">Let’s get started</h2>
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">{`Let's get started`}</h2>
             </div>
             <p className="mt-2 text-lg text-platinum/60">Step 1: Your essentials</p>
             {error && !message && (
