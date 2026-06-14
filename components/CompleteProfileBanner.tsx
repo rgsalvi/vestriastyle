@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { SparklesIcon } from '@heroicons/react/24/outline';
 
 interface CompleteProfileBannerProps {
@@ -6,30 +6,14 @@ interface CompleteProfileBannerProps {
 }
 
 export const CompleteProfileBanner: React.FC<CompleteProfileBannerProps> = ({ onOpen }) => {
-  const [dismissed, setDismissed] = useState(false);
-
-  if (dismissed) return null;
-
   return (
-    <div className="fixed top-6 right-6 z-40 animate-fade-in">
-      <button
-        onClick={onOpen}
-        className="group flex items-center gap-2 px-4 py-2 rounded-full bg-dark-blue/60 backdrop-blur-lg border border-platinum/30 text-platinum text-sm font-medium hover:border-platinum/60 hover:bg-dark-blue/70 transition-all shadow-lg hover:shadow-xl"
-        aria-label="Complete your style profile"
-      >
-        <SparklesIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
-        <span>Complete Your Style Profile</span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setDismissed(true);
-          }}
-          className="ml-2 text-platinum/50 hover:text-platinum transition-colors"
-          aria-label="Dismiss"
-        >
-          ×
-        </button>
-      </button>
-    </div>
+    <button
+      onClick={onOpen}
+      className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-100 text-sm font-medium hover:bg-amber-500/30 hover:border-amber-400/60 transition-all"
+      aria-label="Complete your style profile"
+    >
+      <SparklesIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+      <span>Complete Style Profile</span>
+    </button>
   );
 };

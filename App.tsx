@@ -256,6 +256,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
+            {user && !hasCompletedStyleQuestionnaire && !showOnboarding && (
+              <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
+            )}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
@@ -1475,9 +1478,6 @@ const App: React.FC = () => {
           activePage={currentPage}
           recipesActive={currentPage === 'recipes'}
         />
-        {user && !hasCompletedStyleQuestionnaire && !showOnboarding && (
-          <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
-        )}
         {renderPage()}
       </div>
       <Footer 
