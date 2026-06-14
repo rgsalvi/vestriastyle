@@ -862,6 +862,7 @@ const App: React.FC = () => {
           `${pendingSignupCredentials.firstName} ${pendingSignupCredentials.lastName}`,
           true // skip email verification - will send after onboarding completes
         );
+
         // Construct the real user object from the credentials
         realUser = {
           id: cred.user.uid,
@@ -869,6 +870,19 @@ const App: React.FC = () => {
           name: cred.user.displayName || `${pendingSignupCredentials.firstName} ${pendingSignupCredentials.lastName}`,
           picture: cred.user.photoURL || '',
         };
+
+        // CRITICAL: Wait for auth.currentUser to be synchronized
+        // After signUp, the auth state needs time to update in the client
+        let attempts = 0;
+        while (!auth.currentUser && attempts < 10) {
+          await new Promise(r => setTimeout(r, 100));
+          attempts++;
+        }
+
+        if (!auth.currentUser) {
+          console.warn('[onboarding-save] auth.currentUser not set after signUp, proceeding anyway');
+        }
+
         console.log('[onboarding-save] Firebase Auth account created', { uid: realUser.id });
       } catch (e: any) {
         console.error('[onboarding-save] signUp failed', e);
