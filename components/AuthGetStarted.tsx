@@ -1,5 +1,5 @@
 import React from 'react';
-import { auth, signIn } from '../services/firebase';
+import { auth, signUp, signIn } from '../services/firebase';
 import { TermsOfService } from './TermsOfService';
 import { PrivacyPolicy } from './PrivacyPolicy';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
@@ -10,7 +10,7 @@ interface Props {
   onNavigateToTerms: () => void;
   onNavigateToPrivacy: () => void;
   onSignedIn: () => void;
-  onSignedUp: (credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }) => void;
+  onSignedUp: () => void;
 }
 
 type Stage = 'email' | 'signin' | 'signup';
@@ -104,16 +104,9 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
       const today = new Date();
       if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
 
-      // Store credentials to be used after onboarding completes
-      // Do NOT call signUp here - let handleOnboardingComplete do it after styling questionnaire is done
-      const credentials = {
-        email: email.trim(),
-        password,
-        firstName: fn,
-        lastName: ln,
-        dateOfBirth: date,
-      };
-      onSignedUp(credentials);
+      await signUp(email.trim(), password, `${fn} ${ln}`);
+      setMessage('Account created. Check your email (including Spam) to verify your address.');
+      onSignedUp();
     } catch (err: any) {
       const code: string | undefined = err?.code;
       if (code === 'auth/email-already-in-use') {
