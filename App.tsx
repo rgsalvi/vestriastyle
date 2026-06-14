@@ -606,7 +606,6 @@ const App: React.FC = () => {
         };
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped));
         setUser(mapped);
-        ensureUserRow(mapped.id, mapped.email, mapped.name).catch(e => console.warn('ensureUserRow failed', e));
         (async () => {
           try {
             // Prefer Supabase identity for display name
