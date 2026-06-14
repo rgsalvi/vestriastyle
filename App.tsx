@@ -257,9 +257,11 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
-            {typeof hasCompletedStyleQuestionnaire !== 'undefined' && user && hasCompletedStyleQuestionnaire === false && !showOnboarding ? (
-              <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
-            ) : null}
+            {(() => {
+              const shouldShow = typeof hasCompletedStyleQuestionnaire !== 'undefined' && user && hasCompletedStyleQuestionnaire === false && !showOnboarding;
+              console.log('[banner-check]', { hasCompletedStyleQuestionnaire, user: !!user, showOnboarding, shouldShow });
+              return shouldShow ? <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} /> : null;
+            })()}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
