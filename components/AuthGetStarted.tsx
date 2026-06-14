@@ -107,7 +107,6 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
       const dt = new Date(date);
       const today = new Date();
       if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
-      // Validation passed; move to optional fields
       setStage('signup-optional');
     } catch (err: any) {
       setError(err?.message || 'Please check your entries.');
@@ -136,7 +135,6 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
     } finally { setLoading(false); }
   };
 
-  // Allow switching back to email step (used by "Not you?" affordance)
   const handleChangeEmail = () => {
     setError(null);
     setMessage(null);
@@ -172,11 +170,9 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
     if (stage === 'email' && emailInputRef.current) {
       const el = emailInputRef.current;
       el.focus();
-      // Place cursor at end for quick edits; guard for input types that don't support selection
       const val = el.value ?? '';
       try {
         if (typeof el.setSelectionRange === 'function') {
-          // Some browsers throw for types like 'email'; wrap in try/catch
           el.setSelectionRange(val.length, val.length);
         }
       } catch {
@@ -185,7 +181,6 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
     }
   }, [stage]);
 
-  // Close modal on Escape
   React.useEffect(() => {
     if (!policyModal) return;
     const onKey = (e: KeyboardEvent) => {
@@ -197,7 +192,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-dark-blue px-4 pt-6 md:pt-10 pb-10 animate-fade-in">
-      <div className={`w-full ${stage === 'signup' || stage === 'signup-optional' ? 'max-w-2xl' : 'max-w-xl'} text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative`}>
+      <div className={stage === 'signup' || stage === 'signup-optional' ? 'w-full max-w-2xl text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative' : 'w-full max-w-xl text-center bg-dark-blue/80 backdrop-blur-lg p-8 md:p-12 rounded-2xl shadow-lg border border-platinum/20 relative'}>
 
         {stage === 'email' && (
           <>
@@ -220,7 +215,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   required
                 />
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait…' : 'Continue'}</button>
+              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait' : 'Continue'}</button>
             </form>
           </>
         )}
@@ -280,15 +275,15 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   </button>
                 </div>
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Signing in…' : 'Sign In'}</button>
+              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Signing in' : 'Sign In'}</button>
             </form>
           </>
         )}
 
-        {stage === ‘signup’ && (
+        {stage === 'signup' && (
           <>
             <div className="mt-8">
-              <h2 className="text-3xl font-bold text-platinum tracking-tight">{`Let's get started`}</h2>
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">Lets get started</h2>
             </div>
             <p className="mt-2 text-lg text-platinum/60">Step 1: Your essentials</p>
             {error && !message && (
@@ -358,7 +353,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   name="bday"
                   autoComplete="bday"
                   className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
-                  style={{ colorScheme: ‘dark’ }}
+                  style={{ colorScheme: 'dark' }}
                   required
                 />
                 <p className="mt-1 text-xs text-platinum/60">We use this to tailor your experience.</p>
@@ -371,7 +366,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                     title="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    type={showPassword ? ‘text’ : ‘password’}
+                    type={showPassword ? 'text' : 'password'}
                     name="new-password"
                     autoComplete="new-password"
                     className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 pr-24 text-platinum"
@@ -382,22 +377,22 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                     type="button"
                     onClick={() => setShowPassword(s => !s)}
                     className="absolute inset-y-0 right-0 inline-flex items-center gap-1 px-4 text-xs font-medium text-platinum/70 hover:text-platinum focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40"
-                    aria-label={showPassword ? ‘Hide password’ : ‘Show password’}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? ‘Hide’ : ‘Show’}
+                    {showPassword ? 'Hide' : 'Show'}
                   </button>
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? ‘Please wait…’ : ‘Continue’}</button>
+              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait' : 'Continue'}</button>
             </form>
           </>
         )}
 
-        {stage === ‘signup-optional’ && (
+        {stage === 'signup-optional' && (
           <>
             <div className="mt-8">
-              <h2 className="text-3xl font-bold text-platinum tracking-tight">One more thing!</h2>
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">One more thing</h2>
             </div>
             <p className="mt-2 text-lg text-platinum/60">Step 2: Make your profile complete (optional)</p>
             {message && (
@@ -407,7 +402,6 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
               <div role="alert" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-white/5 text-platinum/90">{error}</div>
             )}
             <form onSubmit={handleSignUpSubmit} className="mt-8 space-y-4 text-left">
-              {/* Avatar Upload */}
               <div>
                 <label className="block text-sm text-platinum/70 mb-3">Profile Picture</label>
                 <div className="flex items-center gap-4">
@@ -436,14 +430,13 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                 </div>
               </div>
 
-              {/* Gender */}
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Gender</label>
                 <select
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
                   className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
-                  style={{ colorScheme: ‘dark’ }}
+                  style={{ colorScheme: 'dark' }}
                 >
                   <option value="">Select gender (optional)</option>
                   <option value="Female">Female</option>
@@ -453,7 +446,6 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                 </select>
               </div>
 
-              {/* Location */}
               <div>
                 <label className="block text-sm text-platinum/70 mb-1">Location/City</label>
                 <input
@@ -467,17 +459,17 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={handleBackToRequired} className="flex-1 border border-platinum/30 text-platinum font-bold py-3 rounded-full hover:bg-platinum/10 transition">Back</button>
-                <button type="submit" disabled={loading} className="flex-1 bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? ‘Creating account…’ : ‘Create Account’}</button>
+                <button type="submit" disabled={loading} className="flex-1 bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Creating account' : 'Create Account'}</button>
               </div>
             </form>
           </>
         )}
 
         <p className="mt-8 text-xs text-platinum/50">
-          By continuing, you agree to our{' '}
-          <button onClick={() => setPolicyModal('terms')} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Terms of Service</button>
-          {' '}and{' '}
-          <button onClick={() => setPolicyModal('privacy')} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors">Privacy Policy</button>.
+          By continuing, you agree to our
+          <button onClick={() => setPolicyModal('terms')} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors"> Terms of Service </button>
+          and
+          <button onClick={() => setPolicyModal('privacy')} className="underline decoration-platinum/40 hover:decoration-white hover:text-white transition-colors"> Privacy Policy</button>.
         </p>
 
         {policyModal && (
