@@ -628,12 +628,16 @@ const App: React.FC = () => {
               // Expected to fail on first sign-up when user doc doesn't exist yet
               console.debug('[auth-observer] identity lookup skipped', (e as any)?.message);
             }
-            // Check questionnaire status from localStorage (simplified approach)
+            // Check questionnaire status from cloud profile
             try {
-              const localStatus = localStorage.getItem(`questionnaire-completed-${mapped.id}`);
-              const completed = localStatus === 'true' ? true : false;
-              setHasCompletedStyleQuestionnaire(completed);
-              console.log('[auth-observer] Questionnaire status from localStorage:', completed);
+              const cloudProfile = await loadUserProfile(mapped.id);
+              if (cloudProfile) {
+                const completed = cloudProfile.isOnboarded === true;
+                setHasCompletedStyleQuestionnaire(completed);
+                console.log('[auth-observer] Questionnaire status from database:', completed);
+              } else {
+                setHasCompletedStyleQuestionnaire(false);
+              }
             } catch (e) {
               console.debug('[auth-observer] Could not check questionnaire status', (e as any)?.message);
               setHasCompletedStyleQuestionnaire(false);
@@ -828,17 +832,10 @@ const App: React.FC = () => {
     console.log('[onboarding-save] start');
 
     try {
-      // Save profile to Firestore and mark questionnaire as completed
+      // Save profile to database and mark questionnaire as completed
       console.log('[onboarding-save] saving profile');
-      await saveUserProfile(user.id, { ...profile, isOnboarded: true, has_completed_style_questionnaire: true });
+      await saveUserProfile(user.id, { ...profile, isOnboarded: true });
       console.log('[onboarding-save] profile saved successfully');
-
-      // Also save to localStorage as backup
-      try {
-        localStorage.setItem(`questionnaire-completed-${user.id}`, 'true');
-      } catch (e) {
-        console.debug('[onboarding-save] Could not save to localStorage', e);
-      }
 
       // Update local state
       const cloudProfile = { ...profile, isOnboarded: true };
