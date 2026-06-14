@@ -257,9 +257,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
-            {!hasCompletedStyleQuestionnaire && (
-              <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
-            )}
+            {/* TODO: Add Complete Profile banner - hasCompletedStyleQuestionnaire not in scope here */}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
