@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-export const db = getDatabase(app);
+export const db = getDatabase(app, 'https://vestria-style-default-rtdb.asia-southeast1.firebasedatabase.app');
 export const auth = getAuth(app);
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
