@@ -27,7 +27,7 @@ import { Squares2X2Icon, SparklesIcon } from '@heroicons/react/24/outline';
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
-import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth, resendVerification } from './services/firebase';
+import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth, resendVerification, signUp, sendVerificationEmail } from './services/firebase';
 import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow, repositoryLoadUserIdentity } from './services/repository';
 
 interface HeaderProps {
@@ -511,6 +511,9 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [onboardingSuccessToast, setOnboardingSuccessToast] = useState(false);
+
+  // Store signup credentials from AuthGetStarted to use in handleOnboardingComplete
+  const [pendingSignupCredentials, setPendingSignupCredentials] = useState<{ email: string; password: string; firstName: string; lastName: string; dateOfBirth: string } | null>(null);
   
   // Pending-action flow: capture user's intended action when login is required and resume post-sign-in
   type PendingAction =
@@ -994,12 +997,23 @@ const App: React.FC = () => {
       }, 400);
     }
 
+    // Send email verification now that onboarding is complete
+    try {
+      await sendVerificationEmail();
+      console.log('[onboarding-save] verification email sent');
+    } catch (e) {
+      console.warn('[onboarding-save] verification email send failed (non-critical)', e);
+    }
+
     if (user && !auth.currentUser?.emailVerified) {
       setProfileSavedBanner('Check your email to verify your account (look in Spam) so we can keep your experience secure.');
       setTimeout(() => setProfileSavedBanner(null), 8000);
     }
 
     try { trackEvent('onboarding_complete'); } catch {}
+
+    // Clear pending credentials after successful onboarding completion
+    setPendingSignupCredentials(null);
   };
 
   // Wardrobe Logic
@@ -1159,6 +1173,24 @@ const App: React.FC = () => {
   };
   
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
+
+  const handleSignupComplete = async (credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }) => {
+    try {
+      // Create Firebase Auth account, but skip email verification for now
+      // It will be sent after onboarding is complete
+      await signUp(credentials.email, credentials.password, `${credentials.firstName} ${credentials.lastName}`, true);
+      // Store credentials for handleOnboardingComplete to use
+      setPendingSignupCredentials(credentials);
+      setShowLogin(false);
+      setShowOnboarding(true);
+      setOnboardingGateBanner(true);
+    } catch (err: any) {
+      console.error('[handleSignupComplete] signUp failed', err);
+      // If signup failed, don't proceed to onboarding
+      alert(`Sign up failed: ${err?.message || 'Unknown error'}`);
+    }
+  };
+
   const handleOpenChat = (context: AiResponse, newItemForChat: AnalysisItem | null) => {
     if (!user) {
       setPendingAction({ type: 'open-chat', context, newItem: newItemForChat });
@@ -1193,7 +1225,7 @@ const App: React.FC = () => {
         onNavigateToTerms={() => { setShowLogin(false); navigate('/terms'); }}
         onNavigateToPrivacy={() => { setShowLogin(false); navigate('/privacy'); }}
         onSignedIn={() => { setShowLogin(false); }}
-        onSignedUp={() => { setShowLogin(false); setShowOnboarding(true); setOnboardingGateBanner(true); }}
+        onSignedUp={handleSignupComplete}
       />
     );
   }

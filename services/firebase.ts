@@ -27,7 +27,8 @@ try {
 export const auth = getAuth(app);
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
-export const signUp = (email: string, password: string, displayName?: string): Promise<UserCredential> =>
+export const sendVerificationEmail = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
+export const signUp = (email: string, password: string, displayName?: string, skipEmailVerification?: boolean): Promise<UserCredential> =>
   createUserWithEmailAndPassword(auth, email, password).then(async (cred: UserCredential) => {
     // Track signup_start (fire-and-forget; endpoint may ignore if unauth yet)
     try {
@@ -36,7 +37,9 @@ export const signUp = (email: string, password: string, displayName?: string): P
     if (displayName) {
       try { await updateProfile(cred.user, { displayName }); } catch {}
     }
-    await sendEmailVerification(cred.user);
+    if (!skipEmailVerification) {
+      await sendEmailVerification(cred.user);
+    }
     try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
     // Data persistence now handled lazily via Supabase repository on first profile save.
     return cred;
