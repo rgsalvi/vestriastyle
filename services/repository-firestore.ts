@@ -253,13 +253,23 @@ export async function repositoryFindUserByEmail(
     const snapshot = await get(usersRef);
 
     if (!snapshot.exists()) {
+      console.log('[realtime-db] findUserByEmail: no users collection');
       return null;
     }
 
     const users = snapshot.val() as Record<string, RealtimeDBUser>;
-    const found = Object.values(users).find(u => u.email === email);
+    console.log('[realtime-db] findUserByEmail: checking', Object.keys(users).length, 'users for email:', email);
+
+    const found = Object.values(users).find(u => {
+      const matches = u.email?.toLowerCase() === email.toLowerCase();
+      if (matches) {
+        console.log('[realtime-db] findUserByEmail: found match', u.email);
+      }
+      return matches;
+    });
 
     if (!found) {
+      console.log('[realtime-db] findUserByEmail: no match found');
       return null;
     }
 
