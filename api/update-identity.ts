@@ -1,50 +1,38 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import * as admin from 'firebase-admin';
+import { getFirebaseAdmin } from './_lib/firebaseAdmin';
 
 export const config = { runtime: 'nodejs' };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).json({ success: false, message: `Method ${req.method} Not Allowed` });
   }
-  try {
-    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      return res.status(500).json({ success: false, message: 'Server misconfiguration: SUPABASE_URL and SUPABASE_SERVICE_KEY are required.' });
-    }
-    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+  try {
     const authHeader = (req.headers.authorization || req.headers.Authorization) as string | undefined;
     const idToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
     if (!idToken) return res.status(401).json({ success: false, message: 'Missing Authorization token.' });
-    let adminAuth: any;
-    try {
-      const mod = await import('./_firebaseAdmin.js');
-      adminAuth = (mod as any).adminAuth;
-    } catch {
-      const mod = await import('./_firebaseAdmin');
-      adminAuth = (mod as any).adminAuth;
-    }
-    if (!adminAuth) return res.status(500).json({ success: false, message: 'Firebase Admin not available.' });
-    const decoded = await adminAuth.verifyIdToken(idToken);
-    const uid = decoded.uid as string;
 
-  const { firstName, lastName, dateOfBirth } = req.body || {};
+    const adm = getFirebaseAdmin();
+    let uid: string;
+    try {
+      const decoded = await adm.auth().verifyIdToken(idToken);
+      uid = decoded.uid;
+    } catch (e) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
+    }
+
+    const { firstName, lastName, dateOfBirth } = req.body || {};
     if (!firstName && !lastName && !dateOfBirth) {
-      return res.status(400).json({ success: false, message: 'At least one of firstName, lastName or dateOfBirth must be provided.' });
+      return res.status(400).json({
+        success: false,
+        message: 'At least one of firstName, lastName or dateOfBirth must be provided.',
+      });
     }
-    let display_name: string | undefined = undefined;
-    let first_name: string | undefined = undefined;
-    let last_name: string | undefined = undefined;
-    if (firstName || lastName) {
-      const fn = (firstName ?? '').toString().trim();
-      const ln = (lastName ?? '').toString().trim();
-      first_name = fn || undefined;
-      last_name = ln || undefined;
-      display_name = `${fn} ${ln}`.trim();
-    }
+
+    // Validate dateOfBirth format if provided
     if (dateOfBirth) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
         return res.status(400).json({ success: false, message: 'dateOfBirth must be YYYY-MM-DD.' });
@@ -55,25 +43,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ success: false, message: 'dateOfBirth must be a valid date in the past.' });
       }
     }
-    const payload: any = { id: uid };
-    if (display_name) payload.display_name = display_name;
-    if (first_name) payload.first_name = first_name;
-    if (last_name) payload.last_name = last_name;
-    if (dateOfBirth) payload.date_of_birth = dateOfBirth;
-    let { error } = await sb.from('users').upsert(payload, { onConflict: 'id' });
-    if (error && typeof error.message === 'string' && (error.message.includes('first_name') || error.message.includes('last_name'))) {
-      // Fallback for deployments where columns aren't created yet: retry without first/last
-      const fallback: any = { id: uid };
-      if (display_name) fallback.display_name = display_name;
-      if (dateOfBirth) fallback.date_of_birth = dateOfBirth;
-      const retry = await sb.from('users').upsert(fallback, { onConflict: 'id' });
-      error = retry.error as any;
-    }
-    if (error) return res.status(500).json({ success: false, message: error.message || 'Failed to update identity.' });
 
+    // Prepare payload for Firestore
+    const fn = (firstName ?? '').toString().trim();
+    const ln = (lastName ?? '').toString().trim();
+    const displayName = `${fn} ${ln}`.trim();
+
+    const payload: any = {
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (fn) payload.first_name = fn;
+    if (ln) payload.last_name = ln;
+    if (displayName) payload.display_name = displayName;
+    if (dateOfBirth) payload.date_of_birth = dateOfBirth;
+
+    const db = adm.firestore();
+    await db.collection('users').doc(uid).set(payload, { merge: true });
+
+    console.log(`[api/update-identity] updated for ${uid}`);
     return res.status(200).json({ success: true });
   } catch (e: any) {
     console.error('[api/update-identity] error', e);
     return res.status(500).json({ success: false, message: e?.message || 'Unexpected error' });
   }
 }
+

@@ -1,8 +1,6 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// Import admin for token verification and Firestore checks
-import { adminAuth, adminDb } from './_firebaseAdmin';
-import { FieldValue } from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
+import { getFirebaseAdmin } from './_lib/firebaseAdmin';
 import twilio from 'twilio';
 
 // Securely access Twilio credentials from environment variables
@@ -102,58 +100,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!idToken) {
             return res.status(401).json({ success: false, message: 'Missing Authorization token.' });
         }
+
         let uid: string;
         let emailVerified = false;
+        const adm = getFirebaseAdmin();
         try {
-            const decoded = await adminAuth.verifyIdToken(idToken);
+            const decoded = await adm.auth().verifyIdToken(idToken);
             uid = decoded.uid;
             emailVerified = !!(decoded as any).email_verified;
         } catch (e) {
             return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
         }
-        // Read premium flag from Firestore profile: users/{uid}/meta/profile
+
+        // Check premium status from Firestore
+        const adminDb = adm.firestore();
         let isPremium = false;
-        const userDoc = await adminDb.doc(`users/${uid}`).get();
         let profileData: any = null;
-        if (userDoc.exists) {
-            profileData = userDoc.data() || {};
-            isPremium = !!profileData.isPremium;
-        } else {
-            const legacySnap = await adminDb.doc(`users/${uid}/meta/profile`).get();
-            if (legacySnap.exists) {
-              profileData = legacySnap.data();
-              isPremium = !!profileData.isPremium;
+
+        try {
+            const userSnap = await adminDb.collection('users').doc(uid).get();
+            if (userSnap.exists) {
+                profileData = userSnap.data() || {};
+                isPremium = !!profileData.is_premium;
             }
+        } catch (e) {
+            console.warn('[initiate-chat] failed to check premium status', e);
         }
-        // Launch promo: optionally auto-upgrade verified users and backfill Firestore
+
+        // Launch promo: optionally auto-upgrade verified users
         const promoEnabled = (process.env.LAUNCH_PROMO_AUTO_PREMIUM || '').toLowerCase() === 'true';
         if (!isPremium && promoEnabled && emailVerified) {
             try {
-                await adminDb.doc(`users/${uid}`).set({ isPremium: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+                await adminDb.collection('users').doc(uid).set({
+                    is_premium: true,
+                    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
                 isPremium = true;
-            } catch {}
+            } catch (e) {
+                console.warn('[initiate-chat] auto-upgrade failed', e);
+            }
         }
+
         if (!isPremium) {
             return res.status(403).json({ success: false, message: 'Premium required.' });
         }
 
-                // Onboarding enforcement Phase 2 (soft): require onboardingComplete flag OR essential fields
-                const hasEssential = profileData && profileData.bodyType && profileData.bodyType !== 'None' && Array.isArray(profileData.styleArchetypes) && profileData.styleArchetypes.length > 0;
-                const hasFlag = !!profileData?.onboardingComplete;
-                if (!hasFlag && hasEssential) {
-                    // Backfill flag silently
-                    try {
-                        await adminDb.doc(`users/${uid}`).set({ onboardingComplete: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-                        console.log('[chat-onboarding] backfill_flag uid=', uid);
-                    } catch (e) {
-                        console.warn('[chat-onboarding] backfill_failed uid=', uid, e);
-                    }
-                } else if (!hasFlag && !hasEssential) {
-                    console.log('[chat-onboarding] deny_incomplete uid=', uid);
-                    return res.status(400).json({ success: false, message: 'Onboarding incomplete. Please finish your style profile first.', error: 'ONBOARDING_INCOMPLETE' });
-                } else {
-                    console.log('[chat-onboarding] allow uid=', uid, 'flag=', hasFlag, 'essential=', hasEssential);
-                }
+        // Onboarding enforcement: require bodyType and styleArchetypes
+        const hasEssential = profileData &&
+            profileData.body_type &&
+            profileData.body_type !== 'None' &&
+            Array.isArray(profileData.style_archetypes) &&
+            profileData.style_archetypes.length > 0;
+
+        if (!hasEssential) {
+            console.log('[chat-onboarding] deny_incomplete uid=', uid);
+            return res.status(400).json({
+                success: false,
+                message: 'Onboarding incomplete. Please finish your style profile first.',
+                error: 'ONBOARDING_INCOMPLETE',
+            });
+        }
 
         // Randomly assign one stylist for a 1-on-1 chat
         const assignedStylist = availableStylists[Math.floor(Math.random() * availableStylists.length)];
