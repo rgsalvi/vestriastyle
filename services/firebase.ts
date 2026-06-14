@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
-import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
+import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel, getDoc, enableNetwork, disableNetwork } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUg5U7c-KR7GGpusHQZTSqqucD1In_0NI",
@@ -12,23 +12,18 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-// Initialize Firestore with standard settings (WebSocket by default)
-export const db = initializeFirestore(app, {});
 
-// Enable offline persistence to handle connectivity issues gracefully
-try {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('[firestore] Multiple tabs open, persistence disabled');
-    } else if (err.code === 'unimplemented') {
-      console.warn('[firestore] Browser doesn\'t support persistence');
-    } else {
-      console.debug('[firestore] Persistence warning:', err);
-    }
-  });
-} catch (e) {
-  console.debug('[firestore] Could not enable persistence:', e);
-}
+// Initialize Firestore with caching enabled
+export const db = initializeFirestore(app, {
+  cacheSizeBytes: 50 * 1024 * 1024, // 50MB cache for offline support
+});
+
+// Enable network connectivity
+enableNetwork(db).then(() => {
+  console.log('[firestore] Network enabled successfully');
+}).catch((err) => {
+  console.warn('[firestore] Warning enabling network:', err?.message);
+});
 
 // Optional debug logging: set localStorage FIRESTORE_DEBUG=true (dev only)
 try {
@@ -39,6 +34,21 @@ try {
   }
 } catch {}
 export const auth = getAuth(app);
+
+// Diagnostic function to check Firestore connection
+export const checkFirestoreConnection = async () => {
+  try {
+    console.log('[firestore-health] Testing connection...');
+    // Try a simple read to test connectivity
+    const testRef = doc(db, 'users', 'connection-test');
+    await getDoc(testRef);
+    console.log('[firestore-health] ✓ Connection successful');
+    return true;
+  } catch (err: any) {
+    console.error('[firestore-health] ✗ Connection failed:', err?.message || err);
+    return false;
+  }
+};
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
 export const sendVerificationEmail = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
@@ -54,29 +64,49 @@ export const signUp = (email: string, password: string, displayName?: string, sk
     }
 
     // Create Firestore user document with defaults so profile loads and banner can show
-    try {
-      const userRef = doc(db, 'users', cred.user.uid);
-      const existing = await getDoc(userRef);
-      if (!existing.exists()) {
-        await setDoc(userRef, {
-          id: cred.user.uid,
-          email: cred.user.email,
-          display_name: displayName || cred.user.email?.split('@')[0] || 'User',
-          first_name: '',
-          last_name: '',
-          is_onboarded: false,
-          is_premium: true,
-          style_archetypes: [],
-          color_palettes: [],
-          favorite_colors: '',
-          favorite_brands: '',
-          body_type: 'None',
-          created_at: serverTimestamp(),
-          updated_at: serverTimestamp(),
-        });
+    // Use retry logic to handle temporary connectivity issues
+    const createUserDocWithRetry = async () => {
+      let lastError: any;
+      for (let attempt = 0; attempt <= 2; attempt++) {
+        try {
+          const userRef = doc(db, 'users', cred.user.uid);
+          const existing = await getDoc(userRef);
+          if (!existing.exists()) {
+            await setDoc(userRef, {
+              id: cred.user.uid,
+              email: cred.user.email,
+              display_name: displayName || cred.user.email?.split('@')[0] || 'User',
+              first_name: '',
+              last_name: '',
+              is_onboarded: false,
+              is_premium: true,
+              style_archetypes: [],
+              color_palettes: [],
+              favorite_colors: '',
+              favorite_brands: '',
+              body_type: 'None',
+              created_at: serverTimestamp(),
+              updated_at: serverTimestamp(),
+            });
+          }
+          console.log('[signUp] User document created successfully');
+          return;
+        } catch (e) {
+          lastError = e;
+          if (attempt < 2) {
+            const delayMs = Math.min(500 * Math.pow(2, attempt), 2000);
+            console.debug(`[signUp] Create doc attempt ${attempt + 1} failed, retrying in ${delayMs}ms`, (e as any)?.message);
+            await new Promise(r => setTimeout(r, delayMs));
+          }
+        }
       }
+      console.warn('[signUp] Failed to create user document in Firestore', lastError?.message);
+    };
+
+    try {
+      await createUserDocWithRetry();
     } catch (e) {
-      console.warn('[signUp] Failed to create user document in Firestore', e);
+      console.warn('[signUp] User document creation failed after retries:', (e as any)?.message);
     }
 
     // Send verification email immediately and ensure it completes

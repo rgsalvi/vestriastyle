@@ -22,51 +22,85 @@ function toISOString(ts: any): string | undefined {
  * Ensure a user document exists in Firestore.
  * This is CRITICAL to prevent race conditions during onboarding.
  * Must be called BEFORE attempting to save profile data.
+ * Includes retry logic for handling temporary connectivity issues.
  */
 export async function repositoryEnsureUserRow(
   uid: string,
   email: string,
   displayName: string
 ): Promise<void> {
-  const userRef = doc(db, 'users', uid);
+  const maxRetries = 3;
+  let lastError: any;
 
-  try {
-    const existing = await getDoc(userRef);
-    if (existing.exists()) {
-      return; // User already exists, do nothing
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const userRef = doc(db, 'users', uid);
+
+      try {
+        const existing = await getDoc(userRef);
+        if (existing.exists()) {
+          return; // User already exists, do nothing
+        }
+      } catch (e) {
+        // Check might fail if offline, but we should still try to create
+        console.debug(`[firestore-repo] ensureUserRow check failed (attempt ${attempt + 1}):`, (e as any)?.message);
+      }
+
+      // Create new user document with required fields
+      await setDoc(userRef, {
+        id: uid,
+        email: email || `${uid}@placeholder.local`,
+        display_name: displayName || email || `${uid}@placeholder.local`,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      });
+
+      console.log('[firestore-repo] ensureUserRow created successfully');
+      return;
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxRetries) {
+        const delayMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+        console.debug(`[firestore-repo] ensureUserRow attempt ${attempt + 1} failed, retrying in ${delayMs}ms`, (e as any)?.message);
+        await new Promise(r => setTimeout(r, delayMs));
+      }
     }
-
-    // Create new user document with required fields
-    await setDoc(userRef, {
-      id: uid,
-      email: email || `${uid}@placeholder.local`,
-      display_name: displayName || email || `${uid}@placeholder.local`,
-      created_at: serverTimestamp(),
-      updated_at: serverTimestamp(),
-    });
-  } catch (e) {
-    console.error('[firestore-repo] ensureUserRow failed', e);
-    throw e;
   }
+
+  console.error('[firestore-repo] ensureUserRow failed after retries', lastError?.message);
+  throw lastError;
 }
 
 /**
- * Load a user's profile from Firestore
+ * Load a user's profile from Firestore with retry logic
  */
 export async function repositoryLoadUserProfile(uid: string): Promise<StyleProfile | null> {
-  try {
-    const userRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(userRef);
+  const maxRetries = 3;
+  let lastError: any;
 
-    if (!docSnap.exists()) {
-      return null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const docSnap = await getDoc(userRef);
+
+      if (!docSnap.exists()) {
+        return null;
+      }
+
+      return mapFirestoreToStyleProfile(docSnap.data() as Partial<FirestoreUser>);
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxRetries) {
+        // Wait before retrying, with exponential backoff
+        const delayMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+        console.debug(`[firestore-repo] loadUserProfile attempt ${attempt + 1} failed, retrying in ${delayMs}ms`, (e as any)?.message);
+        await new Promise(r => setTimeout(r, delayMs));
+      }
     }
-
-    return mapFirestoreToStyleProfile(docSnap.data() as Partial<FirestoreUser>);
-  } catch (e) {
-    console.error('[firestore-repo] loadUserProfile failed', e);
-    throw e;
   }
+
+  console.error('[firestore-repo] loadUserProfile failed after retries', lastError?.message);
+  throw lastError;
 }
 
 /**
