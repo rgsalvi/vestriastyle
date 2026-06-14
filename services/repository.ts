@@ -1,10 +1,34 @@
 import { getSupabaseClient } from './supabaseClient';
 import type { StyleProfile, PersistentWardrobeItem } from '../types';
 
-// Force Supabase for all data persistence (Firebase only for Auth retained)
-function useSupabase() { return true; }
+// ============================================================================
+// FEATURE FLAG: Switch between Firestore and Supabase implementations
+// ============================================================================
+// Set via environment variable: VITE_USE_FIRESTORE=true (client-side)
+// or: USE_FIRESTORE=true (server-side in Vercel)
+function useFirestore(): boolean {
+  // Client-side
+  if (typeof window !== 'undefined') {
+    return (import.meta as any).env?.VITE_USE_FIRESTORE === 'true';
+  }
+  // Server-side
+  return process.env.USE_FIRESTORE === 'true';
+}
 
-// Supabase helpers (minimal now)
+// Conditionally import Firestore implementation (lazy-loaded to avoid import errors if not used)
+let firestoreImpl: typeof import('./repository-firestore') | null = null;
+async function getFirestoreImpl() {
+  if (!firestoreImpl) {
+    firestoreImpl = await import('./repository-firestore');
+  }
+  return firestoreImpl;
+}
+
+// ============================================================================
+// SUPABASE IMPLEMENTATIONS (fallback/legacy)
+// ============================================================================
+
+// Supabase helpers
 function mapRowToProfile(row: any): StyleProfile {
   if (!row) return row;
   return {
@@ -68,20 +92,15 @@ async function sbListWardrobe(uid: string): Promise<PersistentWardrobeItem[]> {
 async function sbSaveWardrobe(uid: string, items: PersistentWardrobeItem[]): Promise<void> {
   const sb = getSupabaseClient();
   if (!items.length) return;
-  // Upsert each item; could be optimized with RPC/batch later.
   const rows = items.map(i => ({ ...i, user_id: uid }));
   const { error } = await sb.from('wardrobe_items').upsert(rows, { onConflict: 'id' });
   if (error) { console.warn('[supabase] save wardrobe error', error); throw error; }
 }
 
 async function sbUploadAvatar(uid: string, dataUrl: string): Promise<string> {
-  // Serverless upload via Vercel function using Supabase Service Key (bypasses RLS), authenticated by Firebase ID token
   if (!dataUrl.startsWith('data:')) throw new Error('Unsupported avatar format');
-  // Obtain Firebase ID token from current auth session if available (optional enhancement):
-  // Since this is a repository layer shared by UI, we'll fetch token from window.firebase if present; otherwise rely on caller to be authenticated and cookie-based auth if configured.
   let idToken: string | undefined;
   try {
-    // dynamic import to avoid coupling
     const mod = await import('../services/firebase');
     const auth = (mod as any).auth as any;
     if (auth?.currentUser) {
@@ -105,22 +124,8 @@ async function sbUploadAvatar(uid: string, dataUrl: string): Promise<string> {
   return json.path as string;
 }
 
-export async function repositoryLoadUserProfile(uid: string) { return sbLoadUserProfile(uid); }
-export async function repositorySaveUserProfile(uid: string, profile: Partial<StyleProfile>) { return sbSaveUserProfile(uid, profile); }
-export async function repositoryListWardrobe(uid: string) { return sbListWardrobe(uid); }
-export async function repositorySaveWardrobeItems(uid: string, items: PersistentWardrobeItem[]) { return sbSaveWardrobe(uid, items); }
-export async function repositoryUploadAvatar(uid: string, dataUrl: string) { return sbUploadAvatar(uid, dataUrl); }
-export async function repositoryDeleteAllUserData(uid: string) {
-  const sb = getSupabaseClient();
-  const { error: wErr } = await sb.from('wardrobe_items').delete().eq('user_id', uid);
-  if (wErr) console.warn('[supabase] delete wardrobe items error', wErr);
-  const { error: uErr } = await sb.from('users').delete().eq('id', uid);
-  if (uErr) console.warn('[supabase] delete user row error', uErr);
-}
-
 export function getSupabaseAvatarPublicUrl(path: string): string {
   if (!path) return `https://ui-avatars.com/api/?name=User`;
-  // If already a URL or data URL, return as-is
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
   const base = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
   if (!base) {
@@ -130,7 +135,31 @@ export function getSupabaseAvatarPublicUrl(path: string): string {
   return `${base}/storage/v1/object/public/avatars/${path}`;
 }
 
+// ============================================================================
+// EXPORTED FUNCTIONS WITH FEATURE FLAG ROUTING
+// ============================================================================
+
+export async function repositoryLoadUserProfile(uid: string) {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositoryLoadUserProfile(uid);
+  }
+  return sbLoadUserProfile(uid);
+}
+
+export async function repositorySaveUserProfile(uid: string, profile: Partial<StyleProfile>) {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositorySaveUserProfile(uid, profile);
+  }
+  return sbSaveUserProfile(uid, profile);
+}
+
 export async function repositoryEnsureUserRow(uid: string, email: string, displayName: string) {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositoryEnsureUserRow(uid, email, displayName);
+  }
   const sb = getSupabaseClient();
   const safeEmail = email || `${uid}@placeholder.local`;
   try {
@@ -138,14 +167,54 @@ export async function repositoryEnsureUserRow(uid: string, email: string, displa
     if (selErr && (selErr as any).code !== 'PGRST116') {
       console.warn('[supabase] ensure user row: select failed', selErr);
     }
-    if (data?.id) return; // already exists; do not overwrite existing identity fields
+    if (data?.id) return;
   } catch {}
   const payload: any = { id: uid, email: safeEmail, display_name: displayName || safeEmail, created_at: new Date().toISOString() };
   const { error } = await sb.from('users').insert(payload);
   if (error) console.warn('[supabase] ensure user row insert error', error);
 }
 
+export async function repositoryListWardrobe(uid: string) {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositoryListWardrobe(uid);
+  }
+  return sbListWardrobe(uid);
+}
+
+export async function repositorySaveWardrobeItems(uid: string, items: PersistentWardrobeItem[]) {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositorySaveWardrobeItems(uid, items);
+  }
+  return sbSaveWardrobe(uid, items);
+}
+
+export async function repositoryUploadAvatar(uid: string, dataUrl: string) {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositoryUploadAvatar(uid, dataUrl);
+  }
+  return sbUploadAvatar(uid, dataUrl);
+}
+
+export async function repositoryDeleteAllUserData(uid: string) {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositoryDeleteAllUserData(uid);
+  }
+  const sb = getSupabaseClient();
+  const { error: wErr } = await sb.from('wardrobe_items').delete().eq('user_id', uid);
+  if (wErr) console.warn('[supabase] delete wardrobe items error', wErr);
+  const { error: uErr } = await sb.from('users').delete().eq('id', uid);
+  if (uErr) console.warn('[supabase] delete user row error', uErr);
+}
+
 export async function repositoryLoadUserIdentity(uid: string): Promise<{ display_name: string | null; date_of_birth: string | null; first_name?: string | null; last_name?: string | null }> {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositoryLoadUserIdentity(uid);
+  }
   const sb = getSupabaseClient();
   const { data, error } = await sb.from('users').select('display_name,date_of_birth,first_name,last_name').eq('id', uid).single();
   if (error) {
@@ -168,10 +237,22 @@ export async function repositoryUpdateIdentity(args: { firstName?: string; lastN
     const auth = (mod as any).auth as any;
     if (auth?.currentUser) idToken = await auth.currentUser.getIdToken();
   } catch {}
+
+  let body = args as any;
+  if (useFirestore()) {
+    try {
+      const mod = await import('../services/firebase');
+      const auth = (mod as any).auth as any;
+      if (auth?.currentUser) {
+        body = { ...args, uid: auth.currentUser.uid };
+      }
+    } catch {}
+  }
+
   const resp = await fetch('/api/update-identity', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}) },
-    body: JSON.stringify(args),
+    body: JSON.stringify(body),
   });
   if (!resp.ok) {
     const t = await resp.json().catch(() => ({} as any));
@@ -179,8 +260,11 @@ export async function repositoryUpdateIdentity(args: { firstName?: string; lastN
   }
 }
 
-// Convenience: find a user by email to greet on sign-in stage
 export async function repositoryFindUserByEmail(email: string): Promise<{ display_name: string | null; first_name: string | null } | null> {
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.repositoryFindUserByEmail(email);
+  }
   const sb = getSupabaseClient();
   const { data, error } = await sb.from('users').select('display_name,first_name').eq('email', email).single();
   if (error) {
@@ -189,4 +273,18 @@ export async function repositoryFindUserByEmail(email: string): Promise<{ displa
     return null;
   }
   return { display_name: (data as any)?.display_name ?? null, first_name: (data as any)?.first_name ?? null };
+}
+
+/**
+ * Get public URL for avatar based on backend (Firestore or Supabase)
+ */
+export async function getAvatarPublicUrl(path: string): Promise<string> {
+  if (!path) return `https://ui-avatars.com/api/?name=User`;
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+
+  if (useFirestore()) {
+    const impl = await getFirestoreImpl();
+    return impl.getFirebaseStorageAvatarPublicUrl(path);
+  }
+  return getSupabaseAvatarPublicUrl(path);
 }
