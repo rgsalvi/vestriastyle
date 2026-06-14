@@ -79,8 +79,34 @@ export const signUp = (email: string, password: string, displayName?: string, sk
       console.warn('[signUp] Failed to create user document in Firestore', e);
     }
 
+    // Send verification email immediately and ensure it completes
     if (!skipEmailVerification) {
-      await sendEmailVerification(cred.user);
+      try {
+        console.log('[signUp] Preparing to send verification email for', cred.user.email);
+
+        // Small delay to ensure auth state is fully settled
+        await new Promise(r => setTimeout(r, 100));
+
+        // Ensure the user has an email
+        if (!cred.user.email) {
+          throw new Error('User email is not set');
+        }
+
+        // Use auth.currentUser to ensure the user is properly initialized
+        if (auth.currentUser) {
+          console.log('[signUp] Sending via auth.currentUser');
+          await sendEmailVerification(auth.currentUser);
+          console.log('[signUp] ✓ Verification email sent successfully to', auth.currentUser.email);
+        } else {
+          // Fallback: use cred.user if auth.currentUser is not set yet
+          console.log('[signUp] Sending via credential (auth.currentUser not ready)');
+          await sendEmailVerification(cred.user);
+          console.log('[signUp] ✓ Verification email sent successfully via credential');
+        }
+      } catch (emailError: any) {
+        console.error('[signUp] ✗ Failed to send verification email', emailError?.message || emailError);
+        // Don't fail the signup if email fails, but log it
+      }
     }
 
     try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
