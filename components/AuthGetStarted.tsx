@@ -2,7 +2,6 @@ import React from 'react';
 import { auth, signUp, signIn } from '../services/firebase';
 import { TermsOfService } from './TermsOfService';
 import { PrivacyPolicy } from './PrivacyPolicy';
-import { fetchSignInMethodsForEmail } from 'firebase/auth';
 import { repositoryUpdateIdentity, repositoryFindUserByEmail } from '../services/repository';
 
 interface Props {
@@ -65,25 +64,8 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
     if (!validateEmail(eaddr)) { setError('Please enter a valid email address.'); return; }
     setLoading(true);
     try {
-      let isRegistered = false;
-
-      try {
-        const methods = await fetchSignInMethodsForEmail(auth, eaddr);
-        if (Array.isArray(methods) && methods.length > 0) {
-          isRegistered = true;
-        }
-      } catch (authErr: any) {
-        console.log('[Auth Check] Firebase Auth check failed, checking database:', authErr?.message);
-      }
-
-      if (!isRegistered) {
-        const user = await repositoryFindUserByEmail(eaddr);
-        if (user) {
-          isRegistered = true;
-        }
-      }
-
-      if (isRegistered) {
+      const user = await repositoryFindUserByEmail(eaddr);
+      if (user) {
         setStage('signin');
         lookupGreeting(eaddr);
       } else {
