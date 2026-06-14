@@ -859,22 +859,6 @@ const App: React.FC = () => {
     }
   };
 
-    } catch (e) {
-      console.warn('[onboarding-save] verification email send failed (non-critical)', e);
-    }
-
-    if (realUser && !auth.currentUser?.emailVerified) {
-      setProfileSavedBanner('Check your email to verify your account (look in Spam) so we can keep your experience secure.');
-      setTimeout(() => setProfileSavedBanner(null), 8000);
-    }
-
-    try { trackEvent('onboarding_complete'); } catch {}
-
-    // Clear pending credentials and temporary user after successful onboarding completion
-    setPendingSignupCredentials(null);
-    setTempOnboardingUser(null);
-  };
-
   // Wardrobe Logic
   useEffect(() => {
     if (user) {
