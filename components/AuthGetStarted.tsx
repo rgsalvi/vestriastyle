@@ -69,7 +69,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
       console.log('[handleEmailSubmit] User found:', user);
       if (user) {
         setStage('signin');
-        await lookupGreeting(eaddr);
+        lookupGreeting(eaddr);
       } else {
         setStage('signup');
       }
