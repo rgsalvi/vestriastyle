@@ -3,13 +3,12 @@ import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWith
 import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCdw-72plQ9WDlSBn3c_dQopah6-FLNqAg",
-  authDomain: "ai-wardrobe-curator.firebaseapp.com",
-  projectId: "ai-wardrobe-curator",
-  storageBucket: "ai-wardrobe-curator.appspot.com",
-  messagingSenderId: "79620949788",
-  appId: "1:79620949788:web:b00eaa99abdbd4569b1cd9",
-  measurementId: "G-N7K4N9K8V2"
+  apiKey: "AIzaSyCUg5U7c-KR7GGpusHQZTSqqucD1In_0NI",
+  authDomain: "vestria-style.firebaseapp.com",
+  projectId: "vestria-style",
+  storageBucket: "vestria-style.firebasestorage.app",
+  messagingSenderId: "195881749027",
+  appId: "1:195881749027:web:2e6d600593f7ccc60dff96"
 };
 
 export const app = initializeApp(firebaseConfig);
