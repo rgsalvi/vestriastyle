@@ -23,11 +23,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [dob, setDob] = useState(''); // YYYY-MM-DD
+    const [avatar, setAvatar] = useState('');
+    const [gender, setGender] = useState('');
+    const [location, setLocation] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [errorCode, setErrorCode] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
     // Update mode when parent changes initialMode
     React.useEffect(() => {
@@ -79,7 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 const today = new Date();
                 if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
 
-                await signUp(email, password, `${fn} ${ln}`, fn, ln, date);
+                await signUp(email, password, `${fn} ${ln}`, fn, ln, date, avatar, gender, location);
                 // Identity will be saved to Firestore during onboarding completion
                 setMessage(‘Account created. Please check your email (including the Spam folder) for a link to verify your address before trying to sign in.’);
             } else {
@@ -119,6 +123,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
             const friendly = code ? friendlyAuthMessage(code, mode) : null;
             if (code) setErrorCode(code);
             setError(friendly === 'mismatch' ? 'mismatch' : (friendly || (err instanceof Error ? err.message : 'Failed to send verification email.')));
+        }
+    };
+
+    const handleAvatarSelect = async (file: File) => {
+        try {
+            const { resizeImageToDataUrl } = await import('../utils/imageProcessor');
+            const dataUrl = await resizeImageToDataUrl(file, 512, 0.85);
+            setAvatar(dataUrl);
+        } catch (e) {
+            setError('Failed to process image. Please try a different file.');
         }
     };
 
@@ -236,6 +250,71 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                             </button>
                         </div>
                     </div>
+
+                    {/* Optional Profile Fields */}
+                    {mode === 'signup' && (
+                        <div className="pt-4 border-t border-platinum/10">
+                            <p className="text-xs text-platinum/60 mb-4">Optional: Complete your profile</p>
+
+                            {/* Avatar Upload */}
+                            <div className="mb-4">
+                                <label className="block text-sm text-platinum/70 mb-3">Profile Picture</label>
+                                <div className="flex items-center gap-4">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f); }}
+                                        className="hidden"
+                                        aria-label="Upload profile picture"
+                                    />
+                                    <div className="w-28 h-28 rounded-lg bg-black/30 border border-platinum/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        {avatar ? (
+                                            <img src={avatar} alt="Avatar preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-sm text-platinum/50">No image</span>
+                                        )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="px-4 py-2 bg-platinum/10 hover:bg-platinum/20 border border-platinum/30 text-platinum rounded-lg text-sm font-medium transition"
+                                    >
+                                        Choose Photo
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Gender */}
+                            <div className="mb-4">
+                                <label className="block text-sm text-platinum/70 mb-1">Gender</label>
+                                <select
+                                    value={gender}
+                                    onChange={(e) => setGender(e.target.value)}
+                                    className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                                >
+                                    <option value="">Select gender (optional)</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Other">Other</option>
+                                    <option value="Prefer Not To Say">Prefer Not To Say</option>
+                                </select>
+                            </div>
+
+                            {/* Location */}
+                            <div>
+                                <label className="block text-sm text-platinum/70 mb-1">Location/City</label>
+                                <input
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                    type="text"
+                                    placeholder="City or location (optional)"
+                                    className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Please wait…' : (mode === 'signup' ? 'Sign Up' : 'Sign In')}</button>
                 </form>
 

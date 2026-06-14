@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
 import { getDatabase, ref, set, get, remove } from 'firebase/database';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUg5U7c-KR7GGpusHQZTSqqucD1In_0NI",
@@ -14,11 +15,12 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app, 'https://vestria-style-default-rtdb.asia-southeast1.firebasedatabase.app');
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
 export const sendVerificationEmail = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
 
-export const signUp = (email: string, password: string, displayName?: string, firstName?: string, lastName?: string, dateOfBirth?: string, skipEmailVerification?: boolean): Promise<UserCredential> =>
+export const signUp = (email: string, password: string, displayName?: string, firstName?: string, lastName?: string, dateOfBirth?: string, avatarDataUrl?: string, gender?: string, location?: string, skipEmailVerification?: boolean): Promise<UserCredential> =>
   createUserWithEmailAndPassword(auth, email, password).then(async (cred: UserCredential) => {
     try {
       fetch('/api/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'signup_start', meta: { email: cred.user.email } }) });
@@ -28,7 +30,22 @@ export const signUp = (email: string, password: string, displayName?: string, fi
       try { await updateProfile(cred.user, { displayName }); } catch {}
     }
 
-    // Save user profile to Realtime Database with basic info
+    // Upload avatar to Firebase Storage if provided
+    let avatarPath = '';
+    if (avatarDataUrl) {
+      try {
+        const blob = await fetch(avatarDataUrl).then(r => r.blob());
+        const ext = blob.type.split('/')[1] || 'jpg';
+        const fileRef = storageRef(storage, `avatars/${cred.user.uid}/avatar.${ext}`);
+        await uploadBytes(fileRef, blob);
+        avatarPath = `avatars/${cred.user.uid}/avatar.${ext}`;
+        console.log('[signUp] Avatar uploaded to Firebase Storage');
+      } catch (e) {
+        console.error('[signUp] Failed to upload avatar:', (e as any)?.message);
+      }
+    }
+
+    // Save user profile to Realtime Database with all fields
     try {
       const userRef = ref(db, `users/${cred.user.uid}`);
       await set(userRef, {
@@ -38,6 +55,9 @@ export const signUp = (email: string, password: string, displayName?: string, fi
         first_name: firstName || '',
         last_name: lastName || '',
         date_of_birth: dateOfBirth || '',
+        gender: gender || '',
+        location: location || '',
+        avatar_url: avatarPath,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_onboarded: false,
@@ -89,3 +109,4 @@ export const deleteCurrentUser = async () => {
   if (!auth.currentUser) return;
   await deleteUser(auth.currentUser);
 };
+
