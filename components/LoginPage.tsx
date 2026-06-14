@@ -79,7 +79,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 const today = new Date();
                 if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
 
-                await signUp(email, password, `${fn} ${ln}`);
+                await signUp(email, password, `${fn} ${ln}`, fn, ln, date);
                 // Identity will be saved to Firestore during onboarding completion
                 setMessage(‘Account created. Please check your email (including the Spam folder) for a link to verify your address before trying to sign in.’);
             } else {

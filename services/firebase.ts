@@ -18,7 +18,7 @@ export const auth = getAuth(app);
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
 export const sendVerificationEmail = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
 
-export const signUp = (email: string, password: string, displayName?: string, skipEmailVerification?: boolean): Promise<UserCredential> =>
+export const signUp = (email: string, password: string, displayName?: string, firstName?: string, lastName?: string, dateOfBirth?: string, skipEmailVerification?: boolean): Promise<UserCredential> =>
   createUserWithEmailAndPassword(auth, email, password).then(async (cred: UserCredential) => {
     try {
       fetch('/api/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'signup_start', meta: { email: cred.user.email } }) });
@@ -28,13 +28,16 @@ export const signUp = (email: string, password: string, displayName?: string, sk
       try { await updateProfile(cred.user, { displayName }); } catch {}
     }
 
-    // Save user profile to Realtime Database
+    // Save user profile to Realtime Database with basic info
     try {
       const userRef = ref(db, `users/${cred.user.uid}`);
       await set(userRef, {
         uid: cred.user.uid,
         email: cred.user.email,
         display_name: displayName || cred.user.email?.split('@')[0] || 'User',
+        first_name: firstName || '',
+        last_name: lastName || '',
+        date_of_birth: dateOfBirth || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_onboarded: false,
