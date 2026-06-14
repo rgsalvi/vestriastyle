@@ -624,8 +624,9 @@ const App: React.FC = () => {
               // Expected to fail on first sign-up when user doc doesn't exist yet
               console.debug('[auth-observer] identity lookup skipped', (e as any)?.message);
             }
-            // Check if user has completed the style questionnaire (simple boolean check)
+            // Check if user has completed the style questionnaire (try Firestore, fallback to localStorage)
             try {
+              // Try Firestore first
               const { doc: firestoreDoc, getDoc: getFirestoreDoc } = await import('firebase/firestore');
               const { getFirestore } = await import('firebase/firestore');
               const db = getFirestore();
@@ -634,10 +635,23 @@ const App: React.FC = () => {
               if (userDocSnap.exists()) {
                 const userData = userDocSnap.data();
                 setHasCompletedStyleQuestionnaire(userData.has_completed_style_questionnaire ?? true);
-                console.log('[auth-observer] Questionnaire status:', userData.has_completed_style_questionnaire);
+                console.log('[auth-observer] Questionnaire status from Firestore:', userData.has_completed_style_questionnaire);
+              } else {
+                // Document doesn't exist, use localStorage
+                const localStatus = localStorage.getItem(`questionnaire-completed-${mapped.id}`);
+                setHasCompletedStyleQuestionnaire(localStatus === 'true' ? true : false);
+                console.log('[auth-observer] User doc not found, using localStorage status:', localStatus);
               }
             } catch (e) {
-              console.debug('[auth-observer] Could not check questionnaire status', (e as any)?.message);
+              // Firestore failed, fallback to localStorage
+              try {
+                const localStatus = localStorage.getItem(`questionnaire-completed-${mapped.id}`);
+                const completed = localStatus === 'true' ? true : false;
+                setHasCompletedStyleQuestionnaire(completed);
+                console.log('[auth-observer] Firestore offline, using localStorage status:', completed);
+              } catch (e2) {
+                console.debug('[auth-observer] Could not check questionnaire status', (e as any)?.message);
+              }
             }
             // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)
             const cloudProfile = await loadUserProfile(mapped.id);
@@ -827,6 +841,13 @@ const App: React.FC = () => {
       console.log('[onboarding-save] saving profile');
       await saveUserProfile(user.id, { ...profile, isOnboarded: true, has_completed_style_questionnaire: true });
       console.log('[onboarding-save] profile saved successfully');
+
+      // Also save to localStorage as backup
+      try {
+        localStorage.setItem(`questionnaire-completed-${user.id}`, 'true');
+      } catch (e) {
+        console.debug('[onboarding-save] Could not save to localStorage', e);
+      }
 
       // Update local state
       const cloudProfile = { ...profile, isOnboarded: true };
