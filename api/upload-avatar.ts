@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as admin from 'firebase-admin';
 import { getFirebaseAdmin } from './_lib/firebaseAdmin';
 
 // Force Node.js runtime (not Edge) for Buffer support
@@ -57,7 +56,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Upload to Firebase Storage
-    const bucket = admin.storage().bucket();
+    const adm = getFirebaseAdmin();
+    const bucket = adm.storage().bucket();
     const filePath = `avatars/${uid}/avatar.${ext}`;
     const file = bucket.file(filePath);
 
