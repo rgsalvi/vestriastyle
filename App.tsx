@@ -257,15 +257,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
-            {(() => {
-              const isDef = typeof hasCompletedStyleQuestionnaire !== 'undefined';
-              const hasUser = !!user;
-              const isNotOnboarded = hasCompletedStyleQuestionnaire === false;
-              const notShowingOnboarding = !showOnboarding;
-              const show = isDef && hasUser && isNotOnboarded && notShowingOnboarding;
-              console.log('[banner-condition]', { isDef, hasUser, isNotOnboarded, notShowingOnboarding, show, hasCompletedStyleQuestionnaire, showOnboarding });
-              return show ? <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} /> : null;
-            })()}
+            {typeof hasCompletedStyleQuestionnaire !== 'undefined' && user && hasCompletedStyleQuestionnaire === false && !showOnboarding ? (
+              <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
+            ) : null}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
@@ -514,7 +508,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [managedWardrobe, setManagedWardrobe] = useState<PersistentWardrobeItem[]>([]);
   const [unsavedItemsFromAnalysis, setUnsavedItemsFromAnalysis] = useState<AnalysisItem[]>([]);
-  
+
   const [user, setUser] = useState<User | null>(null);
   // No more guest chat users; chat is premium-only
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
@@ -523,6 +517,11 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [onboardingSuccessToast, setOnboardingSuccessToast] = useState(false);
+
+  // Log banner state for debugging
+  useEffect(() => {
+    console.log('[banner-state]', { hasCompletedStyleQuestionnaire, user: !!user, showOnboarding, shouldShow: typeof hasCompletedStyleQuestionnaire !== 'undefined' && user && hasCompletedStyleQuestionnaire === false && !showOnboarding });
+  }, [hasCompletedStyleQuestionnaire, user, showOnboarding]);
   
   // Pending-action flow: capture user's intended action when login is required and resume post-sign-in
   type PendingAction =
