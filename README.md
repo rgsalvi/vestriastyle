@@ -56,8 +56,7 @@ Notes:
 
 **Prerequisites:**
 - Node.js 18+
-- A Supabase project (Postgres + Storage)
-- Firebase project (Auth only) if you are deploying authentication yourself
+- Firebase project (Auth, Firestore, Storage)
 
 ### 1. Install dependencies
 `npm install`
@@ -67,9 +66,8 @@ Create a `.env.local` (not committed) with:
 
 ```
 VITE_GEMINI_API_KEY=YOUR_GEMINI_KEY
-VITE_SUPABASE_URL=https://YOUR_PROJECT.ref.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-VITE_FIREBASE_API_KEY=...            # Firebase Auth
+VITE_USE_FIRESTORE=true
+VITE_FIREBASE_API_KEY=...            # Firebase Web Config
 VITE_FIREBASE_AUTH_DOMAIN=...        # yourapp.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=...
 VITE_FIREBASE_APP_ID=...
@@ -77,12 +75,13 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=...
 
 # Server-side (Node) env vars used by `/api/*` endpoints
 API_KEY=YOUR_GEMINI_KEY
-# Optional: switch model IDs without code changes
-# IMAGE_GENERATE_MODEL=imagen-4.1-pro-001
-# IMAGE_EDIT_MODEL=gemini-2.5-image-edit-001
+FIREBASE_PROJECT_ID=...
+FIREBASE_CLIENT_EMAIL=...
+FIREBASE_PRIVATE_KEY=...
+USE_FIRESTORE=true
 ```
 
-Only Firebase Auth is used; all application data is stored in Supabase (see architecture below).
+All application data is stored in Firestore (see architecture below).
 
 ### 3. Run the dev server
 `npm run dev`
@@ -165,22 +164,10 @@ If you have lingering local data from older builds, clear `localStorage` for a c
 
 ---
 
-## Supabase Sanity Test (Optional)
-There is a lightweight script `supabaseSanityTests.ts` you can run (manually) to verify basic CRUD:
-
-```
-npx ts-node supabaseSanityTests.ts
-```
-
-It upserts a test user, profile, and wardrobe items, then validates round-trips.
-
----
-
 ## Future Enhancements (Planned)
-- Chat history table (`chat_messages`)
-- Generated AI image metadata table (`ai_images`)
-- Migrate wardrobe item image storage from data URLs to Supabase Storage paths for size/perf
-- Add Vitest + CI test harness (convert sanity script to automated tests)
+- Chat history table (`chat_messages` in Firestore)
+- Generated AI image metadata table (`ai_images` in Firestore)
+- Vitest + CI test harness for automated testing
 
 ---
 

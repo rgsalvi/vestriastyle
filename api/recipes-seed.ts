@@ -1,10 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fs from 'fs';
 import path from 'path';
-import { getSupabaseAdmin } from './_lib/supabaseAdmin';
 import { verifyBearerIdToken } from './_lib/firebaseAdmin';
+import { getFirebaseAdmin } from './_lib/firebaseAdmin';
 
-// Protect: only Super Admin can trigger
 const SUPER_ADMIN = 'support@vestria.style';
 
 function parseDescription(arr: unknown): { lead: string; body: string }[] {
@@ -38,15 +37,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const slugs: string[] = JSON.parse(indexRaw);
     if (!Array.isArray(slugs)) return res.status(400).json({ message: 'Invalid index.json' });
 
-    const sb = getSupabaseAdmin();
+    const adm = getFirebaseAdmin();
+    const db = adm.firestore();
     let ok = 0, fail = 0;
+
     for (const slug of slugs) {
       try {
         const metaPath = path.join(recipesDir, slug, 'meta.json');
         if (!fs.existsSync(metaPath)) throw new Error('Missing meta.json');
         const metaRaw = fs.readFileSync(metaPath, 'utf-8');
         const meta = JSON.parse(metaRaw);
-        const row = {
+        const doc = {
           slug: String(meta.slug || slug),
           date: String(meta.date),
           title: String(meta.title),
@@ -57,9 +58,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           flatlay_alt: String(meta.flatlayAlt || `Flat lay of ${meta.title} outfit`),
           model_alt: String(meta.modelAlt || `Model wearing the ${meta.title} outfit styled from the flat lay`),
           created_by: 'seed-api',
-        } as any;
-        const { error } = await sb.from('recipes').upsert(row, { onConflict: 'slug' });
-        if (error) throw error;
+          created_at: new Date(),
+          updated_at: new Date(),
+        };
+        await db.collection('recipes').doc(slug).set(doc, { merge: true });
         ok++;
       } catch (e: any) {
         console.error('[recipes-seed] failed', slug, e?.message || e);

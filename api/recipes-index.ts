@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseAdmin } from './_lib/supabaseAdmin';
+import { getFirebaseAdmin } from './_lib/firebaseAdmin';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -7,10 +7,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
   try {
-    const sb = getSupabaseAdmin();
-    const { data, error } = await sb.from('recipes').select('slug,date').order('date', { ascending: true });
-    if (error) throw error;
-    const slugs = (data || []).map((r: any) => r.slug);
+    const adm = getFirebaseAdmin();
+    const db = adm.firestore();
+    const snap = await db.collection('recipes').orderBy('date', 'asc').select('slug').get();
+    const slugs = snap.docs.map(d => d.data().slug);
     res.setHeader('Content-Type', 'application/json');
     return res.status(200).send(JSON.stringify(slugs));
   } catch (e: any) {

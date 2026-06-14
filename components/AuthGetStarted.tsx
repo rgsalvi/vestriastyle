@@ -3,8 +3,7 @@ import { auth, signUp, signIn } from '../services/firebase';
 import { TermsOfService } from './TermsOfService';
 import { PrivacyPolicy } from './PrivacyPolicy';
 import { fetchSignInMethodsForEmail } from 'firebase/auth';
-import { repositoryUpdateIdentity } from '../services/repository';
-import { getSupabaseClient } from '../services/supabaseClient';
+import { repositoryUpdateIdentity, repositoryFindUserByEmail } from '../services/repository';
 
 interface Props {
   onBack: () => void;
@@ -41,10 +40,9 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
   const lookupGreeting = async (emailAddr: string) => {
     try {
-      const sb = getSupabaseClient();
-      const { data, error } = await sb.from('users').select('display_name,first_name').eq('email', emailAddr).single();
-      if (!error && data) {
-        const fn = (data.first_name as string | null) || (data.display_name as string | null);
+      const user = await repositoryFindUserByEmail(emailAddr);
+      if (user) {
+        const fn = user.first_name || user.display_name;
         if (fn) {
           const short = fn.split(' ').filter(Boolean)[0];
           setGreetName(short || null);

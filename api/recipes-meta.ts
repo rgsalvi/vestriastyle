@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseAdmin } from './_lib/supabaseAdmin';
+import { getFirebaseAdmin } from './_lib/firebaseAdmin';
 
 type WeekMeta = {
   date: string;
@@ -8,8 +8,6 @@ type WeekMeta = {
   flatlayAlt: string;
   modelAlt: string;
   slug: string;
-  // Optional fields to help clients resolve image sources
-  // If provided, these are absolute URLs (e.g., Supabase public storage URLs)
   flatlayUrl?: string;
   modelUrl?: string;
   flatlay?: string;
@@ -25,11 +23,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slug = (req.query.slug as string | undefined)?.trim();
   if (!slug) return res.status(400).json({ message: 'Missing slug' });
   try {
-    const sb = getSupabaseAdmin();
-    const { data, error } = await sb.from('recipes').select('*').eq('slug', slug).single();
-    if (error) throw error;
-    if (!data) return res.status(404).json({ message: 'Not found' });
+    const adm = getFirebaseAdmin();
+    const db = adm.firestore();
+    const snap = await db.collection('recipes').where('slug', '==', slug).limit(1).get();
+    if (snap.empty) return res.status(404).json({ message: 'Not found' });
 
+    const data = snap.docs[0].data();
     const descArray: string[] = Array.isArray(data.description)
       ? (data.description as any[]).map((d: any) => `${(d?.lead || '').trim()}: ${(d?.body || '').trim()}`.replace(/: $/, ''))
       : [];
@@ -44,7 +43,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       flatlayUrl: data.flatlay_url || undefined,
       modelUrl: data.model_url || undefined,
       founderId: data.founder_id,
-      // For backward compatibility, also include file names if needed
     };
 
     res.setHeader('Content-Type', 'application/json');
