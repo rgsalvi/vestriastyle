@@ -80,22 +80,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onNavigateToTerms,
                 if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
 
                 await signUp(email, password, `${fn} ${ln}`);
-                try {
-                    await repositoryUpdateIdentity({ firstName: fn, lastName: ln, dateOfBirth: date });
-                    // Best-effort: write identity cache so post-auth name uses Supabase value immediately
-                    try {
-                        const raw = localStorage.getItem('ai-wardrobe-user');
-                        const u = raw ? JSON.parse(raw) : null;
-                        const uid = u?.id as string | undefined;
-                        if (uid) {
-                            localStorage.setItem(`identity-cache-${uid}`, JSON.stringify({ display_name: `${fn} ${ln}`, first_name: fn, last_name: ln, date_of_birth: date }));
-                        }
-                    } catch {}
-                } catch (idErr: any) {
-                    // Show a clear message but don’t block the account creation
-                    console.warn('Failed to persist identity to Supabase', idErr);
-                }
-                setMessage('Account created. Please check your email (including the Spam folder) for a link to verify your address before trying to sign in.');
+                // Identity will be saved to Firestore during onboarding completion
+                setMessage(‘Account created. Please check your email (including the Spam folder) for a link to verify your address before trying to sign in.’);
             } else {
                 await signIn(email, password);
                 setMessage('Signed in successfully.');

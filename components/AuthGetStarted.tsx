@@ -105,7 +105,6 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
       if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
 
       await signUp(email.trim(), password, `${fn} ${ln}`);
-      try { await repositoryUpdateIdentity({ firstName: fn, lastName: ln, dateOfBirth: date }); } catch {}
       setMessage('Account created. Check your email (including Spam) to verify your address.');
       onSignedUp();
     } catch (err: any) {
