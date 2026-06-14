@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
-import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel } from 'firebase/firestore';
+import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel, getDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUg5U7c-KR7GGpusHQZTSqqucD1In_0NI",
@@ -32,14 +32,35 @@ export const signUp = (email: string, password: string, displayName?: string, sk
     try {
       fetch('/api/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'signup_start', meta: { email: cred.user.email } }) });
     } catch {}
+
     if (displayName) {
       try { await updateProfile(cred.user, { displayName }); } catch {}
     }
+
+    // Create Firestore user document with defaults so profile loads and banner can show
+    try {
+      const userRef = doc(db, 'users', cred.user.uid);
+      const existing = await getDoc(userRef);
+      if (!existing.exists()) {
+        await setDoc(userRef, {
+          id: cred.user.uid,
+          email: cred.user.email,
+          display_name: displayName || cred.user.email?.split('@')[0] || 'User',
+          isOnboarded: false,
+          isPremium: true,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      console.warn('[signUp] Failed to create user document in Firestore', e);
+    }
+
     if (!skipEmailVerification) {
       await sendEmailVerification(cred.user);
     }
+
     try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
-    // Data persistence now handled lazily via Supabase repository on first profile save.
     return cred;
   });
 export const signIn = (email: string, password: string) => signInWithEmailAndPassword(auth, email, password);

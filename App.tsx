@@ -641,9 +641,9 @@ const App: React.FC = () => {
                 setBodyType(cloudProfile.bodyType || 'None');
                 setShowOnboarding(false);
               } else {
-                // Incomplete / blank profile doc -> trigger onboarding
-                setStyleProfile(null);
-                setShowOnboarding(true);
+                // Incomplete profile doc -> show banner, don't auto-open wizard
+                setStyleProfile(cloudProfile);
+                setShowOnboarding(false);
               }
               try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${mapped.id}`, JSON.stringify(cloudProfile)); } catch {}
             } else {
@@ -666,15 +666,15 @@ const App: React.FC = () => {
                   // lazy migrate to cloud
                   try { await saveUserProfile(mapped.id, localProf); } catch (e) { console.warn('Failed to migrate local profile to cloud', e); }
                 } else {
-                  setStyleProfile(null);
-                  setShowOnboarding(true);
+                  // Incomplete profile -> show banner, don't auto-open wizard
+                  setStyleProfile(localProf);
+                  setShowOnboarding(false);
                 }
               } else {
-                // No profile anywhere: if not already triggered immediately, show onboarding now.
-                if (!immediateOnboardingRef.current) {
-                  console.log('[onboarding-decision] deferred-new-user-no-profile');
-                  setShowOnboarding(true);
-                }
+                // No profile anywhere: don't auto-show wizard, let user decide via banner
+                console.log('[onboarding-decision] no-profile-found');
+                setStyleProfile(null);
+                setShowOnboarding(false);
               }
             }
           } catch (e) {
