@@ -256,9 +256,9 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
-            {user && !hasCompletedStyleQuestionnaire && !showOnboarding && (
+            {typeof hasCompletedStyleQuestionnaire !== 'undefined' && user && hasCompletedStyleQuestionnaire === false && !showOnboarding ? (
               <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
-            )}
+            ) : null}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
