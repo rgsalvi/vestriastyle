@@ -436,13 +436,17 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
                   className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
-                  style={{ colorScheme: 'dark' }}
+                  style={{
+                    colorScheme: 'dark',
+                    backgroundColor: '#1a1a2e',
+                    color: '#e8e8e8'
+                  }}
                 >
-                  <option value="">Select gender (optional)</option>
-                  <option value="Female">Female</option>
-                  <option value="Male">Male</option>
-                  <option value="Other">Other</option>
-                  <option value="Prefer Not To Say">Prefer Not To Say</option>
+                  <option value="" style={{ backgroundColor: '#1a1a2e', color: '#e8e8e8' }}>Select gender (optional)</option>
+                  <option value="Female" style={{ backgroundColor: '#1a1a2e', color: '#e8e8e8' }}>Female</option>
+                  <option value="Male" style={{ backgroundColor: '#1a1a2e', color: '#e8e8e8' }}>Male</option>
+                  <option value="Other" style={{ backgroundColor: '#1a1a2e', color: '#e8e8e8' }}>Other</option>
+                  <option value="Prefer Not To Say" style={{ backgroundColor: '#1a1a2e', color: '#e8e8e8' }}>Prefer Not To Say</option>
                 </select>
               </div>
 
