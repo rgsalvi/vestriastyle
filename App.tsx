@@ -257,7 +257,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
-            {user && styleProfile && styleProfile.isOnboarded === false ? (
+            {user && hasCompletedStyleQuestionnaire === false ? (
               <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
             ) : null}
             <div className="relative" ref={menuRef}>
