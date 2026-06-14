@@ -14,4 +14,10 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    exclude: ['@tensorflow-models/face-detection', '@tensorflow/tfjs'],
+  },
+  worker: {
+    format: 'es',
+  },
 })
