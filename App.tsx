@@ -28,7 +28,7 @@ import { getStyleAdvice, trackEvent, initiateChatSession } from './services/gemi
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth, resendVerification } from './services/firebase';
-import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getSupabaseAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow, repositoryLoadUserIdentity } from './services/repository';
+import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow, repositoryLoadUserIdentity } from './services/repository';
 
 interface HeaderProps {
   user: User | null;
@@ -629,7 +629,7 @@ const App: React.FC = () => {
               }
               // Derive header picture from storage path if present
               if ((cloudProfile as any).avatar_url) {
-                mapped.picture = getSupabaseAvatarPublicUrl((cloudProfile as any).avatar_url);
+                mapped.picture = getAvatarPublicUrl((cloudProfile as any).avatar_url);
               }
               // Ignore legacy onboardingComplete and heuristics per new spec; rely only on isOnboarded
               if (isProfileComplete(cloudProfile)) {
@@ -652,7 +652,7 @@ const App: React.FC = () => {
                 if (!localProf.isPremium) localProf.isPremium = true;
                 // Map local storage path to public URL for header
                 if ((localProf as any).avatar_url) {
-                  mapped.picture = getSupabaseAvatarPublicUrl((localProf as any).avatar_url);
+                  mapped.picture = getAvatarPublicUrl((localProf as any).avatar_url);
                 }
                 // No heuristic backfill; will force onboarding if isOnboarded not true
                 if (isProfileComplete(localProf)) {
@@ -682,7 +682,7 @@ const App: React.FC = () => {
                 console.log('[profile-load] source=local-fallback hasFlag=', !!localProf.onboardingComplete);
                 if (!localProf.isPremium) localProf.isPremium = true;
                 if ((localProf as any).avatar_url) {
-                  mapped.picture = getSupabaseAvatarPublicUrl((localProf as any).avatar_url);
+                  mapped.picture = getAvatarPublicUrl((localProf as any).avatar_url);
                 }
                 // No heuristic backfill in fallback
                 if (isProfileComplete(localProf)) {
@@ -959,7 +959,7 @@ const App: React.FC = () => {
           return await getAvatarPublicUrl(photoURL);
         } catch {
           // Fallback if async import fails
-          return getSupabaseAvatarPublicUrl(photoURL);
+          return getAvatarPublicUrl(photoURL);
         }
       })();
       const updatedUser = { ...user, picture: publicUrl } as User;
@@ -1211,7 +1211,7 @@ const App: React.FC = () => {
               try {
                 if (updatedUser.picture && updatedUser.picture.startsWith('data:')) {
                   uploadedPath = await withTimeout(uploadAvatar(user.id, updatedUser.picture), 15000, 'Avatar upload');
-                  finalPictureUrl = getSupabaseAvatarPublicUrl(uploadedPath);
+                  finalPictureUrl = getAvatarPublicUrl(uploadedPath);
                 }
               } catch (e) { console.warn('Avatar upload failed', e); }
               const mergedUser = { ...user, ...updatedUser, picture: finalPictureUrl || updatedUser.picture || user.picture } as User;
@@ -1229,7 +1229,7 @@ const App: React.FC = () => {
                 if (newAvatarPath) {
                   updatedCloudProfile.avatar_url = newAvatarPath;
                   // Keep header picture in sync if profile avatar was provided this way
-                  const publicUrl = getSupabaseAvatarPublicUrl(newAvatarPath);
+                  const publicUrl = getAvatarPublicUrl(newAvatarPath);
                   const userWithNewAvatar = { ...mergedUser, picture: publicUrl } as User;
                   setUser(userWithNewAvatar);
                   try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userWithNewAvatar)); } catch {}

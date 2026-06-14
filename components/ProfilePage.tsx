@@ -3,7 +3,7 @@ import type { User, StyleProfile, BodyType } from '../types';
 import { BodyTypeSelector } from './BodyTypeSelector';
 import { resizeImageToDataUrl } from '../utils/imageProcessor';
 import { auth, deleteCurrentUser } from '../services/firebase';
-import { repositoryDeleteAllUserData as deleteAllUserData, getSupabaseAvatarPublicUrl, repositoryUpdateIdentity, repositoryLoadUserIdentity } from '../services/repository';
+import { repositoryDeleteAllUserData as deleteAllUserData, getAvatarPublicUrl, repositoryUpdateIdentity, repositoryLoadUserIdentity } from '../services/repository';
 
 interface ProfilePageProps {
   user: User;
@@ -32,9 +32,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
   const [name, setName] = useState(cachedName || user.name);
   const [dob, setDob] = useState<string>('');
   // Initialize with a stable public URL if a storage path exists to avoid image flicker
-  const [avatar, setAvatar] = useState<string>(
-    initialProfile?.avatar_url ? getSupabaseAvatarPublicUrl(initialProfile.avatar_url) : user.picture
-  );
+  const [avatar, setAvatar] = useState<string>(user.picture);
   const [profile, setProfile] = useState<StyleProfile>(() => initialProfile || {
     styleArchetypes: [],
     colorPalettes: [],
@@ -67,7 +65,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, initialProfile, 
       }));
       if (initialProfile.avatar_url) {
         try {
-          setAvatar(getSupabaseAvatarPublicUrl(initialProfile.avatar_url));
+          setAvatar(getAvatarPublicUrl(initialProfile.avatar_url));
         } catch {
           setAvatar(user.picture);
         }
