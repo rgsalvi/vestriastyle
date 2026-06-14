@@ -1,7 +1,6 @@
-import { ref, set, get, remove, getDatabase } from 'firebase/database';
+import { ref, set, get, remove } from 'firebase/database';
 import type { StyleProfile, PersistentWardrobeItem } from '../types';
-
-const db = getDatabase();
+import { db } from './firebase';
 
 // User identity type for Realtime DB
 interface RealtimeDBUser {
