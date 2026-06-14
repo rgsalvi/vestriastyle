@@ -38,7 +38,8 @@ export const signUp = (email: string, password: string, displayName?: string, fi
         const ext = blob.type.split('/')[1] || 'jpg';
         const fileRef = storageRef(storage, `avatars/${cred.user.uid}/avatar.${ext}`);
         await uploadBytes(fileRef, blob);
-        avatarPath = `avatars/${cred.user.uid}/avatar.${ext}`;
+        // Get public download URL
+        avatarPath = await getDownloadURL(fileRef);
         console.log('[signUp] Avatar uploaded to Firebase Storage');
       } catch (e) {
         console.error('[signUp] Failed to upload avatar:', (e as any)?.message);
