@@ -7,6 +7,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [wasm(), react()],
   build: {
+    target: 'es2022',
     chunkSizeWarningLimit: 3000,
     rollupOptions: {
       input: {
