@@ -9,7 +9,7 @@ export const CompleteProfileBanner: React.FC<CompleteProfileBannerProps> = ({ on
   return (
     <button
       onClick={onOpen}
-      className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-100 text-sm font-medium hover:bg-amber-500/30 hover:border-amber-400/60 transition-all"
+      className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-platinum/20 border border-platinum/40 text-platinum text-sm font-medium hover:bg-platinum/30 hover:border-platinum/60 transition-all"
       aria-label="Complete your style profile"
     >
       <SparklesIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
