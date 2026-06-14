@@ -228,7 +228,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
         {stage === 'signin' && (
           <>
             <div className="mt-8 flex items-baseline justify-center gap-3">
-              <h2 className="text-3xl font-bold text-platinum tracking-tight">Welcome back{greetName ? `, ${greetName}` : ''}</h2>
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">Welcome back{greetName ? ', ' + greetName : ''}</h2>
               <button
                 type="button"
                 onClick={handleChangeEmail}
