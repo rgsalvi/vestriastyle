@@ -694,14 +694,15 @@ const App: React.FC = () => {
                   setBodyType(localProf.bodyType || 'None');
                   setShowOnboarding(false);
                 } else {
-                  setStyleProfile(null);
-                  if (!immediateOnboardingRef.current) setShowOnboarding(true);
+                  // Incomplete profile in fallback -> show banner, don't force wizard
+                  setStyleProfile(localProf);
+                  setShowOnboarding(false);
                 }
               } else {
-                if (!immediateOnboardingRef.current) {
-                  console.log('[onboarding-decision] fallback-no-profile');
-                  setShowOnboarding(true);
-                }
+                // No profile anywhere in fallback -> don't force wizard, let user decide via banner
+                console.log('[onboarding-decision] fallback-no-profile');
+                setStyleProfile(null);
+                setShowOnboarding(false);
               }
             } catch {}
           }

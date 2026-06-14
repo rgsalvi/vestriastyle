@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
-import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel, getDoc } from 'firebase/firestore';
+import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUg5U7c-KR7GGpusHQZTSqqucD1In_0NI",
@@ -14,6 +14,22 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 // Initialize Firestore with standard settings (WebSocket by default)
 export const db = initializeFirestore(app, {});
+
+// Enable offline persistence to handle connectivity issues gracefully
+try {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('[firestore] Multiple tabs open, persistence disabled');
+    } else if (err.code === 'unimplemented') {
+      console.warn('[firestore] Browser doesn\'t support persistence');
+    } else {
+      console.debug('[firestore] Persistence warning:', err);
+    }
+  });
+} catch (e) {
+  console.debug('[firestore] Could not enable persistence:', e);
+}
+
 // Optional debug logging: set localStorage FIRESTORE_DEBUG=true (dev only)
 try {
   if (typeof window !== 'undefined' && localStorage.getItem('FIRESTORE_DEBUG') === 'true') {
