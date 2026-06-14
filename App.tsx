@@ -14,6 +14,7 @@ import { RefundPolicy } from './components/RefundPolicy';
 import { LoginPage } from './components/LoginPage';
 import AuthGetStarted from './components/AuthGetStarted';
 import { OnboardingWizard } from './components/OnboardingWizard';
+import { CompleteProfileBanner } from './components/CompleteProfileBanner';
 import { StylistChatModal } from './components/StylistChatModal';
 import AboutUs from './components/AboutUs';
 import AdminModelStatusPage from './components/AdminModelStatusPage';
@@ -1478,6 +1479,9 @@ const App: React.FC = () => {
           activePage={currentPage}
           recipesActive={currentPage === 'recipes'}
         />
+        {user && styleProfile && !isProfileComplete(styleProfile) && !showOnboarding && (
+          <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
+        )}
         {renderPage()}
       </div>
       <Footer 
