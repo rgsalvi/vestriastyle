@@ -649,6 +649,8 @@ const App: React.FC = () => {
               // Derive header picture from storage path if present
               if ((cloudProfile as any).avatar_url) {
                 mapped.picture = getAvatarPublicUrl((cloudProfile as any).avatar_url);
+                setUser(mapped);
+                try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped)); } catch {}
               }
               // Ignore legacy onboardingComplete and heuristics per new spec; rely only on isOnboarded
               if (isProfileComplete(cloudProfile)) {
@@ -672,6 +674,8 @@ const App: React.FC = () => {
                 // Map local storage path to public URL for header
                 if ((localProf as any).avatar_url) {
                   mapped.picture = getAvatarPublicUrl((localProf as any).avatar_url);
+                  setUser(mapped);
+                  try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped)); } catch {}
                 }
                 // No heuristic backfill; will force onboarding if isOnboarded not true
                 if (isProfileComplete(localProf)) {
@@ -702,6 +706,8 @@ const App: React.FC = () => {
                 if (!localProf.isPremium) localProf.isPremium = true;
                 if ((localProf as any).avatar_url) {
                   mapped.picture = getAvatarPublicUrl((localProf as any).avatar_url);
+                  setUser(mapped);
+                  try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mapped)); } catch {}
                 }
                 // No heuristic backfill in fallback
                 if (isProfileComplete(localProf)) {
