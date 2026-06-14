@@ -827,83 +827,155 @@ const App: React.FC = () => {
   const handleOnboardingComplete = async (profile: StyleProfile): Promise<void> => {
     if (!user) return;
     console.log('[onboarding-save] start');
-    // Ensure base user row (with email/display_name) exists before attempting style/profile upsert
-    try {
-      await ensureUserRow(user.id, user.email, user.name);
-    } catch (e) {
-      console.warn('[onboarding-save] ensureUserRow failed (will proceed anyway)', e);
-    }
-    let photoURL: string | undefined = undefined;
-    const timeout = async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+
+    // ================================================================
+    // Helper: Exponential backoff retry for transient failures
+    // ================================================================
+    const retryWithBackoff = async <T,>(
+      operation: () => Promise<T>,
+      maxRetries = 3,
+      baseDelayMs = 500,
+      operationName = 'operation'
+    ): Promise<T> => {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          return await operation();
+        } catch (error: any) {
+          // Determine if error is retryable (transient)
+          const isRetryable =
+            attempt < maxRetries &&
+            (
+              error?.code === 'DEADLINE_EXCEEDED' || // Timeout
+              error?.code === 'INTERNAL' || // Internal server error
+              error?.code === 'UNAVAILABLE' || // Service unavailable
+              error?.code === 'UNAUTHENTICATED' || // Auth state race condition
+              error?.message?.includes('PERMISSION_DENIED') || // Possible race condition
+              error?.message?.includes('timeout') || // Any timeout
+              error?.message?.includes('temporarily unavailable') // Service issue
+            );
+
+          if (isRetryable) {
+            const delayMs = baseDelayMs * Math.pow(2, attempt);
+            console.warn(
+              `[onboarding-save] ${operationName} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delayMs}ms`,
+              error.code || error.message
+            );
+            await new Promise(r => setTimeout(r, delayMs));
+            continue;
+          }
+
+          // Non-retryable error, throw immediately
+          throw error;
+        }
+      }
+      throw new Error(`${operationName} exhausted ${maxRetries} retries`);
+    };
+
+    // Helper: Promise with timeout
+    const withTimeout = async <T,>(p: Promise<T>, ms: number, label: string): Promise<T> => {
       return await new Promise<T>((resolve, reject) => {
         const t = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
         p.then(v => { clearTimeout(t); resolve(v); }).catch(e => { clearTimeout(t); reject(e); });
       });
     };
-    // Upload avatar if provided as data URL (OnboardingWizard now sends avatar as data URL in a transient field avatar_url or similar preview -- adapt if needed)
+
+    // ================================================================
+    // Step 1: Ensure user row exists (CRITICAL - fixes race condition bug)
+    // ================================================================
+    try {
+      console.log('[onboarding-save] ensuring user row exists');
+      await retryWithBackoff(
+        () => ensureUserRow(user.id, user.email, user.name),
+        3,
+        300,
+        'ensureUserRow'
+      );
+    } catch (e) {
+      console.warn('[onboarding-save] ensureUserRow failed after retries (will proceed)', e);
+      // Don't throw - proceed anyway and let the profile save fail if user row truly doesn't exist
+    }
+
+    // ================================================================
+    // Step 2: Upload avatar if provided
+    // ================================================================
+    let photoURL: string | undefined = undefined;
     let avatarUploadWarning: string | null = null;
     if ((profile as any).avatar_url && (profile as any).avatar_url.startsWith && (profile as any).avatar_url.startsWith('data:')) {
       try {
-        console.log('[onboarding-save] uploading avatar (supabase)');
-        photoURL = await timeout(uploadAvatar(user.id, (profile as any).avatar_url), 20000, 'Avatar upload'); // returns storage path
+        console.log('[onboarding-save] uploading avatar');
+        photoURL = await retryWithBackoff(
+          () => withTimeout(uploadAvatar(user.id, (profile as any).avatar_url), 20000, 'Avatar upload'),
+          2,
+          500,
+          'avatar upload'
+        );
         console.log('[onboarding-save] avatar uploaded (path)', photoURL);
       } catch (e) {
-        console.warn('[onboarding-save] avatar upload failed', e);
+        console.warn('[onboarding-save] avatar upload failed (non-critical)', e);
         avatarUploadWarning = 'We were unable to upload your photo. You can add one later in Profile.';
+        // Don't throw - avatar is optional
       }
     }
+
+    // ================================================================
+    // Step 3: Prepare and save profile
+    // ================================================================
     const cloudProfile: any = {
       ...profile,
-      // Only store storage path if upload succeeded; never store data URLs or absolute URLs
       avatar_url: photoURL || undefined,
       isOnboarded: true,
-      isPremium: true, // Launch bonus: all users are premium
-      // Include identity fields to satisfy potential NOT NULL/unique constraints on first write
+      isPremium: true,
       email: user.email,
       display_name: user.name,
     };
-    console.log('[onboarding-save] prepared profile with isOnboarded=true, saving to Supabase');
+
+    console.log('[onboarding-save] prepared profile, starting save');
     try {
-      await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save');
-      console.log('[onboarding-save] profile saved');
+      await retryWithBackoff(
+        () => withTimeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save'),
+        3,
+        500,
+        'profile save'
+      );
+      console.log('[onboarding-save] profile saved successfully');
     } catch (e: any) {
-      // If we hit a NOT NULL on email (23502) it means ensureUserRow didn't persist; retry once after forcing it.
-      if (e && (e.code === '23502' || e.code === 'PGRST204' || e.code === '23505')) {
-        console.warn('[onboarding-save] first save failed (23502), retrying after ensureUserRow');
-        try { await ensureUserRow(user.id, user.email, user.name); } catch {}
-        try {
-          await timeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save retry');
-          console.log('[onboarding-save] profile saved on retry');
-        } catch (e2: any) {
-          console.warn('[onboarding-save] failed retry; NOT marking isOnboarded true', e2);
-          setOnboardingSuccessToast(false);
-          const msg = (e2?.message || (e2?.error && e2?.error.message) || (typeof e2 === 'string' ? e2 : 'Failed to save profile'));
-          throw new Error(msg);
-        }
-      } else {
-        console.warn('[onboarding-save] failed to save full profile; NOT marking isOnboarded true', e);
-        setOnboardingSuccessToast(false);
-        const msg = (e?.message || (e?.error && e?.error.message) || (typeof e === 'string' ? e : 'Failed to save profile'));
-        throw new Error(msg);
-      }
+      console.error('[onboarding-save] profile save failed after all retries', e);
+      setOnboardingSuccessToast(false);
+      const msg = (e?.message || (e?.error && e?.error.message) || (typeof e === 'string' ? e : 'Failed to save profile. Please try again.'));
+      throw new Error(`[Onboarding] ${msg}`);
     }
+
+    // ================================================================
+    // Step 4: Update local state and UI
+    // ================================================================
     try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
     setStyleProfile(cloudProfile);
     setBodyType(cloudProfile.bodyType || 'None');
+
     if (photoURL) {
-      // Derive public URL
-      const publicUrl = getSupabaseAvatarPublicUrl(photoURL);
+      const publicUrl = await (async () => {
+        try {
+          const { getAvatarPublicUrl } = await import('./services/repository');
+          return await getAvatarPublicUrl(photoURL);
+        } catch {
+          // Fallback if async import fails
+          return getSupabaseAvatarPublicUrl(photoURL);
+        }
+      })();
       const updatedUser = { ...user, picture: publicUrl } as User;
       setUser(updatedUser);
       try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser)); } catch {}
       updateUserProfile(updatedUser.name, publicUrl).catch(() => {});
     }
-  setShowOnboarding(false);
-  setOnboardingSuccessToast(true);
+
+    setShowOnboarding(false);
+    setOnboardingSuccessToast(true);
+
     if (avatarUploadWarning) {
       setProfileSavedBanner(avatarUploadWarning);
       setTimeout(() => setProfileSavedBanner(null), 7000);
     }
+
     if (pendingChatRetry) {
       const retry = pendingChatRetry;
       setTimeout(async () => {
@@ -918,10 +990,12 @@ const App: React.FC = () => {
         } catch (e) { console.warn('[onboarding-save] chat retry failed', e); }
       }, 400);
     }
+
     if (user && !auth.currentUser?.emailVerified) {
       setProfileSavedBanner('Check your email to verify your account (look in Spam) so we can keep your experience secure.');
       setTimeout(() => setProfileSavedBanner(null), 8000);
     }
+
     try { trackEvent('onboarding_complete'); } catch {}
   };
 
