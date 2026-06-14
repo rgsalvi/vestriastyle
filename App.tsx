@@ -733,33 +733,6 @@ const App: React.FC = () => {
     return () => unsub();
   }, []);
 
-  // Immediate onboarding trigger right after signup (before profile fetch finishes)
-  useEffect(() => {
-    if (!user) return;
-    if (styleProfile) return; // existing profile means no onboarding needed
-    if (immediateOnboardingRef.current) return; // already triggered
-    let newly: string | null = null;
-    try { newly = sessionStorage.getItem('newlySignedUpUid'); } catch {}
-    const hasLocal = (() => { try { return !!localStorage.getItem(`${STYLE_PROFILE_KEY}-${user.id}`); } catch { return false; }})();
-    if (newly === user.id && !hasLocal) {
-      console.log('[onboarding-decision] immediate-new-user');
-      immediateOnboardingRef.current = true;
-      setShowOnboarding(true);
-      try { trackEvent('onboarding_start'); } catch {}
-      try { sessionStorage.removeItem('newlySignedUpUid'); } catch {}
-      // Background warm-up: optionally fetch profile after short delay (defensive; should not exist yet)
-      setTimeout(() => {
-        if (!styleProfile && user) {
-          loadUserProfile(user.id).then(p => {
-            if (p && p.onboardingComplete) {
-              console.log('[onboarding-decision] unexpected-profile-found-during-onboarding');
-            }
-          }).catch(() => {});
-        }
-      }, 600);
-    }
-  }, [user, styleProfile]);
-  
   // When the user signs in successfully, close the login view and try to resume any pending action
   useEffect(() => {
     if (user && showLogin) {
