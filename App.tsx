@@ -834,6 +834,19 @@ const App: React.FC = () => {
   };
 
   const handleOnboardingComplete = async (profile: StyleProfile): Promise<void> => {
+    // NOTE: Onboarding Design - Web vs Mobile Optimization
+    // CURRENT (WEB): Questionnaire-first flow - user completes full style questionnaire BEFORE Firebase Auth account is created.
+    // This is optimized for web where sessions are stable, network is reliable, and form friction is acceptable.
+    // Benefit: No orphaned auth accounts, atomic completion, data consistency.
+    //
+    // FUTURE (MOBILE): When building mobile app, reverse this flow:
+    // 1. Quick signup (email + password only) → create Firebase Auth account immediately
+    // 2. User enters app and is authenticated
+    // 3. Style questionnaire as first-run experience inside authenticated session
+    // 4. Save each section progressively to handle interruptions (calls, backgrounding, network drops)
+    // This is optimized for mobile where interruptions are constant and session survival is unpredictable.
+    // See: https://www.figma.com, https://www.notion.so, https://www.airbnb.com for reference patterns
+
     console.log('[onboarding-save] start');
 
     // ================================================================
