@@ -12,10 +12,8 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-// Force long polling to bypass WebChannel 400 issues (network/referrer quirks)
-export const db = initializeFirestore(app, { experimentalForceLongPolling: true });
-// Log configuration once (dev aid)
-try { if (typeof window !== 'undefined') console.log('[firestore-config] initialized with experimentalForceLongPolling=true'); } catch {}
+// Initialize Firestore with standard settings (WebSocket by default)
+export const db = initializeFirestore(app, {});
 // Optional debug logging: set localStorage FIRESTORE_DEBUG=true (dev only)
 try {
   if (typeof window !== 'undefined' && localStorage.getItem('FIRESTORE_DEBUG') === 'true') {
