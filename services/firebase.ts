@@ -13,9 +13,10 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with caching enabled
+// Initialize Firestore - disable persistence to avoid offline issues
 export const db = initializeFirestore(app, {
-  cacheSizeBytes: 50 * 1024 * 1024, // 50MB cache for offline support
+  // Disable persistence to avoid "client is offline" issues
+  cacheSizeBytes: 0,
 });
 
 // Enable network connectivity
