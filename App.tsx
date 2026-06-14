@@ -28,6 +28,7 @@ import { Squares2X2Icon, SparklesIcon } from '@heroicons/react/24/outline';
 import { getStyleAdvice, trackEvent, initiateChatSession } from './services/geminiService';
 import { PremiumUpsellModal } from './components/PremiumUpsellModal';
 import type { AiResponse, WardrobeItem, BodyType, PersistentWardrobeItem, AnalysisItem, User, StyleProfile, Occasion } from './types';
+import { getProfile, saveProfile } from './services/simpleStorage';
 import { observeAuth, signOut as fbSignOut, updateUserProfile, deleteCurrentUser, auth, resendVerification } from './services/firebase';
 import { repositoryLoadUserProfile as loadUserProfile, repositorySaveUserProfile as saveUserProfile, repositoryUploadAvatar as uploadAvatar, repositoryListWardrobe as listWardrobe, getAvatarPublicUrl, repositoryEnsureUserRow as ensureUserRow, repositoryLoadUserIdentity } from './services/repository';
 
