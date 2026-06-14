@@ -13,7 +13,7 @@ interface Props {
   onSignedUp: () => void;
 }
 
-type Stage = 'email' | 'signin' | 'signup';
+type Stage = 'email' | 'signin' | 'signup' | 'signup-optional';
 
 const BackArrowIcon: React.FC = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -97,7 +97,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); setMessage(null); setLoading(true);
+    setError(null); setMessage(null);
     try {
       const fn = firstName.trim();
       const ln = lastName.trim();
@@ -107,7 +107,20 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
       const dt = new Date(date);
       const today = new Date();
       if (Number.isNaN(dt.getTime()) || dt > today) throw new Error('Please enter a valid date of birth in the past.');
+      // Validation passed; move to optional fields
+      setStage('signup-optional');
+    } catch (err: any) {
+      setError(err?.message || 'Please check your entries.');
+    }
+  };
 
+  const handleSignUpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null); setMessage(null); setLoading(true);
+    try {
+      const fn = firstName.trim();
+      const ln = lastName.trim();
+      const date = dob.trim();
       await signUp(email.trim(), password, `${fn} ${ln}`, fn, ln, date, avatar, gender, location);
       setMessage('Account created. Check your email (including Spam) to verify your address.');
       onSignedUp();
@@ -137,6 +150,12 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
     setGreetName(null);
     setShowPassword(false);
     setStage('email');
+  };
+
+  const handleBackToRequired = () => {
+    setError(null);
+    setMessage(null);
+    setStage('signup');
   };
 
   const handleAvatarSelect = async (file: File) => {
@@ -266,15 +285,12 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
           </>
         )}
 
-        {stage === 'signup' && (
+        {stage === ‘signup’ && (
           <>
             <div className="mt-8">
-              <h2 className="text-3xl font-bold text-platinum tracking-tight">Hey! We’re glad you’re here.</h2>
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">Let’s get started</h2>
             </div>
-            <p className="mt-2 text-lg text-platinum/60">Let’s get your style journey started.</p>
-            {message && (
-              <div role="status" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-platinum/5 text-platinum">{message}</div>
-            )}
+            <p className="mt-2 text-lg text-platinum/60">Step 1: Your essentials</p>
             {error && !message && (
               <div role="alert" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-white/5 text-platinum/90">{error}</div>
             )}
@@ -342,6 +358,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                   name="bday"
                   autoComplete="bday"
                   className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                  style={{ colorScheme: ‘dark’ }}
                   required
                 />
                 <p className="mt-1 text-xs text-platinum/60">We use this to tailor your experience.</p>
@@ -354,7 +371,7 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                     title="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? ‘text’ : ‘password’}
                     name="new-password"
                     autoComplete="new-password"
                     className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 pr-24 text-platinum"
@@ -365,76 +382,93 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
                     type="button"
                     onClick={() => setShowPassword(s => !s)}
                     className="absolute inset-y-0 right-0 inline-flex items-center gap-1 px-4 text-xs font-medium text-platinum/70 hover:text-platinum focus:outline-none focus-visible:ring-2 focus-visible:ring-platinum/40"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? ‘Hide password’ : ‘Show password’}
                   >
-                    {showPassword ? 'Hide' : 'Show'}
+                    {showPassword ? ‘Hide’ : ‘Show’}
                   </button>
                 </div>
               </div>
 
-              {/* Optional Profile Fields */}
-              <div className="pt-4 border-t border-platinum/10">
-                <p className="text-xs text-platinum/60 mb-4">Optional: Complete your profile</p>
+              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? ‘Please wait…’ : ‘Continue’}</button>
+            </form>
+          </>
+        )}
 
-                {/* Avatar Upload */}
-                <div className="mb-4">
-                  <label className="block text-sm text-platinum/70 mb-3">Profile Picture</label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f); }}
-                      className="hidden"
-                      aria-label="Upload profile picture"
-                    />
-                    <div className="w-28 h-28 rounded-lg bg-black/30 border border-platinum/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {avatar ? (
-                        <img src={avatar} alt="Avatar preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-sm text-platinum/50">No image</span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 bg-platinum/10 hover:bg-platinum/20 border border-platinum/30 text-platinum rounded-lg text-sm font-medium transition"
-                    >
-                      Choose Photo
-                    </button>
-                  </div>
-                </div>
-
-                {/* Gender */}
-                <div className="mb-4">
-                  <label className="block text-sm text-platinum/70 mb-1">Gender</label>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
-                  >
-                    <option value="">Select gender (optional)</option>
-                    <option value="Female">Female</option>
-                    <option value="Male">Male</option>
-                    <option value="Other">Other</option>
-                    <option value="Prefer Not To Say">Prefer Not To Say</option>
-                  </select>
-                </div>
-
-                {/* Location */}
-                <div>
-                  <label className="block text-sm text-platinum/70 mb-1">Location/City</label>
+        {stage === ‘signup-optional’ && (
+          <>
+            <div className="mt-8">
+              <h2 className="text-3xl font-bold text-platinum tracking-tight">One more thing!</h2>
+            </div>
+            <p className="mt-2 text-lg text-platinum/60">Step 2: Make your profile complete (optional)</p>
+            {message && (
+              <div role="status" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-platinum/5 text-platinum">{message}</div>
+            )}
+            {error && !message && (
+              <div role="alert" className="mt-6 p-4 rounded-xl border border-platinum/25 bg-white/5 text-platinum/90">{error}</div>
+            )}
+            <form onSubmit={handleSignUpSubmit} className="mt-8 space-y-4 text-left">
+              {/* Avatar Upload */}
+              <div>
+                <label className="block text-sm text-platinum/70 mb-3">Profile Picture</label>
+                <div className="flex items-center gap-4">
                   <input
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    type="text"
-                    placeholder="City or location (optional)"
-                    className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAvatarSelect(f); }}
+                    className="hidden"
+                    aria-label="Upload profile picture"
                   />
+                  <div className="w-28 h-28 rounded-lg bg-black/30 border border-platinum/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {avatar ? (
+                      <img src={avatar} alt="Avatar preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm text-platinum/50">No image</span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-platinum/10 hover:bg-platinum/20 border border-platinum/30 text-platinum rounded-lg text-sm font-medium transition"
+                  >
+                    Choose Photo
+                  </button>
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="w-full bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? 'Creating account…' : 'Create Account'}</button>
+              {/* Gender */}
+              <div>
+                <label className="block text-sm text-platinum/70 mb-1">Gender</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                  style={{ colorScheme: ‘dark’ }}
+                >
+                  <option value="">Select gender (optional)</option>
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer Not To Say">Prefer Not To Say</option>
+                </select>
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="block text-sm text-platinum/70 mb-1">Location/City</label>
+                <input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  type="text"
+                  placeholder="City or location (optional)"
+                  className="w-full rounded-full bg-black/20 border border-platinum/30 px-4 py-2 text-platinum"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={handleBackToRequired} className="flex-1 border border-platinum/30 text-platinum font-bold py-3 rounded-full hover:bg-platinum/10 transition">Back</button>
+                <button type="submit" disabled={loading} className="flex-1 bg-platinum text-dark-blue font-bold py-3 rounded-full hover:opacity-90 disabled:opacity-50 transition">{loading ? ‘Creating account…’ : ‘Create Account’}</button>
+              </div>
             </form>
           </>
         )}
