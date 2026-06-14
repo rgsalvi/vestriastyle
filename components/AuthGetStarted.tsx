@@ -64,14 +64,17 @@ export const AuthGetStarted: React.FC<Props> = ({ onBack, onNavigateToTerms, onN
     if (!validateEmail(eaddr)) { setError('Please enter a valid email address.'); return; }
     setLoading(true);
     try {
+      console.log('[handleEmailSubmit] Checking email:', eaddr);
       const user = await repositoryFindUserByEmail(eaddr);
+      console.log('[handleEmailSubmit] User found:', user);
       if (user) {
         setStage('signin');
-        lookupGreeting(eaddr);
+        await lookupGreeting(eaddr);
       } else {
         setStage('signup');
       }
     } catch (err: any) {
+      console.error('[handleEmailSubmit] Error:', err);
       setError(err?.message || 'Could not verify email. Please try again.');
     } finally {
       setLoading(false);
