@@ -23,25 +23,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const adm = getFirebaseAdmin();
-    const adminDb = adm.firestore();
+    const rtdb = adm.database();
     const bucket = admin.storage().bucket();
 
     // Delete all wardrobe items
-    const itemsSnapshot = await adminDb
-      .collection('users')
-      .doc(uid)
-      .collection('items')
-      .get();
-
-    const batch = adminDb.batch();
-    itemsSnapshot.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
+    await rtdb.ref(`wardrobe/${uid}`).remove().catch(() => {});
 
     // Delete user document
-    await adminDb.collection('users').doc(uid).delete().catch(() => {});
-
-    // Delete premium document if exists
-    await adminDb.collection('premium').doc(uid).delete().catch(() => {});
+    await rtdb.ref(`users/${uid}`).remove().catch(() => {});
 
     // Delete avatar from storage (best-effort)
     // Try all possible avatar formats
@@ -68,4 +57,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ success: false, message: 'Failed to delete user data.' });
   }
 }
+
 

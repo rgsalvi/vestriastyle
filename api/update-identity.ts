@@ -44,13 +44,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // Prepare payload for Firestore
+    // Prepare payload for Realtime Database
     const fn = (firstName ?? '').toString().trim();
     const ln = (lastName ?? '').toString().trim();
     const displayName = `${fn} ${ln}`.trim();
 
     const payload: any = {
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: new Date().toISOString(),
     };
 
     if (fn) payload.first_name = fn;
@@ -58,8 +58,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (displayName) payload.display_name = displayName;
     if (dateOfBirth) payload.date_of_birth = dateOfBirth;
 
-    const db = adm.firestore();
-    await db.collection('users').doc(uid).set(payload, { merge: true });
+    const rtdb = adm.database();
+    await rtdb.ref(`users/${uid}`).update(payload);
 
     console.log(`[api/update-identity] updated for ${uid}`);
     return res.status(200).json({ success: true });
@@ -68,4 +68,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ success: false, message: e?.message || 'Unexpected error' });
   }
 }
+
 

@@ -112,15 +112,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
         }
 
-        // Check premium status from Firestore
-        const adminDb = adm.firestore();
+        // Check premium status from Realtime Database
+        const rtdb = adm.database();
         let isPremium = false;
         let profileData: any = null;
 
         try {
-            const userSnap = await adminDb.collection('users').doc(uid).get();
-            if (userSnap.exists) {
-                profileData = userSnap.data() || {};
+            const userSnap = await rtdb.ref(`users/${uid}`).get();
+            if (userSnap.exists()) {
+                profileData = userSnap.val() || {};
                 isPremium = !!profileData.is_premium;
             }
         } catch (e) {
@@ -131,10 +131,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const promoEnabled = (process.env.LAUNCH_PROMO_AUTO_PREMIUM || '').toLowerCase() === 'true';
         if (!isPremium && promoEnabled && emailVerified) {
             try {
-                await adminDb.collection('users').doc(uid).set({
+                await rtdb.ref(`users/${uid}`).update({
                     is_premium: true,
-                    updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                }, { merge: true });
+                    updated_at: new Date().toISOString(),
+                });
                 isPremium = true;
             } catch (e) {
                 console.warn('[initiate-chat] auto-upgrade failed', e);

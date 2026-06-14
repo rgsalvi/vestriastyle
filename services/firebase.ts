@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, sendEmailVerification, sendPasswordResetEmail, User as FbUser, updateProfile, UserCredential, deleteUser } from 'firebase/auth';
-import { initializeFirestore, doc, setDoc, serverTimestamp, setLogLevel, getDoc, enableNetwork, disableNetwork } from 'firebase/firestore';
+import { getDatabase, ref, set, get, remove } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCUg5U7c-KR7GGpusHQZTSqqucD1In_0NI",
@@ -12,50 +12,14 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore - disable persistence to avoid offline issues
-export const db = initializeFirestore(app, {
-  // Disable persistence to avoid "client is offline" issues
-  cacheSizeBytes: 0,
-});
-
-// Enable network connectivity
-enableNetwork(db).then(() => {
-  console.log('[firestore] Network enabled successfully');
-}).catch((err) => {
-  console.warn('[firestore] Warning enabling network:', err?.message);
-});
-
-// Optional debug logging: set localStorage FIRESTORE_DEBUG=true (dev only)
-try {
-  if (typeof window !== 'undefined' && localStorage.getItem('FIRESTORE_DEBUG') === 'true') {
-    setLogLevel('debug');
-    // eslint-disable-next-line no-console
-    console.log('[firestore] debug log level enabled');
-  }
-} catch {}
+export const db = getDatabase(app);
 export const auth = getAuth(app);
-
-// Diagnostic function to check Firestore connection
-export const checkFirestoreConnection = async () => {
-  try {
-    console.log('[firestore-health] Testing connection...');
-    // Try a simple read to test connectivity
-    const testRef = doc(db, 'users', 'connection-test');
-    await getDoc(testRef);
-    console.log('[firestore-health] ✓ Connection successful');
-    return true;
-  } catch (err: any) {
-    console.error('[firestore-health] ✗ Connection failed:', err?.message || err);
-    return false;
-  }
-};
 
 export const observeAuth = (cb: (user: FbUser | null) => void) => onAuthStateChanged(auth, cb);
 export const sendVerificationEmail = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };
+
 export const signUp = (email: string, password: string, displayName?: string, skipEmailVerification?: boolean): Promise<UserCredential> =>
   createUserWithEmailAndPassword(auth, email, password).then(async (cred: UserCredential) => {
-    // Track signup_start (fire-and-forget; endpoint may ignore if unauth yet)
     try {
       fetch('/api/track-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'signup_start', meta: { email: cred.user.email } }) });
     } catch {}
@@ -64,80 +28,49 @@ export const signUp = (email: string, password: string, displayName?: string, sk
       try { await updateProfile(cred.user, { displayName }); } catch {}
     }
 
-    // Create Firestore user document with defaults so profile loads and banner can show
-    // Use retry logic to handle temporary connectivity issues
-    const createUserDocWithRetry = async () => {
-      let lastError: any;
-      for (let attempt = 0; attempt <= 2; attempt++) {
-        try {
-          const userRef = doc(db, 'users', cred.user.uid);
-          const existing = await getDoc(userRef);
-          if (!existing.exists()) {
-            await setDoc(userRef, {
-              id: cred.user.uid,
-              email: cred.user.email,
-              display_name: displayName || cred.user.email?.split('@')[0] || 'User',
-              first_name: '',
-              last_name: '',
-              has_completed_style_questionnaire: false,
-              is_premium: true,
-              created_at: serverTimestamp(),
-              updated_at: serverTimestamp(),
-            });
-          }
-          console.log('[signUp] User document created successfully');
-          return;
-        } catch (e) {
-          lastError = e;
-          if (attempt < 2) {
-            const delayMs = Math.min(500 * Math.pow(2, attempt), 2000);
-            console.debug(`[signUp] Create doc attempt ${attempt + 1} failed, retrying in ${delayMs}ms`, (e as any)?.message);
-            await new Promise(r => setTimeout(r, delayMs));
-          }
-        }
-      }
-      console.warn('[signUp] Failed to create user document in Firestore', lastError?.message);
-    };
-
+    // Save user profile to Realtime Database
     try {
-      await createUserDocWithRetry();
+      const userRef = ref(db, `users/${cred.user.uid}`);
+      await set(userRef, {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        display_name: displayName || cred.user.email?.split('@')[0] || 'User',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_onboarded: false,
+        is_premium: false,
+      });
+      console.log('[signUp] User profile saved to database');
     } catch (e) {
-      console.warn('[signUp] User document creation failed after retries:', (e as any)?.message);
+      console.error('[signUp] Failed to save user profile:', (e as any)?.message);
     }
 
-    // Send verification email immediately and ensure it completes
+    // Send verification email
     if (!skipEmailVerification) {
       try {
         console.log('[signUp] Preparing to send verification email for', cred.user.email);
-
-        // Small delay to ensure auth state is fully settled
         await new Promise(r => setTimeout(r, 100));
-
-        // Ensure the user has an email
         if (!cred.user.email) {
           throw new Error('User email is not set');
         }
-
-        // Use auth.currentUser to ensure the user is properly initialized
         if (auth.currentUser) {
           console.log('[signUp] Sending via auth.currentUser');
           await sendEmailVerification(auth.currentUser);
           console.log('[signUp] ✓ Verification email sent successfully to', auth.currentUser.email);
         } else {
-          // Fallback: use cred.user if auth.currentUser is not set yet
-          console.log('[signUp] Sending via credential (auth.currentUser not ready)');
+          console.log('[signUp] Sending via credential');
           await sendEmailVerification(cred.user);
-          console.log('[signUp] ✓ Verification email sent successfully via credential');
+          console.log('[signUp] ✓ Verification email sent successfully');
         }
       } catch (emailError: any) {
         console.error('[signUp] ✗ Failed to send verification email', emailError?.message || emailError);
-        // Don't fail the signup if email fails, but log it
       }
     }
 
     try { sessionStorage.setItem('newlySignedUpUid', cred.user.uid); } catch {}
     return cred;
   });
+
 export const signIn = (email: string, password: string) => signInWithEmailAndPassword(auth, email, password);
 export const signOut = () => fbSignOut(auth);
 export const resendVerification = async () => { if (auth.currentUser) await sendEmailVerification(auth.currentUser); };

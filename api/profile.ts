@@ -18,13 +18,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const adm = getFirebaseAdmin();
-  const adminDb = adm.firestore();
-  const docRef = adminDb.collection('users').doc(uid);
+  const rtdb = adm.database();
+  const userRef = rtdb.ref(`users/${uid}`);
 
   if (req.method === 'GET') {
     try {
-      const snap = await docRef.get();
-      const data = snap.exists ? snap.data() : null;
+      const snap = await userRef.get();
+      const data = snap.val();
       return res.status(200).json({ success: true, profile: data });
     } catch (e: any) {
       console.error('[profile-get] error:', e);
@@ -42,13 +42,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (profile[key] === undefined) delete profile[key];
       });
 
-      await docRef.set(
-        {
-          ...profile,
-          updated_at: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
+      await userRef.update({
+        ...profile,
+        updated_at: new Date().toISOString(),
+      });
 
       return res.status(200).json({ success: true });
     } catch (e: any) {
@@ -60,4 +57,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Allow', ['GET', 'PUT']);
   return res.status(405).json({ success: false, message: `Method ${req.method} Not Allowed` });
 }
+
 

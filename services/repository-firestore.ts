@@ -1,157 +1,127 @@
-import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, deleteDoc, deleteField, writeBatch, serverTimestamp, Query } from 'firebase/firestore';
+import { ref, set, get, remove, getDatabase } from 'firebase/database';
 import type { StyleProfile, PersistentWardrobeItem } from '../types';
-import type {
-  FirestoreUser,
-  FirestoreWardrobeItem,
-  UserProfileUpdate,
-} from '../firestore-schema';
 
-const db = getFirestore();
+const db = getDatabase();
 
-// Helper: Convert Firestore timestamp to JS Date or ISO string
-function toISOString(ts: any): string | undefined {
-  if (!ts) return undefined;
-  return ts.toDate?.().toISOString() ?? undefined;
+// User identity type for Realtime DB
+interface RealtimeDBUser {
+  uid: string;
+  email: string;
+  display_name: string;
+  first_name?: string;
+  last_name?: string;
+  date_of_birth?: string;
+  avatar_url?: string;
+  style_archetypes?: string[];
+  color_palettes?: string[];
+  favorite_colors?: string;
+  favorite_brands?: string;
+  body_type?: string;
+  is_onboarded?: boolean;
+  is_premium?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// ============================================================================
-// CORE OPERATIONS
-// ============================================================================
-
-/**
- * Ensure a user document exists in Firestore.
- * This is CRITICAL to prevent race conditions during onboarding.
- * Must be called BEFORE attempting to save profile data.
- * Includes retry logic for handling temporary connectivity issues.
- */
+// Ensure user document exists in Realtime Database
 export async function repositoryEnsureUserRow(
   uid: string,
   email: string,
   displayName: string
 ): Promise<void> {
-  const maxRetries = 3;
-  let lastError: any;
+  try {
+    const userRef = ref(db, `users/${uid}`);
+    const snapshot = await get(userRef);
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const userRef = doc(db, 'users', uid);
-
-      try {
-        const existing = await getDoc(userRef);
-        if (existing.exists()) {
-          return; // User already exists, do nothing
-        }
-      } catch (e) {
-        // Check might fail if offline, but we should still try to create
-        console.debug(`[firestore-repo] ensureUserRow check failed (attempt ${attempt + 1}):`, (e as any)?.message);
-      }
-
-      // Create new user document with required fields
-      await setDoc(userRef, {
-        id: uid,
+    if (!snapshot.exists()) {
+      await set(userRef, {
+        uid,
         email: email || `${uid}@placeholder.local`,
         display_name: displayName || email || `${uid}@placeholder.local`,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
-
-      console.log('[firestore-repo] ensureUserRow created successfully');
-      return;
-    } catch (e) {
-      lastError = e;
-      if (attempt < maxRetries) {
-        const delayMs = Math.min(1000 * Math.pow(2, attempt), 5000);
-        console.debug(`[firestore-repo] ensureUserRow attempt ${attempt + 1} failed, retrying in ${delayMs}ms`, (e as any)?.message);
-        await new Promise(r => setTimeout(r, delayMs));
-      }
+      console.log('[realtime-db] ensureUserRow created successfully');
     }
+  } catch (e) {
+    console.error('[realtime-db] ensureUserRow failed', e);
+    throw e;
   }
-
-  console.error('[firestore-repo] ensureUserRow failed after retries', lastError?.message);
-  throw lastError;
 }
 
-/**
- * Load a user's profile from Firestore with retry logic
- */
+// Load user profile from Realtime Database
 export async function repositoryLoadUserProfile(uid: string): Promise<StyleProfile | null> {
-  const maxRetries = 3;
-  let lastError: any;
+  try {
+    const userRef = ref(db, `users/${uid}`);
+    const snapshot = await get(userRef);
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const userRef = doc(db, 'users', uid);
-      const docSnap = await getDoc(userRef);
-
-      if (!docSnap.exists()) {
-        return null;
-      }
-
-      return mapFirestoreToStyleProfile(docSnap.data() as Partial<FirestoreUser>);
-    } catch (e) {
-      lastError = e;
-      if (attempt < maxRetries) {
-        // Wait before retrying, with exponential backoff
-        const delayMs = Math.min(1000 * Math.pow(2, attempt), 5000);
-        console.debug(`[firestore-repo] loadUserProfile attempt ${attempt + 1} failed, retrying in ${delayMs}ms`, (e as any)?.message);
-        await new Promise(r => setTimeout(r, delayMs));
-      }
+    if (!snapshot.exists()) {
+      return null;
     }
-  }
 
-  console.error('[firestore-repo] loadUserProfile failed after retries', lastError?.message);
-  throw lastError;
+    const data = snapshot.val() as Partial<RealtimeDBUser>;
+    return mapRealtimeDBToStyleProfile(data);
+  } catch (e) {
+    console.error('[realtime-db] loadUserProfile failed', e);
+    throw e;
+  }
 }
 
-/**
- * Save a user's profile to Firestore
- */
+// Save user profile to Realtime Database
 export async function repositorySaveUserProfile(
   uid: string,
   profile: Partial<StyleProfile>
 ): Promise<void> {
   try {
-    const userRef = doc(db, 'users', uid);
+    const userRef = ref(db, `users/${uid}`);
+
+    // Read current data to preserve existing fields
+    const snapshot = await get(userRef);
+    const existing = snapshot.val() || {};
+
     const payload: any = {
-      style_archetypes: profile.styleArchetypes,
-      color_palettes: profile.colorPalettes,
-      favorite_colors: profile.favoriteColors,
-      favorite_brands: profile.favoriteBrands,
-      body_type: profile.bodyType,
-      avatar_url: profile.avatar_url,
-      is_premium: profile.isPremium,
-      is_onboarded: profile.isOnboarded,
-      updated_at: serverTimestamp(),
+      ...existing,
+      style_archetypes: profile.styleArchetypes ?? existing.style_archetypes,
+      color_palettes: profile.colorPalettes ?? existing.color_palettes,
+      favorite_colors: profile.favoriteColors ?? existing.favorite_colors,
+      favorite_brands: profile.favoriteBrands ?? existing.favorite_brands,
+      body_type: profile.bodyType ?? existing.body_type,
+      avatar_url: profile.avatar_url ?? existing.avatar_url,
+      is_premium: profile.isPremium ?? existing.is_premium,
+      is_onboarded: profile.isOnboarded ?? existing.is_onboarded,
+      updated_at: new Date().toISOString(),
     };
 
     // Remove undefined keys
     Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
-    await setDoc(userRef, payload, { merge: true });
+    await set(userRef, payload);
+    console.log('[realtime-db] saveUserProfile completed');
   } catch (e) {
-    console.error('[firestore-repo] saveUserProfile failed', e);
+    console.error('[realtime-db] saveUserProfile failed', e);
     throw e;
   }
 }
 
-/**
- * Load user's wardrobe items
- */
+// List wardrobe items
 export async function repositoryListWardrobe(uid: string): Promise<PersistentWardrobeItem[]> {
   try {
-    const itemsRef = collection(db, 'users', uid, 'items');
-    const q = query(itemsRef);
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    const wardrobeRef = ref(db, `wardrobe/${uid}`);
+    const snapshot = await get(wardrobeRef);
+
+    if (!snapshot.exists()) {
+      return [];
+    }
+
+    const items = snapshot.val() as Record<string, any>;
+    return Object.entries(items).map(([id, data]) => ({ id, ...data } as any));
   } catch (e) {
-    console.error('[firestore-repo] listWardrobe failed', e);
+    console.error('[realtime-db] listWardrobe failed', e);
     throw e;
   }
 }
 
-/**
- * Save wardrobe items
- */
+// Save wardrobe items
 export async function repositorySaveWardrobeItems(
   uid: string,
   items: PersistentWardrobeItem[]
@@ -159,26 +129,21 @@ export async function repositorySaveWardrobeItems(
   if (!items.length) return;
 
   try {
-    const batch = writeBatch(db);
-
     for (const item of items) {
-      const itemRef = doc(db, 'users', uid, 'items', item.id || 'temp');
-      batch.set(itemRef, {
+      const itemRef = ref(db, `wardrobe/${uid}/${item.id || 'temp'}`);
+      await set(itemRef, {
         ...item,
-        updated_at: serverTimestamp(),
+        updated_at: new Date().toISOString(),
       });
     }
-
-    await batch.commit();
+    console.log('[realtime-db] saveWardrobeItems completed');
   } catch (e) {
-    console.error('[firestore-repo] saveWardrobeItems failed', e);
+    console.error('[realtime-db] saveWardrobeItems failed', e);
     throw e;
   }
 }
 
-/**
- * Upload avatar via API
- */
+// Upload avatar via API
 export async function repositoryUploadAvatar(uid: string, dataUrl: string): Promise<string> {
   if (!dataUrl.startsWith('data:')) throw new Error('Unsupported avatar format');
 
@@ -205,51 +170,39 @@ export async function repositoryUploadAvatar(uid: string, dataUrl: string): Prom
     const json = await resp.json();
     return json.path as string;
   } catch (e) {
-    console.error('[firestore-repo] uploadAvatar failed', e);
+    console.error('[realtime-db] uploadAvatar failed', e);
     throw e;
   }
 }
 
-/**
- * Delete all user data
- */
+// Delete all user data
 export async function repositoryDeleteAllUserData(uid: string): Promise<void> {
   try {
-    // Delete wardrobe items
-    const itemsRef = collection(db, 'users', uid, 'items');
-    const itemsSnap = await getDocs(itemsRef);
-    const batch = writeBatch(db);
+    const userRef = ref(db, `users/${uid}`);
+    const wardrobeRef = ref(db, `wardrobe/${uid}`);
 
-    itemsSnap.docs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    // Delete user document
-    const userRef = doc(db, 'users', uid);
-    batch.delete(userRef);
-
-    await batch.commit();
+    await remove(userRef);
+    await remove(wardrobeRef);
+    console.log('[realtime-db] deleteAllUserData completed');
   } catch (e) {
-    console.error('[firestore-repo] deleteAllUserData failed', e);
+    console.error('[realtime-db] deleteAllUserData failed', e);
     throw e;
   }
 }
 
-/**
- * Load user identity fields
- */
+// Load user identity
 export async function repositoryLoadUserIdentity(
   uid: string
 ): Promise<{ display_name: string | null; date_of_birth: string | null; first_name?: string | null; last_name?: string | null }> {
   try {
-    const userRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(userRef);
+    const userRef = ref(db, `users/${uid}`);
+    const snapshot = await get(userRef);
 
-    if (!docSnap.exists()) {
+    if (!snapshot.exists()) {
       return { display_name: null, date_of_birth: null };
     }
 
-    const data = docSnap.data() as Partial<FirestoreUser>;
+    const data = snapshot.val() as Partial<RealtimeDBUser>;
     return {
       display_name: data.display_name ?? null,
       date_of_birth: data.date_of_birth ?? null,
@@ -257,14 +210,12 @@ export async function repositoryLoadUserIdentity(
       last_name: data.last_name ?? null,
     };
   } catch (e) {
-    console.error('[firestore-repo] loadUserIdentity failed', e);
+    console.error('[realtime-db] loadUserIdentity failed', e);
     throw e;
   }
 }
 
-/**
- * Update user identity via API
- */
+// Update user identity via API
 export async function repositoryUpdateIdentity(args: {
   firstName?: string;
   lastName?: string;
@@ -289,40 +240,41 @@ export async function repositoryUpdateIdentity(args: {
       throw new Error(t?.message || `Failed to update identity (${resp.status})`);
     }
   } catch (e) {
-    console.error('[firestore-repo] updateIdentity failed', e);
+    console.error('[realtime-db] updateIdentity failed', e);
     throw e;
   }
 }
 
-/**
- * Find user by email
- */
+// Find user by email
 export async function repositoryFindUserByEmail(
   email: string
 ): Promise<{ display_name: string | null; first_name: string | null } | null> {
   try {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email));
-    const snap = await getDocs(q);
+    const usersRef = ref(db, 'users');
+    const snapshot = await get(usersRef);
 
-    if (snap.empty) {
+    if (!snapshot.exists()) {
       return null;
     }
 
-    const data = snap.docs[0].data() as Partial<FirestoreUser>;
+    const users = snapshot.val() as Record<string, RealtimeDBUser>;
+    const found = Object.values(users).find(u => u.email === email);
+
+    if (!found) {
+      return null;
+    }
+
     return {
-      display_name: data.display_name ?? null,
-      first_name: data.first_name ?? null,
+      display_name: found.display_name ?? null,
+      first_name: found.first_name ?? null,
     };
   } catch (e) {
-    console.error('[firestore-repo] findUserByEmail failed', e);
+    console.error('[realtime-db] findUserByEmail failed', e);
     return null;
   }
 }
 
-/**
- * Get public URL for Firebase Storage avatar
- */
+// Get public URL for Firebase Storage avatar
 export function getFirebaseStorageAvatarPublicUrl(path: string): string {
   if (!path) return `https://ui-avatars.com/api/?name=User`;
 
@@ -340,11 +292,8 @@ export function getFirebaseStorageAvatarPublicUrl(path: string): string {
   return `https://firebasestorage.googleapis.com/v0/b/${projectId}.appspot.com/o/${encodeURIComponent(path)}?alt=media`;
 }
 
-// ============================================================================
-// HELPER FUNCTIONS - Data Mapping
-// ============================================================================
-
-function mapFirestoreToStyleProfile(doc: Partial<FirestoreUser>): StyleProfile {
+// Helper: Map Realtime DB user to StyleProfile
+function mapRealtimeDBToStyleProfile(doc: Partial<RealtimeDBUser>): StyleProfile {
   return {
     styleArchetypes: doc.style_archetypes ?? [],
     colorPalettes: doc.color_palettes ?? [],

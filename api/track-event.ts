@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin';
 
 // Lazy admin import so missing env vars do not cause a hard 500 for analytics
 let adminReady = false;
-let adminDb: admin.firestore.Firestore | null = null;
+let adminDb: admin.database.Database | null = null;
 let adminAuth: admin.auth.Auth | null = null;
 
 async function ensureAdmin() {
@@ -12,7 +12,7 @@ async function ensureAdmin() {
     const { getFirebaseAdmin } = await import('./_lib/firebaseAdmin');
     const adm = getFirebaseAdmin();
     adminAuth = adm.auth();
-    adminDb = adm.firestore();
+    adminDb = adm.database();
     adminReady = true;
     return true;
   } catch (e) {
@@ -56,16 +56,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const now = new Date();
     const dateKey = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const eventId = admin.database.ServerValue.TIMESTAMP.toString();
 
     await adminDb
-      .collection('analytics')
-      .doc(dateKey)
-      .collection('events')
-      .add({
+      .ref(`analytics/${dateKey}/events`)
+      .push({
         type,
         uid: uid || null,
         meta: meta || null,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: now.toISOString(),
         user_agent: req.headers['user-agent'] || null,
       });
 
@@ -75,3 +74,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(204).end();
   }
 }
+
