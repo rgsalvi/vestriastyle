@@ -514,6 +514,9 @@ const App: React.FC = () => {
 
   // Store signup credentials from AuthGetStarted to use in handleOnboardingComplete
   const [pendingSignupCredentials, setPendingSignupCredentials] = useState<{ email: string; password: string; firstName: string; lastName: string; dateOfBirth: string } | null>(null);
+
+  // Temporary user for onboarding - will be replaced with real user after signup completes
+  const [tempOnboardingUser, setTempOnboardingUser] = useState<User | null>(null);
   
   // Pending-action flow: capture user's intended action when login is required and resume post-sign-in
   type PendingAction =
@@ -831,8 +834,37 @@ const App: React.FC = () => {
   };
 
   const handleOnboardingComplete = async (profile: StyleProfile): Promise<void> => {
-    if (!user) return;
     console.log('[onboarding-save] start');
+
+    // ================================================================
+    // Step 0: Create Firebase Auth user if using temporary onboarding user
+    // ================================================================
+    let realUser = user;
+    if (!user && tempOnboardingUser && pendingSignupCredentials) {
+      try {
+        console.log('[onboarding-save] creating Firebase Auth account');
+        const cred = await signUp(
+          pendingSignupCredentials.email,
+          pendingSignupCredentials.password,
+          `${pendingSignupCredentials.firstName} ${pendingSignupCredentials.lastName}`,
+          true // skip email verification - will send after onboarding completes
+        );
+        // Construct the real user object from the credentials
+        realUser = {
+          id: cred.user.uid,
+          email: cred.user.email || pendingSignupCredentials.email,
+          name: cred.user.displayName || `${pendingSignupCredentials.firstName} ${pendingSignupCredentials.lastName}`,
+          picture: cred.user.photoURL || '',
+        };
+        console.log('[onboarding-save] Firebase Auth account created', { uid: realUser.id });
+      } catch (e: any) {
+        console.error('[onboarding-save] signUp failed', e);
+        throw new Error(`[Onboarding] Failed to create account: ${e?.message || 'Unknown error'}`);
+      }
+    }
+
+    if (!realUser) return;
+    console.log('[onboarding-save] using user', { id: realUser.id, email: realUser.email });
 
     // ================================================================
     // Helper: Exponential backoff retry for transient failures
@@ -891,7 +923,7 @@ const App: React.FC = () => {
     try {
       console.log('[onboarding-save] ensuring user row exists');
       await retryWithBackoff(
-        () => ensureUserRow(user.id, user.email, user.name),
+        () => ensureUserRow(realUser.id, realUser.email, realUser.name),
         3,
         300,
         'ensureUserRow'
@@ -931,14 +963,14 @@ const App: React.FC = () => {
       avatar_url: photoURL || undefined,
       isOnboarded: true,
       isPremium: true,
-      email: user.email,
-      display_name: user.name,
+      email: realUser.email,
+      display_name: realUser.name,
     };
 
     console.log('[onboarding-save] prepared profile, starting save');
     try {
       await retryWithBackoff(
-        () => withTimeout(saveUserProfile(user.id, cloudProfile), 15000, 'Profile save'),
+        () => withTimeout(saveUserProfile(realUser.id, cloudProfile), 15000, 'Profile save'),
         3,
         500,
         'profile save'
@@ -954,7 +986,7 @@ const App: React.FC = () => {
     // ================================================================
     // Step 4: Update local state and UI
     // ================================================================
-    try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${user.id}`, JSON.stringify(cloudProfile)); } catch {}
+    try { localStorage.setItem(`${STYLE_PROFILE_KEY}-${realUser.id}`, JSON.stringify(cloudProfile)); } catch {}
     setStyleProfile(cloudProfile);
     setBodyType(cloudProfile.bodyType || 'None');
 
@@ -968,10 +1000,14 @@ const App: React.FC = () => {
           return getAvatarPublicUrl(photoURL);
         }
       })();
-      const updatedUser = { ...user, picture: publicUrl } as User;
+      const updatedUser = { ...realUser, picture: publicUrl } as User;
       setUser(updatedUser);
       try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser)); } catch {}
       updateUserProfile(updatedUser.name, publicUrl).catch(() => {});
+    } else {
+      // Even without avatar, set the user in state so the app recognizes them as signed in
+      setUser(realUser);
+      try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(realUser)); } catch {}
     }
 
     setShowOnboarding(false);
@@ -987,7 +1023,7 @@ const App: React.FC = () => {
       setTimeout(async () => {
         try {
           trackEvent('chat_retry_after_onboarding');
-          await initiateChatSession(retry.context, retry.newItem, user as any, true);
+          await initiateChatSession(retry.context, retry.newItem, realUser as any, true);
           setChatContext(retry.context);
           setChatNewItem(retry.newItem);
           setIsChatOpen(true);
@@ -1005,15 +1041,16 @@ const App: React.FC = () => {
       console.warn('[onboarding-save] verification email send failed (non-critical)', e);
     }
 
-    if (user && !auth.currentUser?.emailVerified) {
+    if (realUser && !auth.currentUser?.emailVerified) {
       setProfileSavedBanner('Check your email to verify your account (look in Spam) so we can keep your experience secure.');
       setTimeout(() => setProfileSavedBanner(null), 8000);
     }
 
     try { trackEvent('onboarding_complete'); } catch {}
 
-    // Clear pending credentials after successful onboarding completion
+    // Clear pending credentials and temporary user after successful onboarding completion
     setPendingSignupCredentials(null);
+    setTempOnboardingUser(null);
   };
 
   // Wardrobe Logic
@@ -1175,20 +1212,21 @@ const App: React.FC = () => {
   const [showPremiumUpsell, setShowPremiumUpsell] = useState(false);
 
   const handleSignupComplete = async (credentials: { email: string; password: string; firstName: string; lastName: string; dateOfBirth: string }) => {
-    try {
-      // Create Firebase Auth account, but skip email verification for now
-      // It will be sent after onboarding is complete
-      await signUp(credentials.email, credentials.password, `${credentials.firstName} ${credentials.lastName}`, true);
-      // Store credentials for handleOnboardingComplete to use
-      setPendingSignupCredentials(credentials);
-      setShowLogin(false);
-      setShowOnboarding(true);
-      setOnboardingGateBanner(true);
-    } catch (err: any) {
-      console.error('[handleSignupComplete] signUp failed', err);
-      // If signup failed, don't proceed to onboarding
-      alert(`Sign up failed: ${err?.message || 'Unknown error'}`);
-    }
+    // Create a temporary user object with a placeholder ID for use during onboarding
+    // The real Firebase Auth user will be created in handleOnboardingComplete
+    const tempUserId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const tempUser: User = {
+      id: tempUserId,
+      email: credentials.email,
+      name: `${credentials.firstName} ${credentials.lastName}`,
+      picture: '',
+    };
+
+    setPendingSignupCredentials(credentials);
+    setTempOnboardingUser(tempUser);
+    setShowLogin(false);
+    setShowOnboarding(true);
+    setOnboardingGateBanner(true);
   };
 
   const handleOpenChat = (context: AiResponse, newItemForChat: AnalysisItem | null) => {
@@ -1229,7 +1267,10 @@ const App: React.FC = () => {
       />
     );
   }
-  if (user && showOnboarding) {
+  if (showOnboarding && tempOnboardingUser) {
+        return <OnboardingWizard user={tempOnboardingUser} onComplete={handleOnboardingComplete} />;
+    }
+    if (user && showOnboarding) {
         return <OnboardingWizard user={user} onComplete={handleOnboardingComplete} />;
     }
 
