@@ -77,9 +77,6 @@ export async function repositorySaveUserProfile(
   profile: Partial<StyleProfile>
 ): Promise<void> {
   try {
-    // Ensure user row exists first
-    await repositoryEnsureUserRow(uid, (profile as any).email || 'unknown@example.com', (profile as any).display_name || '');
-
     const userRef = doc(db, 'users', uid);
     const payload: any = {
       style_archetypes: profile.styleArchetypes,

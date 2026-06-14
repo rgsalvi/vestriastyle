@@ -608,7 +608,8 @@ const App: React.FC = () => {
         setUser(mapped);
         (async () => {
           try {
-            // Prefer Supabase identity for display name
+            // Load identity only if user document exists (after onboarding)
+            // Skip during initial sign-up to avoid errors
             try {
               const identity = await repositoryLoadUserIdentity(mapped.id);
               if (identity?.display_name) {
@@ -617,7 +618,10 @@ const App: React.FC = () => {
                 try { localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated)); } catch {}
                 try { localStorage.setItem(`identity-cache-${mapped.id}`, JSON.stringify({ display_name: identity.display_name, date_of_birth: identity.date_of_birth ?? null, first_name: identity.first_name ?? null, last_name: identity.last_name ?? null })); } catch {}
               }
-            } catch (e) { /* non-fatal */ }
+            } catch (e) {
+              // Expected to fail on first sign-up when user doc doesn't exist yet
+              console.debug('[auth-observer] identity lookup skipped', (e as any)?.message);
+            }
             // Try cloud profile first (do NOT pre-create an empty doc; we want absence to trigger onboarding)
             const cloudProfile = await loadUserProfile(mapped.id);
             if (cloudProfile) {
