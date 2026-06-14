@@ -513,7 +513,7 @@ const App: React.FC = () => {
   // No more guest chat users; chat is premium-only
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [hasCompletedStyleQuestionnaire, setHasCompletedStyleQuestionnaire] = useState(true); // Default true to not show banner
+  const [hasCompletedStyleQuestionnaire, setHasCompletedStyleQuestionnaire] = useState(false); // Default false until we check database
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [onboardingSuccessToast, setOnboardingSuccessToast] = useState(false);
