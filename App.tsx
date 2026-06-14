@@ -257,7 +257,7 @@ const Header: React.FC<HeaderProps> = ({ user, onSignOut, onSignIn, onOpenLogin,
                 My Wardrobe
               </button>
             )}
-            {typeof hasCompletedStyleQuestionnaire !== 'undefined' && user && hasCompletedStyleQuestionnaire === false && !showOnboarding ? (
+            {user && hasCompletedStyleQuestionnaire === false ? (
               <CompleteProfileBanner onOpen={() => setShowOnboarding(true)} />
             ) : null}
             <div className="relative" ref={menuRef}>
@@ -518,11 +518,6 @@ const App: React.FC = () => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [onboardingSuccessToast, setOnboardingSuccessToast] = useState(false);
 
-  // Log banner state for debugging
-  useEffect(() => {
-    console.log('[banner-state]', { hasCompletedStyleQuestionnaire, user: !!user, showOnboarding, shouldShow: typeof hasCompletedStyleQuestionnaire !== 'undefined' && user && hasCompletedStyleQuestionnaire === false && !showOnboarding });
-  }, [hasCompletedStyleQuestionnaire, user, showOnboarding]);
-  
   // Pending-action flow: capture user's intended action when login is required and resume post-sign-in
   type PendingAction =
     | { type: 'open-chat'; context: AiResponse; newItem: AnalysisItem | null }
